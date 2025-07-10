@@ -1950,6 +1950,122 @@ body {
   box-shadow: 0 1px 3px rgba(245, 158, 11, 0.1);
 }
 
+/* Workout Explanation Card */
+.workout-explanation-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.04);
+  border-left: 4px solid #8b5cf6;
+  margin-top: 1rem;
+}
+
+.workout-explanation-card h4 {
+  font-size: 1.1rem;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.explanation-content {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(139, 92, 246, 0.1);
+}
+
+.workout-type-section {
+  margin-bottom: 1.5rem;
+}
+
+.workout-type-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.workout-type-section h5 {
+  font-size: 1rem;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.workout-type-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.workout-type-section li {
+  color: #475569;
+  margin-bottom: 0.5rem;
+  padding-left: 1rem;
+  position: relative;
+  line-height: 1.5;
+}
+
+.workout-type-section li:before {
+  content: "•";
+  color: #8b5cf6;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.workout-type-section li strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.schedule-notation {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.schedule-notation h5 {
+  font-size: 1rem;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.schedule-notation ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.schedule-notation li {
+  color: #475569;
+  margin-bottom: 0.5rem;
+  padding-left: 1rem;
+  position: relative;
+  line-height: 1.5;
+}
+
+.schedule-notation li:before {
+  content: "→";
+  color: #f59e0b;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.schedule-notation li strong {
+  color: #1e293b;
+  font-weight: 600;
+  background: #f1f5f9;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+}
+
 /* Food Suggestions */
 .food-suggestions {
   margin-top: 2rem;

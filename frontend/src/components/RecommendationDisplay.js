@@ -255,6 +255,49 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                 <p className="schedule-text">{workout.workout_schedule}</p>
               </div>
             )}
+
+            {/* Workout Type Explanation */}
+            <div className="workout-explanation-card">
+              <h4>📚 Penjelasan Jenis Latihan</h4>
+              <div className="explanation-content">
+                <div className="workout-type-section">
+                  <h5>🏋️ Full Body Workouts</h5>
+                  <ul>
+                    <li><strong>Struktur:</strong> Melatih semua kelompok otot utama dalam setiap sesi</li>
+                    <li><strong>Cocok untuk:</strong> Pemula, orang dengan waktu terbatas</li>
+                    <li><strong>Kelompok Otot:</strong> Kaki, dada, punggung, bahu, lengan, inti</li>
+                  </ul>
+                </div>
+
+                <div className="workout-type-section">
+                  <h5>🔄 Upper/Lower Split</h5>
+                  <ul>
+                    <li><strong>A (Upper):</strong> Dada, punggung, bahu, lengan</li>
+                    <li><strong>B (Lower):</strong> Kaki, bokong, inti</li>
+                    <li><strong>Cocok untuk:</strong> Atlet menengah dengan ketersediaan waktu sedang</li>
+                  </ul>
+                </div>
+
+                <div className="workout-type-section">
+                  <h5>💪 Push/Pull/Legs Split</h5>
+                  <ul>
+                    <li><strong>A (Push):</strong> Dada, bahu, trisep</li>
+                    <li><strong>B (Pull):</strong> Punggung, bisep</li>
+                    <li><strong>C (Legs):</strong> Paha depan, paha belakang, bokong, betis</li>
+                    <li><strong>Cocok untuk:</strong> Atlet lanjutan dengan ketersediaan waktu tinggi</li>
+                  </ul>
+                </div>
+
+                <div className="schedule-notation">
+                  <h5>📅 Notasi Jadwal</h5>
+                  <ul>
+                    <li><strong>W</strong> = Hari latihan (Workout day)</li>
+                    <li><strong>X</strong> = Hari istirahat (Rest day)</li>
+                    <li><strong>A/B/C</strong> = Sesi latihan berbeda dalam rutinitas split</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
