@@ -143,8 +143,8 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
 
   // Handle age input restrictions
   const handleAgeKeyDown = (e) => {
-    // Allow: backspace, delete, tab, escape, enter, arrows
-    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'];
+    // Allow: backspace, delete, tab, escape, enter, arrows, and numbers
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
     
     if (allowedKeys.includes(e.key)) {
       return;
@@ -155,28 +155,44 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
       const currentValue = e.target.value;
       const newValue = currentValue + e.key;
       
-      // Prevent typing if it would result in invalid age
-      if (newValue.length > 2 || parseInt(newValue) > 65) {
+      // Only prevent if the new value would be more than 2 digits or greater than 99
+      // We'll handle the 18-65 range validation in onChange and onBlur
+      if (newValue.length > 2 || parseInt(newValue) > 99) {
         e.preventDefault();
       }
       return;
     }
     
-    // Block all other keys
+    // Block all other keys (like letters, symbols, etc.)
     e.preventDefault();
   };
 
   const handleAgeBlur = (e) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value < 18) {
-      // If user typed a number less than 18, clear it
-      setFormData(prev => ({
-        ...prev,
-        age: ''
-      }));
+    const value = e.target.value;
+    
+    // If empty, just return
+    if (value === '') {
+      return;
+    }
+    
+    const ageValue = parseInt(value);
+    
+    // Check if it's a valid number and within range
+    if (isNaN(ageValue) || ageValue < 18 || ageValue > 65) {
       setValidationErrors(prev => ({
         ...prev,
         age: 'Usia harus antara 18-65 tahun'
+      }));
+      
+      // Don't clear the input, let user fix it
+      return;
+    }
+    
+    // Clear any previous validation errors if age is valid
+    if (validationErrors.age) {
+      setValidationErrors(prev => ({
+        ...prev,
+        age: ''
       }));
     }
   };
@@ -184,12 +200,14 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // Special handling for age input to enforce 18-65 range
+    // Special handling for age input - allow typing but clear validation errors
     if (name === 'age') {
-      const ageValue = parseInt(value);
-      // Allow empty input for editing, but restrict invalid values
-      if (value !== '' && (ageValue < 18 || ageValue > 65 || isNaN(ageValue))) {
-        return; // Don't update state with invalid age values
+      // Clear validation errors when user starts typing
+      if (validationErrors.age) {
+        setValidationErrors(prev => ({
+          ...prev,
+          age: ''
+        }));
       }
     }
     

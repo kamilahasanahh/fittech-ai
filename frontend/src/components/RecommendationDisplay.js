@@ -43,20 +43,20 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
     );
   }
 
-  const { workout, nutrition } = recommendations;
+  // Map API response structure to component expected structure
+  const workout = recommendations.workout_recommendation || recommendations.workout;
+  const nutrition = recommendations.nutrition_recommendation || recommendations.nutrition;
 
-  // Calculate user's daily macro targets based on template output
+  // Calculate user's daily macro targets based on API response
   const calculateDailyMacros = () => {
     if (!nutrition || !userData) return null;
 
-    const weight = parseFloat(userData.weight) || 70;
-    
-    // Based on template structure: caloric_intake, protein_per_kg, carbs_per_kg, fat_per_kg
+    // Use the actual calculated values from the API response
     return {
-      calories: Math.round(nutrition.caloric_intake || 2000),
-      protein: Math.round((nutrition.protein_per_kg || 1.6) * weight),
-      carbs: Math.round((nutrition.carbs_per_kg || 4) * weight),
-      fat: Math.round((nutrition.fat_per_kg || 1) * weight)
+      calories: Math.round(nutrition.target_calories || nutrition.caloric_intake || 2000),
+      protein: Math.round(nutrition.target_protein || (nutrition.protein_per_kg * parseFloat(userData.weight)) || 100),
+      carbs: Math.round(nutrition.target_carbs || (nutrition.carbs_per_kg * parseFloat(userData.weight)) || 200),
+      fat: Math.round(nutrition.target_fat || (nutrition.fat_per_kg * parseFloat(userData.weight)) || 60)
     };
   };
 
@@ -170,6 +170,57 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
           </div>
         </div>
       </div>
+
+      {/* User Metrics from API */}
+      {recommendations.user_metrics && (
+        <div className="metrics-summary">
+          <h3>📊 Analisis Tubuh Anda</h3>
+          <div className="metrics-grid">
+            <div className="metric-item">
+              <span className="label">BMI:</span>
+              <span className="value">{recommendations.user_metrics.bmi?.toFixed(1)}</span>
+            </div>
+            <div className="metric-item">
+              <span className="label">Kategori BMI:</span>
+              <span className="value">{recommendations.user_metrics.bmi_category}</span>
+            </div>
+            <div className="metric-item">
+              <span className="label">BMR:</span>
+              <span className="value">{Math.round(recommendations.user_metrics.bmr)} kkal</span>
+            </div>
+            <div className="metric-item">
+              <span className="label">TDEE:</span>
+              <span className="value">{Math.round(recommendations.user_metrics.tdee)} kkal</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confidence Scores */}
+      {recommendations.confidence_scores && (
+        <div className="confidence-summary">
+          <h3>🎯 Tingkat Kepercayaan AI</h3>
+          <div className="confidence-grid">
+            <div className="confidence-item">
+              <span className="label">Kepercayaan Keseluruhan:</span>
+              <span className="value">{Math.round(recommendations.confidence_scores.overall_confidence * 100)}%</span>
+            </div>
+            <div className="confidence-item">
+              <span className="label">Kepercayaan Nutrisi:</span>
+              <span className="value">{Math.round(recommendations.confidence_scores.nutrition_confidence * 100)}%</span>
+            </div>
+            <div className="confidence-item">
+              <span className="label">Kepercayaan Workout:</span>
+              <span className="value">{Math.round(recommendations.confidence_scores.workout_confidence * 100)}%</span>
+            </div>
+            <div className="confidence-item">
+              <span className="label">Level:</span>
+              <span className="value">{recommendations.confidence_scores.confidence_level}</span>
+            </div>
+          </div>
+          <p className="confidence-message">{recommendations.confidence_scores.confidence_message}</p>
+        </div>
+      )}
 
       {/* Workout Recommendations */}
       {workout && (
@@ -307,11 +358,14 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
           <ul>
             <li>Tujuan: {userData?.fitness_goal}</li>
             <li>Level aktivitas: {userData?.activity_level}</li>
-            <li>BMI kategori: {userData?.bmi_category || 'Normal'}</li>
+            <li>BMI kategori: {recommendations.user_metrics?.bmi_category || userData?.bmi_category || 'Normal'}</li>
+            <li>Template Nutrisi ID: {nutrition?.template_id}</li>
+            <li>Template Workout ID: {workout?.template_id}</li>
             <li>Kalkulasi nutrisi per kg berat badan</li>
           </ul>
         </div>
       </div>
+
 
       {/* Action Buttons */}
       <div className="recommendation-actions">

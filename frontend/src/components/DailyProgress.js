@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/firebaseConfig';
+import { recommendationService } from '../services/recommendationService';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendation }) => {
@@ -12,6 +13,9 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [recommendationHistory, setRecommendationHistory] = useState([]);
+  const [selectedRecommendation, setSelectedRecommendation] = useState(null);
+  const [showRecommendationHistory, setShowRecommendationHistory] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -83,10 +87,7 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
     }
   };
 
-  useEffect(() => {
-    loadTodaysProgress();
-  }, [user, loadTodaysProgress]);
-
+  // Load today's progress data
   const loadTodaysProgress = useCallback(async () => {
     if (!user) return;
     
@@ -117,6 +118,23 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
       setLoading(false);
     }
   }, [user, today]);
+
+  // Load recommendation history
+  const loadRecommendationHistory = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const history = await recommendationService.getRecommendationHistory(user.uid, 20);
+      setRecommendationHistory(history);
+    } catch (error) {
+      console.error('Error loading recommendation history:', error);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadTodaysProgress();
+    loadRecommendationHistory();
+  }, [loadTodaysProgress, loadRecommendationHistory]);
 
   const saveProgress = async (newData) => {
     if (!user) return;
@@ -318,6 +336,148 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
         />
         {saving && <p className="saving-indicator">💾 Menyimpan...</p>}
       </div>
+
+      {/* Recommendation History Section */}
+      <div className="recommendation-history-section">
+        <div className="section-header">
+          <h3>📋 Riwayat Rekomendasi</h3>
+          <button 
+            className="btn-secondary"
+            onClick={() => setShowRecommendationHistory(!showRecommendationHistory)}
+          >
+            {showRecommendationHistory ? 'Sembunyikan' : 'Tampilkan'} Riwayat
+          </button>
+        </div>
+        
+        {showRecommendationHistory && (
+          <div className="recommendation-history">
+            {recommendationHistory.length === 0 ? (
+              <div className="no-history">
+                <p>Belum ada riwayat rekomendasi</p>
+                <p>Buat rekomendasi pertama Anda untuk memulai tracking!</p>
+              </div>
+            ) : (
+              <div className="history-list">
+                {recommendationHistory.map((recommendation, index) => (
+                  <div key={recommendation.id} className="history-item">
+                    <div className="history-header">
+                      <div className="history-date">
+                        <span className="date">
+                          📅 {new Date(recommendation.createdAt.seconds * 1000).toLocaleDateString('id-ID', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </span>
+                        <span className="time">
+                          🕐 {new Date(recommendation.createdAt.seconds * 1000).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                      <div className="history-status">
+                        {recommendation.isActive && (
+                          <span className="active-badge">✅ Aktif</span>
+                        )}
+                        {index === 0 && !recommendation.isActive && (
+                          <span className="latest-badge">🆕 Terbaru</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="history-summary">
+                      <div className="summary-item">
+                        <span className="label">Tujuan:</span>
+                        <span className="value">{recommendation.userData.fitness_goal}</span>
+                      </div>
+                      <div className="summary-item">
+                        <span className="label">Aktivitas:</span>
+                        <span className="value">{recommendation.userData.activity_level}</span>
+                      </div>
+                      <div className="summary-item">
+                        <span className="label">BMI:</span>
+                        <span className="value">{recommendation.recommendations.user_metrics?.bmi?.toFixed(1) || 'N/A'}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="history-actions">
+                      <button 
+                        className="btn-outline"
+                        onClick={() => setSelectedRecommendation(recommendation)}
+                      >
+                        👁️ Lihat Detail
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Selected Recommendation Modal */}
+      {selectedRecommendation && (
+        <div className="recommendation-modal">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>📋 Detail Rekomendasi</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setSelectedRecommendation(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="recommendation-display-mini">
+                <div className="mini-section">
+                  <h4>👤 Profil Pengguna</h4>
+                  <div className="profile-mini">
+                    <span>Usia: {selectedRecommendation.userData.age} tahun</span>
+                    <span>Berat: {selectedRecommendation.userData.weight} kg</span>
+                    <span>Tinggi: {selectedRecommendation.userData.height} cm</span>
+                  </div>
+                </div>
+                
+                {selectedRecommendation.recommendations.workout_recommendation && (
+                  <div className="mini-section">
+                    <h4>🏋️ Workout</h4>
+                    <div className="workout-mini">
+                      <span>Jenis: {selectedRecommendation.recommendations.workout_recommendation.workout_type}</span>
+                      <span>Hari/Minggu: {selectedRecommendation.recommendations.workout_recommendation.days_per_week}</span>
+                      <span>Kardio: {selectedRecommendation.recommendations.workout_recommendation.cardio_minutes_per_day} menit</span>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedRecommendation.recommendations.nutrition_recommendation && (
+                  <div className="mini-section">
+                    <h4>🍎 Nutrisi</h4>
+                    <div className="nutrition-mini">
+                      <span>Kalori: {selectedRecommendation.recommendations.nutrition_recommendation.target_calories} kkal</span>
+                      <span>Protein: {selectedRecommendation.recommendations.nutrition_recommendation.target_protein}g</span>
+                      <span>Karbohidrat: {selectedRecommendation.recommendations.nutrition_recommendation.target_carbs}g</span>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedRecommendation.recommendations.confidence_scores && (
+                  <div className="mini-section">
+                    <h4>🎯 Confidence</h4>
+                    <div className="confidence-mini">
+                      <span>Overall: {Math.round(selectedRecommendation.recommendations.confidence_scores.overall_confidence * 100)}%</span>
+                      <span>Level: {selectedRecommendation.recommendations.confidence_scores.confidence_level}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="progress-tips">
         <h3>💡 Tips Hari Ini</h3>

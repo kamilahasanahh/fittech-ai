@@ -62,19 +62,20 @@ class AuthService {
   // Update user profile
   async updateUserProfile(updates) {
     try {
-      if (!this.currentUser) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
         throw new Error('No authenticated user');
       }
 
       // Update Firebase Auth profile
       if (updates.displayName) {
-        await updateProfile(this.currentUser, {
+        await updateProfile(currentUser, {
           displayName: updates.displayName
         });
       }
 
       // Update Firestore user document
-      const userRef = doc(db, 'users', this.currentUser.uid);
+      const userRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userRef, {
         ...updates,
         updatedAt: new Date()
@@ -90,15 +91,17 @@ class AuthService {
   // Save user data to Firestore
   async saveUserData(userData) {
     try {
-      if (!this.currentUser) {
+      // Get current user from Firebase Auth directly
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
         throw new Error('No authenticated user');
       }
 
-      const userRef = doc(db, 'users', this.currentUser.uid);
+      const userRef = doc(db, 'users', currentUser.uid);
       await setDoc(userRef, {
         ...userData,
-        uid: this.currentUser.uid,
-        email: this.currentUser.email,
+        uid: currentUser.uid,
+        email: currentUser.email,
         createdAt: new Date(),
         updatedAt: new Date()
       }, { merge: true });
@@ -113,11 +116,12 @@ class AuthService {
   // Get user data from Firestore
   async getUserData() {
     try {
-      if (!this.currentUser) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
         throw new Error('No authenticated user');
       }
 
-      const userRef = doc(db, 'users', this.currentUser.uid);
+      const userRef = doc(db, 'users', currentUser.uid);
       const userSnap = await getDoc(userRef);
 
       if (userSnap.exists()) {
@@ -134,14 +138,15 @@ class AuthService {
   // Save recommendation
   async saveRecommendation(recommendationData) {
     try {
-      if (!this.currentUser) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
         throw new Error('No authenticated user');
       }
 
       const recommendationsRef = collection(db, 'recommendations');
       const docRef = await addDoc(recommendationsRef, {
         ...recommendationData,
-        userId: this.currentUser.uid,
+        userId: currentUser.uid,
         createdAt: new Date()
       });
 
@@ -155,14 +160,15 @@ class AuthService {
   // Get user recommendations
   async getUserRecommendations() {
     try {
-      if (!this.currentUser) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
         throw new Error('No authenticated user');
       }
 
       const recommendationsRef = collection(db, 'recommendations');
       const q = query(
         recommendationsRef,
-        where('userId', '==', this.currentUser.uid),
+        where('userId', '==', currentUser.uid),
         orderBy('createdAt', 'desc')
       );
 
@@ -185,14 +191,15 @@ class AuthService {
   // Save daily progress
   async saveDailyProgress(progressData) {
     try {
-      if (!this.currentUser) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
         throw new Error('No authenticated user');
       }
 
       const progressRef = collection(db, 'dailyProgress');
       const docRef = await addDoc(progressRef, {
         ...progressData,
-        userId: this.currentUser.uid,
+        userId: currentUser.uid,
         date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
         createdAt: new Date()
       });
@@ -207,14 +214,15 @@ class AuthService {
   // Get user daily progress
   async getUserProgress(limit = 30) {
     try {
-      if (!this.currentUser) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
         throw new Error('No authenticated user');
       }
 
       const progressRef = collection(db, 'dailyProgress');
       const q = query(
         progressRef,
-        where('userId', '==', this.currentUser.uid),
+        where('userId', '==', currentUser.uid),
         orderBy('createdAt', 'desc')
       );
 

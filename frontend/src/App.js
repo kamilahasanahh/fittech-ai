@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from './services/api';
 import { authService } from './services/authService';
+import { recommendationService } from './services/recommendationService';
+import { auth } from './services/firebaseConfig';
 import AuthForm from './components/AuthForm';
 import EnhancedUserInputForm from './components/EnhancedUserInputForm';
 import RecommendationDisplay from './components/RecommendationDisplay';
@@ -71,14 +73,22 @@ function App() {
     
     try {
       console.log('🔄 Mengirim data pengguna:', formData);
+      console.log('🔄 Current user:', user);
+      console.log('🔄 Firebase Auth user:', auth.currentUser);
       
       // Dapatkan rekomendasi ML dari backend Flask
       const recommendations = await apiService.getRecommendations(formData);
       console.log('✅ Rekomendasi diterima:', recommendations);
       
-      // Simpan ke Firebase
-      await authService.saveUserData(formData);
-      await authService.saveRecommendation(recommendations);
+      // Simpan ke Firebase menggunakan service yang baru
+      console.log('🔄 Menyimpan data pengguna ke Firebase...');
+      const saveResult = await authService.saveUserData(formData);
+      console.log('✅ Data pengguna tersimpan:', saveResult);
+      
+      // Simpan rekomendasi dengan timestamp menggunakan service baru
+      console.log('🔄 Menyimpan rekomendasi ke Firebase...');
+      await recommendationService.saveRecommendation(user.uid, formData, recommendations);
+      console.log('✅ Rekomendasi tersimpan');
       
       setUserData(formData);
       setRecommendations(recommendations);
@@ -94,7 +104,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await authService.logout();
+      await authService.signOut();
       setUser(null);
       setUserData(null);
       setRecommendations(null);
@@ -111,13 +121,10 @@ function App() {
   };
 
   const handleNewRecommendation = async () => {
-    const canCreate = await authService.canCreateNewRecommendation();
-    if (canCreate) {
-      setCurrentView('input');
-      setError('');
-    } else {
-      setError('Anda memiliki rencana mingguan yang aktif. Silakan selesaikan terlebih dahulu sebelum membuat yang baru.');
-    }
+    // For now, always allow creating new recommendations
+    // TODO: Implement logic to check if user has active recommendation
+    setCurrentView('input');
+    setError('');
   };
 
   const handleProgressUpdate = (progressData) => {
