@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { auth } from '../services/firebaseConfig';
 
-const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }) => {
+const EnhancedUserInputForm = ({ onSubmit, onRecommendationsReceived }) => {
   const [formData, setFormData] = useState({
     age: '',
     gender: '',
@@ -12,7 +13,7 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
 
   const [currentStep, setCurrentStep] = useState(1);
   const [validationErrors, setValidationErrors] = useState({});
-  // Use loading state from parent component
+  const [loading, setLoading] = useState(false);
   const [submissionError, setSubmissionError] = useState('');
   const [bmi, setBmi] = useState(null);
   const [bmiCategory, setBmiCategory] = useState(null);
@@ -227,31 +228,39 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
     
     if (!validateStep(currentStep)) return;
     
+    setLoading(true);
     setSubmissionError('');
 
     try {
-      // Prepare data for the parent component
-      const submissionData = {
-        ...formData,
-        // Ensure numeric values are properly converted
-        age: parseInt(formData.age),
-        height: parseFloat(formData.height),
-        weight: parseFloat(formData.weight),
-        gender: formData.gender === 'male' ? 'Male' : 'Female'
-      };
+      // Call the backend API
+      const response = await fetch('http://localhost:5000/api/recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`
+        },
+        body: JSON.stringify(formData)
+      });
 
-      console.log('🔄 Submitting form data to parent:', submissionData);
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
       
-      // Call the parent's submit handler (which handles API calls and state updates)
-      await onSubmit(submissionData);
+      // Call the parent callbacks
+      onSubmit(formData);
+      onRecommendationsReceived(data);
       
     } catch (error) {
-      console.error('❌ Error submitting form:', error);
+      console.error('Error submitting form:', error);
       setSubmissionError(
         error.message.includes('fetch') 
           ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'
-          : `Terjadi kesalahan saat memproses data: ${error.message}`
+          : 'Terjadi kesalahan saat memproses data. Silakan coba lagi.'
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -555,7 +564,7 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
               type="button"
               onClick={handlePrevious}
               className="btn-secondary"
-              disabled={parentLoading}
+              disabled={loading}
             >
               ← Sebelumnya
             </button>
@@ -568,7 +577,7 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
               type="button"
               onClick={handleNext}
               className="btn-primary"
-              disabled={parentLoading}
+              disabled={loading}
             >
               Selanjutnya →
             </button>
@@ -576,9 +585,9 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
             <button
               type="submit"
               className="btn-primary submit-btn"
-              disabled={parentLoading}
+              disabled={loading}
             >
-              {parentLoading ? (
+              {loading ? (
                 <>
                   <div className="spinner small"></div>
                   Memproses...

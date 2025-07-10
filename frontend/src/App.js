@@ -78,7 +78,7 @@ function App() {
       
       // Simpan ke Firebase
       await authService.saveUserData(formData);
-      await authService.saveRecommendations(recommendations);
+      await authService.saveRecommendation(recommendations);
       
       setUserData(formData);
       setRecommendations(recommendations);

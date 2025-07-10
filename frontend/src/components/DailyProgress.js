@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-const DailyProgress = ({ user, onProgressUpdate }) => {
+const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendation }) => {
   const [progressData, setProgressData] = useState({
     workout: false,
     nutrition: false,
@@ -14,6 +14,74 @@ const DailyProgress = ({ user, onProgressUpdate }) => {
   const [saving, setSaving] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
+
+  // Get fitness goal info based on user's actual goal
+  const getFitnessGoalInfo = () => {
+    const goal = userProfile?.fitness_goal || 'Fat Loss';
+    
+    switch (goal) {
+      case 'Fat Loss':
+        return {
+          icon: '📉',
+          title: 'Menurunkan Berat Badan',
+          description: 'Fokus pada pembakaran kalori dan pengurangan lemak tubuh'
+        };
+      case 'Muscle Gain':
+        return {
+          icon: '💪',
+          title: 'Menambah Massa Otot',
+          description: 'Membangun otot dengan latihan beban dan nutrisi yang tepat'
+        };
+      case 'Maintenance':
+        return {
+          icon: '⚖️',
+          title: 'Mempertahankan Bentuk Tubuh',
+          description: 'Menjaga kondisi fisik dan berat badan yang sudah ideal'
+        };
+      default:
+        return {
+          icon: '🎯',
+          title: 'Target Fitness',
+          description: 'Mencapai tujuan kesehatan dan kebugaran optimal'
+        };
+    }
+  };
+
+  // Get activity level info
+  const getActivityLevelInfo = () => {
+    const level = userProfile?.activity_level || 'Low Activity';
+    
+    switch (level) {
+      case 'Low Activity':
+        return {
+          icon: '🚶‍♂️',
+          title: 'Aktivitas Rendah',
+          multiplier: '1.29',
+          description: 'Olahraga ringan dengan intensitas rendah'
+        };
+      case 'Moderate Activity':
+        return {
+          icon: '🏃‍♂️',
+          title: 'Aktivitas Sedang',
+          multiplier: '1.55',
+          description: 'Olahraga teratur dengan intensitas sedang'
+        };
+      case 'High Activity':
+        return {
+          icon: '🏋️‍♂️',
+          title: 'Aktivitas Tinggi',
+          multiplier: '1.81',
+          description: 'Olahraga intensif dengan frekuensi tinggi'
+        };
+      default:
+        return {
+          icon: '🎯',
+          title: 'Level Aktivitas',
+          multiplier: '1.0',
+          description: 'Tingkat aktivitas belum ditentukan'
+        };
+    }
+  };
 
   useEffect(() => {
     loadTodaysProgress();
