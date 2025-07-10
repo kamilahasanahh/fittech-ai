@@ -98,31 +98,6 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
     ];
   };
 
-  const getRecentActivity = () => {
-    return dashboardData.progressData.slice(0, 5).map(progress => {
-      const activities = [];
-      if (progress.workout) activities.push('🏋️ Workout');
-      if (progress.nutrition) activities.push('🍎 Nutrition');
-      if (progress.hydration) activities.push('💧 Hydration');
-      
-      return {
-        date: progress.date,
-        activities,
-        notes: progress.notes || '',
-        completed: activities.length > 0,
-        mood: progress.mood || '',
-        workoutRating: progress.workoutRating || 0,
-        energyLevel: progress.energyLevel || 0,
-        sleepQuality: progress.sleepQuality || 0,
-        stressLevel: progress.stressLevel || 0,
-        recommendationEffectiveness: progress.recommendationEffectiveness || 0,
-        weight: progress.weight || '',
-        bodyFat: progress.bodyFat || '',
-        measurements: progress.measurements || {}
-      };
-    });
-  };
-
   if (loading) {
     return (
       <div className="dashboard loading">
@@ -196,98 +171,6 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
           </div>
         </div>
       )}
-
-      {/* Recent Activity */}
-      <div className="recent-activity">
-        <h3>📈 Aktivitas Terbaru</h3>
-        {getRecentActivity().length > 0 ? (
-          <div className="activity-list">
-            {getRecentActivity().map((activity, index) => (
-              <div key={index} className="activity-item">
-                <div className="activity-date">{formatDate(activity.date)}</div>
-                <div className="activity-details">
-                  {activity.completed ? (
-                    <>
-                      <div className="activity-badges">
-                        {activity.activities.map((act, i) => (
-                          <span key={i} className="activity-badge">{act}</span>
-                        ))}
-                      </div>
-                      
-                      {/* Feedback Summary */}
-                      <div className="activity-feedback">
-                        {activity.mood && (
-                          <div className="feedback-item">
-                            <span className="feedback-label">Mood:</span>
-                            <span className="feedback-value">
-                              {activity.mood === 'excellent' && '😄 Sangat Baik'}
-                              {activity.mood === 'good' && '🙂 Baik'}
-                              {activity.mood === 'neutral' && '😐 Biasa'}
-                              {activity.mood === 'bad' && '😔 Kurang'}
-                              {activity.mood === 'terrible' && '😢 Buruk'}
-                            </span>
-                          </div>
-                        )}
-                        
-                        {activity.workoutRating > 0 && (
-                          <div className="feedback-item">
-                            <span className="feedback-label">Workout:</span>
-                            <span className="feedback-value">
-                              {'⭐'.repeat(activity.workoutRating)} ({activity.workoutRating}/5)
-                            </span>
-                          </div>
-                        )}
-                        
-                        {activity.energyLevel > 0 && (
-                          <div className="feedback-item">
-                            <span className="feedback-label">Energi:</span>
-                            <span className="feedback-value">
-                              {activity.energyLevel >= 4 ? 'Sangat Tinggi' : 
-                               activity.energyLevel >= 3 ? 'Tinggi' : 
-                               activity.energyLevel >= 2 ? 'Sedang' : 'Rendah'}
-                            </span>
-                          </div>
-                        )}
-                        
-                        {activity.recommendationEffectiveness > 0 && (
-                          <div className="feedback-item">
-                            <span className="feedback-label">Efektivitas:</span>
-                            <span className="feedback-value">
-                              {activity.recommendationEffectiveness >= 4 ? 'Sangat Efektif' : 
-                               activity.recommendationEffectiveness >= 3 ? 'Efektif' : 
-                               activity.recommendationEffectiveness >= 2 ? 'Cukup Efektif' : 'Kurang Efektif'}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {activity.notes && (
-                        <div className="activity-notes">
-                          <strong>Catatan:</strong> {activity.notes}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="activity-status">
-                      <span className="no-activity-badge">Tidak ada aktivitas</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="no-activity">
-            <p>Belum ada aktivitas tercatat. Mulai catat progress Anda!</p>
-            <button 
-              className="btn-primary"
-              onClick={() => onNavigate('progress')}
-            >
-              Mulai Catat Progress
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* Quick Actions */}
       <div className="quick-actions">
