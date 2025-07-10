@@ -416,9 +416,9 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                 
                 {selectedRecommendation.recommendations.confidence_scores && (
                   <div className="mini-section">
-                    <h4>🎯 Confidence</h4>
+                    <h4>🎯 Tingkat Kepercayaan</h4>
                     <div className="confidence-mini">
-                      <span>Overall: {Math.round(selectedRecommendation.recommendations.confidence_scores.overall_confidence * 100)}%</span>
+                      <span>Keseluruhan: {Math.round(selectedRecommendation.recommendations.confidence_scores.overall_confidence * 100)}%</span>
                       <span>Level: {selectedRecommendation.recommendations.confidence_scores.confidence_level}</span>
                     </div>
                   </div>

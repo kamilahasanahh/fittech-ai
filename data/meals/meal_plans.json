@@ -1,0 +1,671 @@
+{
+  "meal_templates": {
+    "sarapan": [
+      {
+        "id": "sarapan_1",
+        "name": "Sarapan Tradisional",
+        "description": "Nasi uduk dengan telur dan sayur",
+        "foods": [
+          {
+            "nama": "Nasi Uduk",
+            "base_amount": 100,
+            "unit": "g",
+            "calories_per_unit": 2.15,
+            "carbs_per_unit": 0.28,
+            "protein_per_unit": 0.055,
+            "fat_per_unit": 0.07
+          },
+          {
+            "nama": "Telur Dadar",
+            "base_amount": 60,
+            "unit": "g",
+            "calories_per_unit": 3.17,
+            "carbs_per_unit": 0.022,
+            "protein_per_unit": 0.227,
+            "fat_per_unit": 0.25
+          },
+          {
+            "nama": "Sayur Bening Bayam",
+            "base_amount": 150,
+            "unit": "g",
+            "calories_per_unit": 0.24,
+            "carbs_per_unit": 0.051,
+            "protein_per_unit": 0.012,
+            "fat_per_unit": 0.0025
+          }
+        ],
+        "total_base_calories": 365,
+        "total_base_carbs": 36.65,
+        "total_base_protein": 15.42,
+        "total_base_fat": 10.875,
+        "target_calorie_percentage": 25
+      },
+      {
+        "id": "sarapan_2",
+        "name": "Sarapan Protein Tinggi",
+        "description": "Telur rebus dengan mie telur dan sayur",
+        "foods": [
+          {
+            "nama": "Mie Telur (Ditambah, Masak)",
+            "base_amount": 80,
+            "unit": "g",
+            "calories_per_unit": 1.38,
+            "carbs_per_unit": 0.2516,
+            "protein_per_unit": 0.0454,
+            "fat_per_unit": 0.0207
+          },
+          {
+            "nama": "Telur Rebus",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 1.29,
+            "carbs_per_unit": 0.0092,
+            "protein_per_unit": 0.108,
+            "fat_per_unit": 0.092
+          },
+          {
+            "nama": "Sayur Campur Tumis",
+            "base_amount": 100,
+            "unit": "g",
+            "calories_per_unit": 0.70,
+            "carbs_per_unit": 0.07,
+            "protein_per_unit": 0.02,
+            "fat_per_unit": 0.04
+          }
+        ],
+        "total_base_calories": 335,
+        "total_base_carbs": 28.236,
+        "total_base_protein": 15.996,
+        "total_base_fat": 12.716,
+        "target_calorie_percentage": 25
+      },
+      {
+        "id": "sarapan_3",
+        "name": "Sarapan Mie Tek Tek",
+        "description": "Mie tek tek dengan telur balado",
+        "foods": [
+          {
+            "nama": "Mie Tek Tek",
+            "base_amount": 100,
+            "unit": "g",
+            "calories_per_unit": 2.50,
+            "carbs_per_unit": 0.30,
+            "protein_per_unit": 0.10,
+            "fat_per_unit": 0.08
+          },
+          {
+            "nama": "Telur Balado",
+            "base_amount": 70,
+            "unit": "g",
+            "calories_per_unit": 2.43,
+            "carbs_per_unit": 0.036,
+            "protein_per_unit": 0.114,
+            "fat_per_unit": 0.157
+          }
+        ],
+        "total_base_calories": 420,
+        "total_base_carbs": 32.52,
+        "total_base_protein": 17.98,
+        "total_base_fat": 18.99,
+        "target_calorie_percentage": 25
+      },
+      {
+        "id": "sarapan_4",
+        "name": "Sarapan Sederhana",
+        "description": "Nasi putih dengan telur dan tempe",
+        "foods": [
+          {
+            "nama": "Nasi Putih (Butir-Sedang, Dimasak)",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 1.30,
+            "carbs_per_unit": 0.2859,
+            "protein_per_unit": 0.0238,
+            "fat_per_unit": 0.0021
+          },
+          {
+            "nama": "Telur Dadar",
+            "base_amount": 60,
+            "unit": "g",
+            "calories_per_unit": 3.17,
+            "carbs_per_unit": 0.022,
+            "protein_per_unit": 0.227,
+            "fat_per_unit": 0.25
+          },
+          {
+            "nama": "Tempe Goreng",
+            "base_amount": 50,
+            "unit": "g",
+            "calories_per_unit": 4.50,
+            "carbs_per_unit": 0.18,
+            "protein_per_unit": 0.36,
+            "fat_per_unit": 0.22
+          }
+        ],
+        "total_base_calories": 566,
+        "total_base_carbs": 45.628,
+        "total_base_protein": 31.504,
+        "total_base_fat": 26.272,
+        "target_calorie_percentage": 25
+      }
+    ],
+    "makan_siang": [
+      {
+        "id": "makan_siang_1",
+        "name": "Makan Siang Lengkap",
+        "description": "Nasi, ayam goreng, sayur, dan tempe",
+        "foods": [
+          {
+            "nama": "Nasi Putih (Butir-Sedang, Dimasak)",
+            "base_amount": 150,
+            "unit": "g",
+            "calories_per_unit": 1.30,
+            "carbs_per_unit": 0.2859,
+            "protein_per_unit": 0.0238,
+            "fat_per_unit": 0.0021
+          },
+          {
+            "nama": "Ayam Goreng tanpa Pelapis (Kulit Dimakan)",
+            "base_amount": 100,
+            "unit": "g",
+            "calories_per_unit": 2.60,
+            "carbs_per_unit": 0.0,
+            "protein_per_unit": 0.2862,
+            "fat_per_unit": 0.1535
+          },
+          {
+            "nama": "Tempe Goreng",
+            "base_amount": 80,
+            "unit": "g",
+            "calories_per_unit": 2.25,
+            "carbs_per_unit": 0.09,
+            "protein_per_unit": 0.18,
+            "fat_per_unit": 0.11
+          },
+          {
+            "nama": "Sayur Campuran",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 0.60,
+            "carbs_per_unit": 0.1309,
+            "protein_per_unit": 0.0286,
+            "fat_per_unit": 0.0015
+          }
+        ],
+        "total_base_calories": 627,
+        "total_base_carbs": 58.9185,
+        "total_base_protein": 46.848,
+        "total_base_fat": 25.115,
+        "target_calorie_percentage": 40
+      },
+      {
+        "id": "makan_siang_2",
+        "name": "Makan Siang Ikan",
+        "description": "Nasi dengan ikan panggang dan sayur",
+        "foods": [
+          {
+            "nama": "Nasi Putih (Butir-Sedang, Dimasak)",
+            "base_amount": 160,
+            "unit": "g",
+            "calories_per_unit": 1.30,
+            "carbs_per_unit": 0.2859,
+            "protein_per_unit": 0.0238,
+            "fat_per_unit": 0.0021
+          },
+          {
+            "nama": "Ikan Panggang",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 1.26,
+            "carbs_per_unit": 0.0033,
+            "protein_per_unit": 0.2194,
+            "fat_per_unit": 0.0344
+          },
+          {
+            "nama": "Tahu Goreng",
+            "base_amount": 60,
+            "unit": "g",
+            "calories_per_unit": 2.71,
+            "carbs_per_unit": 0.1049,
+            "protein_per_unit": 0.1719,
+            "fat_per_unit": 0.2018
+          },
+          {
+            "nama": "Sayuran Rebus",
+            "base_amount": 150,
+            "unit": "g",
+            "calories_per_unit": 0.56,
+            "carbs_per_unit": 0.0973,
+            "protein_per_unit": 0.0265,
+            "fat_per_unit": 0.0097
+          }
+        ],
+        "total_base_calories": 547,
+        "total_base_carbs": 67.0635,
+        "total_base_protein": 40.077,
+        "total_base_fat": 20.2525,
+        "target_calorie_percentage": 40
+      },
+      {
+        "id": "makan_siang_3",
+        "name": "Makan Siang Kwetiau",
+        "description": "Kwetiau dengan ayam dan sayur",
+        "foods": [
+          {
+            "nama": "Kwetiau",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 1.75,
+            "carbs_per_unit": 0.2376,
+            "protein_per_unit": 0.0505,
+            "fat_per_unit": 0.0637
+          },
+          {
+            "nama": "Ayam Goreng tanpa Pelapis (Kulit Dimakan)",
+            "base_amount": 90,
+            "unit": "g",
+            "calories_per_unit": 2.60,
+            "carbs_per_unit": 0.0,
+            "protein_per_unit": 0.2862,
+            "fat_per_unit": 0.1535
+          },
+          {
+            "nama": "Sayur Campur Tumis",
+            "base_amount": 100,
+            "unit": "g",
+            "calories_per_unit": 0.70,
+            "carbs_per_unit": 0.07,
+            "protein_per_unit": 0.02,
+            "fat_per_unit": 0.04
+          }
+        ],
+        "total_base_calories": 508,
+        "total_base_carbs": 35.512,
+        "total_base_protein": 32.558,
+        "total_base_fat": 21.419,
+        "target_calorie_percentage": 40
+      },
+      {
+        "id": "makan_siang_4",
+        "name": "Makan Siang Seafood",
+        "description": "Nasi dengan cumi saus padang dan sayur",
+        "foods": [
+          {
+            "nama": "Nasi Putih (Butir-Sedang, Dimasak)",
+            "base_amount": 150,
+            "unit": "g",
+            "calories_per_unit": 1.30,
+            "carbs_per_unit": 0.2859,
+            "protein_per_unit": 0.0238,
+            "fat_per_unit": 0.0021
+          },
+          {
+            "nama": "Cumi Saus Padang",
+            "base_amount": 110,
+            "unit": "g",
+            "calories_per_unit": 1.45,
+            "carbs_per_unit": 0.0647,
+            "protein_per_unit": 0.1334,
+            "fat_per_unit": 0.0729
+          },
+          {
+            "nama": "Sayur Tahu Toge",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 0.86,
+            "carbs_per_unit": 0.1291,
+            "protein_per_unit": 0.0593,
+            "fat_per_unit": 0.0193
+          }
+        ],
+        "total_base_calories": 454,
+        "total_base_carbs": 58.4027,
+        "total_base_protein": 25.241,
+        "total_base_fat": 11.333,
+        "target_calorie_percentage": 40
+      },
+      {
+        "id": "makan_siang_5",
+        "name": "Makan Siang Vegetarian",
+        "description": "Nasi dengan tahu, tempe, dan sayur",
+        "foods": [
+          {
+            "nama": "Nasi Putih (Butir-Sedang, Dimasak)",
+            "base_amount": 140,
+            "unit": "g",
+            "calories_per_unit": 1.30,
+            "carbs_per_unit": 0.2859,
+            "protein_per_unit": 0.0238,
+            "fat_per_unit": 0.0021
+          },
+          {
+            "nama": "Tahu Goreng",
+            "base_amount": 80,
+            "unit": "g",
+            "calories_per_unit": 3.39,
+            "carbs_per_unit": 0.1311,
+            "protein_per_unit": 0.2149,
+            "fat_per_unit": 0.2523
+          },
+          {
+            "nama": "Tempe Goreng",
+            "base_amount": 70,
+            "unit": "g",
+            "calories_per_unit": 3.21,
+            "carbs_per_unit": 0.1286,
+            "protein_per_unit": 0.2571,
+            "fat_per_unit": 0.1571
+          },
+          {
+            "nama": "Sup Sayur Vegetarian",
+            "base_amount": 150,
+            "unit": "g",
+            "calories_per_unit": 0.72,
+            "carbs_per_unit": 0.1198,
+            "protein_per_unit": 0.0212,
+            "fat_per_unit": 0.0193
+          }
+        ],
+        "total_base_calories": 684,
+        "total_base_carbs": 67.7545,
+        "total_base_protein": 35.51,
+        "total_base_fat": 27.178,
+        "target_calorie_percentage": 40
+      }
+    ],
+    "makan_malam": [
+      {
+        "id": "makan_malam_1",
+        "name": "Makan Malam Ringan",
+        "description": "Kwetiau dengan sayur dan protein",
+        "foods": [
+          {
+            "nama": "Kwetiau",
+            "base_amount": 100,
+            "unit": "g",
+            "calories_per_unit": 1.75,
+            "carbs_per_unit": 0.2376,
+            "protein_per_unit": 0.0505,
+            "fat_per_unit": 0.0637
+          },
+          {
+            "nama": "Telur Balado",
+            "base_amount": 80,
+            "unit": "g",
+            "calories_per_unit": 2.125,
+            "carbs_per_unit": 0.03125,
+            "protein_per_unit": 0.10,
+            "fat_per_unit": 0.1375
+          },
+          {
+            "nama": "Sayur Tahu Toge",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 0.86,
+            "carbs_per_unit": 0.1291,
+            "protein_per_unit": 0.0593,
+            "fat_per_unit": 0.0193
+          }
+        ],
+        "total_base_calories": 408,
+        "total_base_carbs": 38.635,
+        "total_base_protein": 18.616,
+        "total_base_fat": 13.445,
+        "target_calorie_percentage": 30
+      },
+      {
+        "id": "makan_malam_2",
+        "name": "Makan Malam Sate",
+        "description": "Sate Padang dengan nasi dan sayur",
+        "foods": [
+          {
+            "nama": "Nasi Putih (Butir-Sedang, Dimasak)",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 1.30,
+            "carbs_per_unit": 0.2859,
+            "protein_per_unit": 0.0238,
+            "fat_per_unit": 0.0021
+          },
+          {
+            "nama": "Sate Padang",
+            "base_amount": 100,
+            "unit": "g",
+            "calories_per_unit": 1.61,
+            "carbs_per_unit": 0.0679,
+            "protein_per_unit": 0.1801,
+            "fat_per_unit": 0.0663
+          },
+          {
+            "nama": "Sup Sayur Vegetarian",
+            "base_amount": 150,
+            "unit": "g",
+            "calories_per_unit": 0.72,
+            "carbs_per_unit": 0.1198,
+            "protein_per_unit": 0.0212,
+            "fat_per_unit": 0.0193
+          }
+        ],
+        "total_base_calories": 429,
+        "total_base_carbs": 59.022,
+        "total_base_protein": 24.378,
+        "total_base_fat": 11.145,
+        "target_calorie_percentage": 30
+      },
+      {
+        "id": "makan_malam_3",
+        "name": "Makan Malam Ikan",
+        "description": "Ikan panggang dengan kentang dan sayur",
+        "foods": [
+          {
+            "nama": "Ikan Panggang",
+            "base_amount": 130,
+            "unit": "g",
+            "calories_per_unit": 1.26,
+            "carbs_per_unit": 0.0033,
+            "protein_per_unit": 0.2194,
+            "fat_per_unit": 0.0344
+          },
+          {
+            "nama": "Kentang Goreng",
+            "base_amount": 80,
+            "unit": "g",
+            "calories_per_unit": 3.425,
+            "carbs_per_unit": 0.4458,
+            "protein_per_unit": 0.0435,
+            "fat_per_unit": 0.1758
+          },
+          {
+            "nama": "Sayuran Rebus",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 0.56,
+            "carbs_per_unit": 0.0973,
+            "protein_per_unit": 0.0265,
+            "fat_per_unit": 0.0097
+          }
+        ],
+        "total_base_calories": 505,
+        "total_base_carbs": 47.234,
+        "total_base_protein": 32.002,
+        "total_base_fat": 18.638,
+        "target_calorie_percentage": 30
+      },
+      {
+        "id": "makan_malam_4",
+        "name": "Makan Malam Sederhana",
+        "description": "Mie telur dengan telur dan sayur",
+        "foods": [
+          {
+            "nama": "Mie Telur (Ditambah, Masak)",
+            "base_amount": 100,
+            "unit": "g",
+            "calories_per_unit": 1.38,
+            "carbs_per_unit": 0.2516,
+            "protein_per_unit": 0.0454,
+            "fat_per_unit": 0.0207
+          },
+          {
+            "nama": "Telur Rebus",
+            "base_amount": 100,
+            "unit": "g",
+            "calories_per_unit": 1.55,
+            "carbs_per_unit": 0.011,
+            "protein_per_unit": 0.13,
+            "fat_per_unit": 0.11
+          },
+          {
+            "nama": "Sayur Bening Bayam",
+            "base_amount": 150,
+            "unit": "g",
+            "calories_per_unit": 0.24,
+            "carbs_per_unit": 0.051,
+            "protein_per_unit": 0.012,
+            "fat_per_unit": 0.0025
+          }
+        ],
+        "total_base_calories": 329,
+        "total_base_carbs": 33.74,
+        "total_base_protein": 19.24,
+        "total_base_fat": 14.575,
+        "target_calorie_percentage": 30
+      },
+      {
+        "id": "makan_malam_5",
+        "name": "Makan Malam Cumi",
+        "description": "Cumi saus padang dengan kentang dan sayur",
+        "foods": [
+          {
+            "nama": "Cumi Saus Padang",
+            "base_amount": 120,
+            "unit": "g",
+            "calories_per_unit": 1.33,
+            "carbs_per_unit": 0.0593,
+            "protein_per_unit": 0.1222,
+            "fat_per_unit": 0.0669
+          },
+          {
+            "nama": "Kentang Goreng",
+            "base_amount": 70,
+            "unit": "g",
+            "calories_per_unit": 3.91,
+            "carbs_per_unit": 0.5095,
+            "protein_per_unit": 0.0497,
+            "fat_per_unit": 0.2008
+          },
+          {
+            "nama": "Sayur Campur Tumis",
+            "base_amount": 110,
+            "unit": "g",
+            "calories_per_unit": 0.64,
+            "carbs_per_unit": 0.064,
+            "protein_per_unit": 0.018,
+            "fat_per_unit": 0.036
+          }
+        ],
+        "total_base_calories": 504,
+        "total_base_carbs": 50.204,
+        "total_base_protein": 20.294,
+        "total_base_fat": 21.373,
+        "target_calorie_percentage": 30
+      }
+    ]
+  },
+  "snack_templates": [
+    {
+      "id": "snack_1",
+      "name": "Snack Sehat",
+      "description": "Jagung rebus",
+      "foods": [
+        {
+          "nama": "Jagung Rebus",
+          "base_amount": 100,
+          "unit": "g",
+          "calories_per_unit": 0.93,
+          "carbs_per_unit": 0.2233,
+          "protein_per_unit": 0.0311,
+          "fat_per_unit": 0.0074
+        }
+      ],
+      "total_base_calories": 93,
+      "total_base_carbs": 22.33,
+      "total_base_protein": 3.11,
+      "total_base_fat": 0.74,
+      "target_calorie_percentage": 5
+    },
+    {
+      "id": "snack_2",
+      "name": "Snack Protein",
+      "description": "Telur rebus",
+      "foods": [
+        {
+          "nama": "Telur Rebus",
+          "base_amount": 50,
+          "unit": "g",
+          "calories_per_unit": 1.55,
+          "carbs_per_unit": 0.011,
+          "protein_per_unit": 0.13,
+          "fat_per_unit": 0.11
+        }
+      ],
+      "total_base_calories": 77.5,
+      "total_base_carbs": 0.55,
+      "total_base_protein": 6.5,
+      "total_base_fat": 5.5,
+      "target_calorie_percentage": 5
+    },
+    {
+      "id": "snack_3",
+      "name": "Snack Kentang",
+      "description": "Kentang goreng kecil",
+      "foods": [
+        {
+          "nama": "Kentang Goreng",
+          "base_amount": 40,
+          "unit": "g",
+          "calories_per_unit": 6.85,
+          "carbs_per_unit": 0.8915,
+          "protein_per_unit": 0.087,
+          "fat_per_unit": 0.3515
+        }
+      ],
+      "total_base_calories": 274,
+      "total_base_carbs": 35.66,
+      "total_base_protein": 3.48,
+      "total_base_fat": 14.06,
+      "target_calorie_percentage": 5
+    },
+    {
+      "id": "snack_4",
+      "name": "Snack Tempe",
+      "description": "Tempe goreng kecil",
+      "foods": [
+        {
+          "nama": "Tempe Goreng",
+          "base_amount": 30,
+          "unit": "g",
+          "calories_per_unit": 7.5,
+          "carbs_per_unit": 0.3,
+          "protein_per_unit": 0.6,
+          "fat_per_unit": 0.367
+        }
+      ],
+      "total_base_calories": 225,
+      "total_base_carbs": 9.0,
+      "total_base_protein": 18.0,
+      "total_base_fat": 11.0,
+      "target_calorie_percentage": 5
+    }
+  ],
+  "scaling_instructions": {
+    "description": "How to scale meals based on individual calorie and macro needs",
+    "formula": "scaling_factor = target_calories_for_meal / base_meal_calories",
+    "steps": [
+      "1. Calculate individual's total daily calorie needs",
+      "2. Determine calories needed for each meal based on target_calorie_percentage",
+      "3. Calculate scaling factor for each meal",
+      "4. Multiply all food amounts by scaling factor",
+      "5. Adjust portions for practical serving sizes"
+    ]
+  }
+}

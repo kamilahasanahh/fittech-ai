@@ -1,25 +1,70 @@
 import React, { useState, useEffect } from 'react';
 import { nutritionService } from '../services/nutritionService';
+import { mealPlanService } from '../services/mealPlanService';
 
 const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecommendation }) => {
   const [nutritionData, setNutritionData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [mealPlan, setMealPlan] = useState(null);
+  const [mealPlanLoading, setMealPlanLoading] = useState(true);
 
-  // Load nutrition data from CSV file
+  // Calculate user's daily macro targets based on API response
+  const calculateDailyMacros = () => {
+    if (!recommendations || !userData) return null;
+
+    const nutrition = recommendations.nutrition_recommendation || recommendations.nutrition;
+    if (!nutrition) return null;
+
+    // Use the actual calculated values from the API response
+    return {
+      calories: Math.round(nutrition.target_calories || nutrition.caloric_intake || 2000),
+      protein: Math.round(nutrition.target_protein || (nutrition.protein_per_kg * parseFloat(userData.weight)) || 100),
+      carbs: Math.round(nutrition.target_carbs || (nutrition.carbs_per_kg * parseFloat(userData.weight)) || 200),
+      fat: Math.round(nutrition.target_fat || (nutrition.fat_per_kg * parseFloat(userData.weight)) || 60)
+    };
+  };
+
+  // Load nutrition data from JSON file and generate meal plan
   useEffect(() => {
-    const loadNutritionData = async () => {
+    const loadData = async () => {
       try {
-        const csvData = await nutritionService.loadNutritionData();
-        setNutritionData(csvData);
+        // Load nutrition data
+        const jsonData = await nutritionService.loadNutritionData();
+        setNutritionData(jsonData);
         setLoading(false);
+
+        // Generate meal plan if we have user data
+        if (recommendations && userData) {
+          setMealPlanLoading(true);
+          const dailyMacros = calculateDailyMacros();
+          
+          if (dailyMacros) {
+            const mealPlanResult = await mealPlanService.generateDailyMealPlan(
+              dailyMacros.calories,
+              dailyMacros.protein,
+              dailyMacros.carbs,
+              dailyMacros.fat
+            );
+
+            if (mealPlanResult.success) {
+              const transformedMealPlan = mealPlanService.transformMealPlanToFrontend(mealPlanResult);
+              setMealPlan(transformedMealPlan);
+            } else {
+              console.warn('Failed to load organized meal plan, using fallback');
+              setMealPlan(null);
+            }
+          }
+          setMealPlanLoading(false);
+        }
       } catch (error) {
-        console.error('Error loading nutrition data:', error);
+        console.error('Error loading data:', error);
         setLoading(false);
+        setMealPlanLoading(false);
       }
     };
 
-    loadNutritionData();
-  }, []);
+    loadData();
+  }, [recommendations, userData]);
 
   if (!recommendations) {
     return (
@@ -39,19 +84,6 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
   const workout = recommendations.workout_recommendation || recommendations.workout;
   const nutrition = recommendations.nutrition_recommendation || recommendations.nutrition;
 
-  // Calculate user's daily macro targets based on API response
-  const calculateDailyMacros = () => {
-    if (!nutrition || !userData) return null;
-
-    // Use the actual calculated values from the API response
-    return {
-      calories: Math.round(nutrition.target_calories || nutrition.caloric_intake || 2000),
-      protein: Math.round(nutrition.target_protein || (nutrition.protein_per_kg * parseFloat(userData.weight)) || 100),
-      carbs: Math.round(nutrition.target_carbs || (nutrition.carbs_per_kg * parseFloat(userData.weight)) || 200),
-      fat: Math.round(nutrition.target_fat || (nutrition.fat_per_kg * parseFloat(userData.weight)) || 60)
-    };
-  };
-
   // Calculate food portions based on template requirements
   const calculateFoodPortions = (targetMacros) => {
     if (!nutritionData.length || !targetMacros) return [];
@@ -60,9 +92,10 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
     
     // Distribute daily calories across meals
     const mealDistribution = {
-      sarapan: { percentage: 0.30, name: '🌅 Sarapan' },
+      sarapan: { percentage: 0.25, name: '🌅 Sarapan' },
       makan_siang: { percentage: 0.40, name: '☀️ Makan Siang' },
-      makan_malam: { percentage: 0.30, name: '🌙 Makan Malam' }
+      makan_malam: { percentage: 0.30, name: '🌙 Makan Malam' },
+      camilan: { percentage: 0.05, name: '🍪 Camilan' }
     };
 
     Object.entries(mealDistribution).forEach(([mealType, config]) => {
@@ -78,17 +111,35 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
         selectedFoods = nutritionService.getFoodsByCategory('lunch');
       } else if (mealType === 'makan_malam') {
         selectedFoods = nutritionService.getFoodsByCategory('dinner');
+      } else if (mealType === 'camilan') {
+        selectedFoods = nutritionService.getFoodsByCategory('snack');
       }
 
       // If no specific foods found, use all available
       if (selectedFoods.length === 0) {
-        selectedFoods = nutritionData.slice(0, 3);
+        if (mealType === 'camilan') {
+          // For snacks, use lighter options
+          selectedFoods = nutritionData.filter(food => 
+            food.name.toLowerCase().includes('jagung') ||
+            food.name.toLowerCase().includes('telur rebus') ||
+            food.calories < 200
+          ).slice(0, 2);
+        } else {
+          selectedFoods = nutritionData.slice(0, 3);
+        }
       }
 
       // Calculate portions to meet targets
-      const mealFoods = selectedFoods.slice(0, 3).map(food => {
+      const mealFoods = selectedFoods.slice(0, mealType === 'camilan' ? 1 : 3).map(food => {
         // Calculate how many grams needed to meet portion of target calories
-        const gramsNeeded = Math.min(200, Math.max(50, (targetCalories / 3) / (food.calories / 100)));
+        const divisor = mealType === 'camilan' ? 1 : 3; // Only 1 food for snacks, 3 for meals
+        const gramsNeeded = Math.min(
+          mealType === 'camilan' ? 100 : 200, 
+          Math.max(
+            mealType === 'camilan' ? 30 : 50, 
+            (targetCalories / divisor) / (food.calories / 100)
+          )
+        );
         
         return {
           ...food,
@@ -112,7 +163,11 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
   };
 
   const dailyMacros = calculateDailyMacros();
-  const foodSuggestions = dailyMacros ? calculateFoodPortions(dailyMacros) : [];
+  
+  // Use organized meal plan if available, otherwise use fallback calculation
+  const foodSuggestions = mealPlan && mealPlan.length > 0 
+    ? mealPlan 
+    : (dailyMacros ? calculateFoodPortions(dailyMacros) : []);
 
   return (
     <div className="recommendation-container">
@@ -339,14 +394,22 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
           </div>
 
           {/* Food Suggestions with Calculated Portions */}
-          {!loading && foodSuggestions.length > 0 && (
+          {(!loading && !mealPlanLoading) && foodSuggestions.length > 0 && (
             <div className="food-suggestions">
-              <h4>🍽️ Porsi Makanan Indonesia Berdasarkan Template</h4>
-              <p className="suggestions-subtitle">Porsi yang dihitung untuk mencapai target nutrisi harian Anda</p>
+              <h4>🍽️ {mealPlan ? 'Rencana Makan Berdasarkan Template' : 'Porsi Makanan Indonesia Berdasarkan Template'}</h4>
+              <p className="suggestions-subtitle">
+                {mealPlan ? 'Kombinasi makanan yang sudah diatur untuk mencapai target nutrisi harian Anda' : 'Porsi yang dihitung untuk mencapai target nutrisi harian Anda'}
+              </p>
               
               {foodSuggestions.map((meal, index) => (
                 <div key={index} className="meal-section">
                   <h5 className="meal-title">{meal.meal}</h5>
+                  {meal.mealName && (
+                    <div className="meal-info">
+                      <p className="meal-name"><strong>{meal.mealName}</strong></p>
+                      {meal.description && <p className="meal-description">{meal.description}</p>}
+                    </div>
+                  )}
                   <div className="meal-target">
                     <span>Target: {meal.targetCalories} kkal | {meal.targetProtein}g protein</span>
                   </div>
@@ -369,6 +432,14 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          
+          {/* Loading state for meal plan */}
+          {mealPlanLoading && (
+            <div className="meal-plan-loading">
+              <h4>🔄 Memuat Rencana Makan...</h4>
+              <p>Sedang menyusun kombinasi makanan yang optimal untuk Anda...</p>
             </div>
           )}
         </div>

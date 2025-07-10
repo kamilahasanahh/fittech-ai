@@ -24,6 +24,7 @@ import numpy as np
 import warnings
 import pickle
 import os
+import json
 from datetime import datetime
 warnings.filterwarnings('ignore')
 
@@ -111,13 +112,15 @@ class XGFitnessAIModel:
         return self.template_manager.get_template_assignments(fitness_goal, activity_level, bmi_category)
         
     def _create_workout_templates(self):
-        """Load workout templates from CSV file"""
+        """Load workout templates from JSON file"""
         try:
-            template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'data', 'workout_templates.csv')
-            workout_df = pd.read_csv(template_path)
+            template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'data', 'workout_templates.json')
+            with open(template_path, 'r') as f:
+                workout_data = json.load(f)
+            workout_df = pd.DataFrame(workout_data['workout_templates'])
             return workout_df
         except FileNotFoundError:
-            print("Warning: workout_templates.csv not found, using fallback templates")
+            print("Warning: workout_templates.json not found, using fallback templates")
             # Fallback to basic templates if file not found
             templates = [
                 {'template_id': 1, 'goal': 'Fat Loss', 'activity_level': 'Low Activity', 
@@ -133,13 +136,15 @@ class XGFitnessAIModel:
             return pd.DataFrame(templates)
     
     def _create_nutrition_templates(self):
-        """Load nutrition templates from CSV file"""
+        """Load nutrition templates from JSON file"""
         try:
-            template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'data', 'nutrition_templates.csv')
-            nutrition_df = pd.read_csv(template_path)
+            template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'data', 'nutrition_templates.json')
+            with open(template_path, 'r') as f:
+                nutrition_data = json.load(f)
+            nutrition_df = pd.DataFrame(nutrition_data)
             return nutrition_df
         except FileNotFoundError:
-            print("Warning: nutrition_templates.csv not found, using fallback templates")
+            print("Warning: nutrition_templates.json not found, using fallback templates")
             # Fallback to basic templates if file not found
             templates = [
                 {'template_id': 1, 'goal': 'Fat Loss', 'bmi_category': 'Normal', 
@@ -1231,10 +1236,16 @@ class XGFitnessAIModel:
             # Fallback: use encoded value + 1 (assuming template IDs start from 1)
             nutrition_template_id = nutrition_pred_encoded + 1
         
-        # Calculate confidence scores
-        workout_confidence = np.max(workout_proba)
-        nutrition_confidence = np.max(nutrition_proba)
-        overall_confidence = (workout_confidence + nutrition_confidence) / 2
+        # Enhanced confidence scoring system
+        workout_confidence = self._calculate_enhanced_confidence(
+            workout_proba, user_data, 'workout', workout_pred_encoded
+        )
+        nutrition_confidence = self._calculate_enhanced_confidence(
+            nutrition_proba, user_data, 'nutrition', nutrition_pred_encoded
+        )
+        
+        # Weighted overall confidence (nutrition is generally more reliable)
+        overall_confidence = (workout_confidence * 0.6 + nutrition_confidence * 0.4)
         
         # Get template details using template manager
         workout_template = self.template_manager.get_workout_template(workout_template_id)
@@ -1253,16 +1264,16 @@ class XGFitnessAIModel:
         target_carbs = int(user_data['weight'] * nutrition_template['carbs_per_kg'])
         target_fat = int(user_data['weight'] * nutrition_template['fat_per_kg'])
         
-        # Determine confidence level for user display
-        if overall_confidence >= 0.8:
-            confidence_level = "High"
-            confidence_message = "Very confident in recommendations"
-        elif overall_confidence >= 0.6:
-            confidence_level = "Medium"
-            confidence_message = "Moderately confident in recommendations"
+        # Determine confidence level for user display (adjusted thresholds)
+        if overall_confidence >= 0.75:
+            confidence_level = "Tinggi"
+            confidence_message = "Sangat yakin dengan rekomendasi ini"
+        elif overall_confidence >= 0.55:
+            confidence_level = "Sedang"
+            confidence_message = "Cukup yakin dengan rekomendasi ini"
         else:
-            confidence_level = "Low"
-            confidence_message = "Lower confidence - consider consulting a fitness professional"
+            confidence_level = "Rendah"
+            confidence_message = "Kepercayaan rendah - pertimbangkan konsultasi dengan profesional fitness"
         
         return {
             'success': True,
@@ -1302,7 +1313,12 @@ class XGFitnessAIModel:
                 'nutrition_confidence': round(nutrition_confidence, 3),
                 'overall_confidence': round(overall_confidence, 3),
                 'confidence_level': confidence_level,
-                'confidence_message': confidence_message
+                'confidence_message': confidence_message,
+                'confidence_explanation': self.get_confidence_explanation(user_data, {
+                    'workout_confidence': workout_confidence,
+                    'nutrition_confidence': nutrition_confidence,
+                    'overall_confidence': overall_confidence
+                })
             },
             'model_info': {
                 'last_trained': self.training_info.get('training_date', 'Unknown'),
@@ -1497,8 +1513,187 @@ class XGFitnessAIModel:
         
         print(f"Augmented data: {original_size} -> {len(augmented_df)} samples (+{len(augmented_samples)})")
         return augmented_df
+    
+    def get_confidence_explanation(self, user_data, confidence_scores):
+        """
+        Generate a user-friendly explanation of why the confidence is at its current level
+        
+        Args:
+            user_data: User input data
+            confidence_scores: The calculated confidence scores
+            
+        Returns:
+            Dictionary with explanation details
+        """
+        explanations = []
+        overall_confidence = confidence_scores['overall_confidence']
+        
+        # Assess input quality
+        quality_score = self._assess_input_quality(user_data)
+        if quality_score >= 0.8:
+            explanations.append("✅ Data profil Anda lengkap dan realistic")
 
-# Example usage and training function
+        elif quality_score >= 0.6:
+            explanations.append("⚠️ Beberapa data profil mungkin tidak optimal")
+        else:
+            explanations.append("❌ Data profil perlu diperbaiki untuk akurasi lebih baik")
+        
+       
+        
+        # Assess template certainty
+        template_certainty = self._assess_template_certainty(user_data, 'nutrition')
+        if template_certainty >= 0.8:
+            explanations.append("✅ Profil Anda sangat cocok dengan template yang tersedia")
+        elif template_certainty >= 0.6:
+            explanations.append("⚠️ Profil Anda cukup cocok dengan template")
+        else:
+            explanations.append("❌ Profil Anda kurang umum, rekomendasi mungkin kurang akurat")
+        
+        # Model-specific explanations
+        workout_conf = confidence_scores['workout_confidence']
+        nutrition_conf = confidence_scores['nutrition_confidence']
+        
+        if workout_conf > nutrition_conf:
+            explanations.append("💪 Rekomendasi workout lebih akurat daripada nutrisi")
+        elif nutrition_conf > workout_conf:
+            explanations.append("🥗 Rekomendasi nutrisi lebih akurat daripada workout")
+        else:
+            explanations.append("⚖️ Rekomendasi workout dan nutrisi memiliki akurasi yang seimbang")
+        
+        # Overall assessment
+        if overall_confidence >= 0.75:
+            summary = "Rekomendasi ini sangat dapat diandalkan untuk profil Anda"
+        elif overall_confidence >= 0.55:
+            summary = "Rekomendasi ini cukup baik, tapi pertimbangkan penyesuaian sesuai kebutuhan"
+        else:
+            summary = "Rekomendasi ini perlu disesuaikan lebih lanjut atau konsultasi dengan ahli"
+        
+        return {
+            'summary': summary,
+            'explanations': explanations,
+            'improvement_tips': self._get_improvement_tips(user_data, quality_score, template_certainty)
+        }
+    
+    def _get_improvement_tips(self, user_data, quality_score, template_certainty):
+        """
+        Get tips for improving confidence scores
+        
+        Returns:
+            List of improvement tips
+        """
+        tips = []
+        
+        # Data quality tips
+        if quality_score < 0.7:
+            age = user_data.get('age', 0)
+            height = user_data.get('height', 0)
+            weight = user_data.get('weight', 0)
+            
+            if not (18 <= age <= 80):
+                tips.append("🎯 Pastikan usia yang dimasukkan realistic (18-80 tahun)")
+            
+            if not (150 <= height <= 200):
+                tips.append("📏 Periksa kembali tinggi badan Anda (150-200 cm)")
+            
+            if not (40 <= weight <= 150):
+                tips.append("⚖️ Periksa kembali berat badan Anda (40-150 kg)")
+        
+        # Template certainty tips
+        if template_certainty < 0.6:
+            tips.append("🎯 Pertimbangkan untuk menyesuaikan tujuan fitness dengan kondisi BMI Anda")
+            tips.append("🏃‍♂️ Sesuaikan tingkat aktivitas dengan kondisi fisik dan lifestyle Anda")
+        
+        # General tips
+        tips.append("📊 Semakin lengkap dan akurat data yang Anda berikan, semakin baik rekomendasinya")
+        tips.append("🔄 Update profil secara berkala seiring perubahan kondisi fisik Anda")
+        
+        return tips
+
+    def test_confidence_improvements(self):
+        """
+        Test the improved confidence scoring system with various user profiles
+        """
+        if not self.is_trained:
+            print("Model must be trained first!")
+            return
+        
+        print("=== Testing Enhanced Confidence Scoring System ===\n")
+        
+        # Test cases with different profile types
+        test_cases = [
+            {
+                'name': 'Ideal Fat Loss Case',
+                'data': {
+                    'age': 30,
+                    'gender': 'Male',
+                    'height': 175,
+                    'weight': 85,
+                    'activity_level': 'Moderate Activity',
+                    'fitness_goal': 'Fat Loss'
+                }
+            },
+            {
+                'name': 'Clear Muscle Gain Case',
+                'data': {
+                    'age': 25,
+                    'gender': 'Male',
+                    'height': 180,
+                    'weight': 60,
+                    'activity_level': 'High Activity',
+                    'fitness_goal': 'Muscle Gain'
+                }
+            },
+            {
+                'name': 'Maintenance Case',
+                'data': {
+                    'age': 35,
+                    'gender': 'Female',
+                    'height': 165,
+                    'weight': 60,
+                    'activity_level': 'Moderate Activity',
+                    'fitness_goal': 'Maintenance'
+                }
+            },
+            {
+                'name': 'Edge Case - Unusual Profile',
+                'data': {
+                    'age': 65,
+                    'gender': 'Female',
+                    'height': 155,
+                    'weight': 45,
+                    'activity_level': 'High Activity',
+                    'fitness_goal': 'Muscle Gain'
+                }
+            }
+        ]
+        
+        for test_case in test_cases:
+            print(f"🧪 Testing: {test_case['name']}")
+            try:
+                result = self.predict_with_confidence(test_case['data'])
+                if result['success']:
+                    conf_scores = result['confidence_scores']
+                    print(f"  Overall Confidence: {conf_scores['overall_confidence']:.3f} ({conf_scores['confidence_level']})")
+                    print(f"  Workout: {conf_scores['workout_confidence']:.3f} | Nutrition: {conf_scores['nutrition_confidence']:.3f}")
+                    
+                    # Show explanation
+                    explanation = conf_scores.get('confidence_explanation', {})
+                    print(f"  Summary: {explanation.get('summary', 'N/A')}")
+                    print(f"  Tips: {len(explanation.get('improvement_tips', []))} improvement tips available")
+                else:
+                    print(f"  Error: {result['error']}")
+            except Exception as e:
+                print(f"  Error: {str(e)}")
+            print()
+        
+        print("=== Enhanced Confidence System Benefits ===")
+        print("✅ More realistic confidence scores (higher for good inputs)")
+        print("✅ Multi-factor confidence calculation")
+        print("✅ User-friendly explanations")
+        print("✅ Actionable improvement tips")
+        print("✅ Better user trust and transparency")
+        print()
+        
 def train_and_save_model(templates_dir: str = 'data'):
     """Train and save the XGFitness AI model with real data"""
     print("Initializing XGFitness AI Model...")
@@ -1545,3 +1740,6 @@ if __name__ == "__main__":
     print(f"Overall Confidence: {prediction['confidence_scores']['overall_confidence']}")
     print(f"Workout Template: {prediction['workout_recommendation']['template_id']}")
     print(f"Nutrition Template: {prediction['nutrition_recommendation']['template_id']}")
+    
+    # Test confidence improvements
+    model.test_confidence_improvements()

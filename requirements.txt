@@ -1,0 +1,26 @@
+# XGFitness AI - Comprehensive Requirements
+# This file contains all dependencies for the entire project
+
+# Core Flask Backend
+flask>=2.0.0
+flask-cors>=3.0.0
+python-dotenv>=0.19.0
+
+# Data Science & Machine Learning
+pandas>=1.5.0
+numpy>=1.21.0
+scikit-learn>=1.1.0
+xgboost>=1.6.0
+joblib>=1.1.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+Pillow>=8.0.0
+
+# Development & Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Optional: For enhanced features
+requests>=2.28.0

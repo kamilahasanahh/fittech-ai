@@ -4,12 +4,24 @@ Calculates specific food amounts to meet nutrition targets
 """
 
 import pandas as pd
+import json
 import os
 from typing import Dict, List, Optional
+
+# Import the new meal plan calculator
+try:
+    from .meal_plan_calculator import meal_plan_calculator
+except ImportError:
+    try:
+        from meal_plan_calculator import meal_plan_calculator
+    except ImportError:
+        meal_plan_calculator = None
+        print("Warning: Meal plan calculator not available")
 
 class FoodCalculator:
     """
     Calculates food examples to meet specific nutrition targets
+    Now integrated with meal plan system
     """
     
     def __init__(self, templates_dir: str = 'data'):
@@ -21,6 +33,7 @@ class FoodCalculator:
         """
         self.templates_dir = templates_dir
         self.nutrition_data = None
+        self.meal_calculator = meal_plan_calculator
         self.load_nutrition_data()
     
     def load_nutrition_data(self):
@@ -28,19 +41,22 @@ class FoodCalculator:
         try:
             # Try multiple possible paths for the nutrition file
             possible_paths = [
-                os.path.join(self.templates_dir, 'nutrition_macro_summary.csv'),
-                os.path.join('..', self.templates_dir, 'nutrition_macro_summary.csv'),
-                os.path.join('data', 'nutrition_macro_summary.csv'),
-                'nutrition_macro_summary.csv'
+                os.path.join(self.templates_dir, 'nutrition', 'nutrition_macro_summary.json'),
+                os.path.join('..', self.templates_dir, 'nutrition', 'nutrition_macro_summary.json'),
+                os.path.join('data', 'nutrition', 'nutrition_macro_summary.json'),
+                os.path.join('data', 'nutrition_database.json'),
+                'nutrition_macro_summary.json'
             ]
             
             for nutrition_path in possible_paths:
                 if os.path.exists(nutrition_path):
-                    self.nutrition_data = pd.read_csv(nutrition_path)
+                    with open(nutrition_path, 'r', encoding='utf-8') as f:
+                        nutrition_data = json.load(f)
+                    self.nutrition_data = pd.DataFrame(nutrition_data['nutrition_database'])
                     print(f"Loaded nutrition data: {len(self.nutrition_data)} foods from {nutrition_path}")
                     return
             
-            print(f"Warning: Nutrition file not found in any of these paths: {possible_paths}")
+            print(f"Warning: Nutrition JSON file not found in any of these paths: {possible_paths}")
             self.nutrition_data = None
         except Exception as e:
             print(f"Error loading nutrition data: {e}")
@@ -170,6 +186,125 @@ class FoodCalculator:
                 'error': f'Error calculating food examples: {str(e)}',
                 'food_examples': []
             }
+    
+    def get_meal_plan_recommendations(self, target_calories: int, target_protein: int, 
+                                    target_carbs: int, target_fat: int) -> Dict:
+        """
+        Get comprehensive meal plan recommendations using the new meal plan system
+        
+        Args:
+            target_calories: Target calories per day
+            target_protein: Target protein in grams
+            target_carbs: Target carbohydrates in grams
+            target_fat: Target fat in grams
+            
+        Returns:
+            Dictionary with meal plan recommendations
+        """
+        if self.meal_calculator is None:
+            # Fallback to old system
+            return self.calculate_food_examples(target_protein, target_carbs, target_fat)
+        
+        try:
+            # Generate daily meal plan
+            daily_plan = self.meal_calculator.calculate_daily_meal_plan(
+                target_calories, target_protein, target_carbs, target_fat
+            )
+            
+            if daily_plan['success']:
+                # Format for compatibility with existing API
+                formatted_response = {
+                    'success': True,
+                    'meal_plan_type': 'comprehensive',
+                    'daily_meal_plan': daily_plan['daily_meal_plan'],
+                    'nutrition_summary': daily_plan['nutrition_summary'],
+                    'accuracy': daily_plan['accuracy'],
+                    'meal_distribution': daily_plan['meal_distribution'],
+                    'note': 'Rencana makan harian lengkap yang disesuaikan dengan target nutrisi Anda. '
+                           'Porsi dapat disesuaikan sesuai kebutuhan dan selera.'
+                }
+                
+                # Add legacy food_examples format for backward compatibility
+                food_examples = []
+                for meal_type, meal_data in daily_plan['daily_meal_plan'].items():
+                    for food in meal_data['foods']:
+                        food_examples.append({
+                            'nama': food['nama'],
+                            'jumlah': f"{food['amount']}{food['unit']}",
+                            'target': meal_type,
+                            'kontribusi': f"{food['calories']} kcal",
+                            'kalori': food['calories']
+                        })
+                
+                formatted_response['food_examples'] = food_examples
+                formatted_response['total_calculated_calories'] = daily_plan['nutrition_summary']['total_calories']
+                
+                return formatted_response
+            else:
+                return daily_plan
+                
+        except Exception as e:
+            # Fallback to old system if new system fails
+            print(f"Meal plan system error, falling back to legacy system: {e}")
+            return self.calculate_food_examples(target_protein, target_carbs, target_fat)
+    
+    def get_weekly_meal_plan(self, target_calories: int, target_protein: int, 
+                           target_carbs: int, target_fat: int) -> Dict:
+        """
+        Generate a 7-day meal plan
+        
+        Args:
+            target_calories: Target calories per day
+            target_protein: Target protein in grams
+            target_carbs: Target carbohydrates in grams
+            target_fat: Target fat in grams
+            
+        Returns:
+            Dictionary with weekly meal plan
+        """
+        if self.meal_calculator is None:
+            return {
+                'success': False,
+                'error': 'Meal plan calculator not available'
+            }
+        
+        return self.meal_calculator.generate_weekly_meal_plan(
+            target_calories, target_protein, target_carbs, target_fat
+        )
+    
+    def get_meal_options_by_type(self, meal_type: str) -> List[Dict]:
+        """
+        Get available meal options for a specific meal type
+        
+        Args:
+            meal_type: Type of meal (sarapan, makan_siang, makan_malam, snack)
+            
+        Returns:
+            List of available meal options
+        """
+        if self.meal_calculator is None:
+            return []
+        
+        return self.meal_calculator.get_meal_options(meal_type)
+    
+    def scale_specific_meal(self, meal_id: str, target_calories: float) -> Dict:
+        """
+        Scale a specific meal to target calories
+        
+        Args:
+            meal_id: ID of the meal to scale
+            target_calories: Target calories for the meal
+            
+        Returns:
+            Dictionary with scaled meal data
+        """
+        if self.meal_calculator is None:
+            return {
+                'success': False,
+                'error': 'Meal plan calculator not available'
+            }
+        
+        return self.meal_calculator.calculate_single_meal(meal_id, target_calories)
 
 # Global instance for easy import
 food_calculator = FoodCalculator()

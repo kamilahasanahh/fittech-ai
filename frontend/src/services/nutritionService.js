@@ -1,4 +1,4 @@
-// Nutrition Service for fetching nutrition data from CSV files
+// Nutrition Service for fetching nutrition data from JSON files
 class NutritionService {
   constructor() {
     this.nutritionData = null;
@@ -21,30 +21,29 @@ class NutritionService {
     this.loading = true;
 
     try {
-      // Fetch the CSV file from the public directory
-      const response = await fetch('/data/nutrition_macro_summary.csv');
+      // Fetch the JSON file from the public directory
+      const response = await fetch('/data/nutrition_macro_summary.json');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch nutrition data: ${response.status}`);
       }
 
-      const csvText = await response.text();
-      const nutritionData = this.parseCSV(csvText);
+      const jsonData = await response.json();
+      const nutritionData = this.formatNutritionData(jsonData.nutrition_database);
       
       this.nutritionData = nutritionData;
       return nutritionData;
     } catch (error) {
       console.error('Error loading nutrition data:', error);
       
-      // Fallback to hardcoded data if CSV fetch fails
+      // Fallback to hardcoded data if JSON fetch fails
       const fallbackData = [
         { name: "Mie Telur (Ditambah, Masak)", calories: 138, carbs: 25.16, protein: 4.54, fat: 2.07 },
-        { name: "Roti Gandum", calories: 67, carbs: 12.26, protein: 2.37, fat: 1.07 },
         { name: "Ayam Goreng tanpa Pelapis (Kulit Dimakan)", calories: 260, carbs: 0.0, protein: 28.62, fat: 15.35 },
         { name: "Ikan Panggang", calories: 126, carbs: 0.33, protein: 21.94, fat: 3.44 },
         { name: "Nasi Putih (Butir-Sedang, Dimasak)", calories: 130, carbs: 28.59, protein: 2.38, fat: 0.21 },
-        { name: "Tempe Goreng", calories: 34, carbs: 1.79, protein: 2.0, fat: 2.28 },
-        { name: "Tahu Goreng", calories: 35, carbs: 1.36, protein: 2.23, fat: 2.62 }
+        { name: "Tempe Goreng", calories: 225, carbs: 9.0, protein: 18.0, fat: 11.0 },
+        { name: "Tahu Goreng", calories: 271, carbs: 10.49, protein: 17.19, fat: 20.18 }
       ];
       
       this.nutritionData = fallbackData;
@@ -54,52 +53,14 @@ class NutritionService {
     }
   }
 
-  parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
-    
-    const nutritionData = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i];
-      const values = this.parseCSVLine(line);
-      
-      if (values.length >= headers.length) {
-        const food = {
-          name: values[0].replace(/"/g, '').trim(),
-          calories: parseFloat(values[1]) || 0,
-          carbs: parseFloat(values[2]) || 0,
-          protein: parseFloat(values[3]) || 0,
-          fat: parseFloat(values[4]) || 0
-        };
-        
-        nutritionData.push(food);
-      }
-    }
-    
-    return nutritionData;
-  }
-
-  parseCSVLine(line) {
-    const values = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    
-    values.push(current);
-    return values;
+  formatNutritionData(nutritionDatabase) {
+    return nutritionDatabase.map(food => ({
+      name: food.name,
+      calories: food.calories,
+      carbs: food.carbohydrates,
+      protein: food.protein,
+      fat: food.fat
+    }));
   }
 
   // Get foods by category for meal planning
@@ -107,10 +68,10 @@ class NutritionService {
     if (!this.nutritionData) return [];
     
     const categoryFilters = {
-      breakfast: ['Roti', 'Telur', 'Mie'],
-      lunch: ['Nasi', 'Ayam', 'Ikan'],
-      dinner: ['Ikan', 'Tempe', 'Tahu', 'Sayur'],
-      snack: ['Tempe', 'Tahu']
+      breakfast: ['Roti', 'Telur', 'Mie', 'Nasi Uduk'],
+      lunch: ['Nasi', 'Ayam', 'Ikan', 'Kwetiau', 'Mie Tek Tek'],
+      dinner: ['Ikan', 'Tempe', 'Tahu', 'Sayur', 'Sate'],
+      snack: ['Jagung', 'Telur Rebus', 'Kentang']
     };
     
     const filters = categoryFilters[category] || [];

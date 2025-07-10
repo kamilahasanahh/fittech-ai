@@ -4,6 +4,7 @@ Handles loading and management of workout and nutrition templates
 """
 
 import pandas as pd
+import json
 import os
 from typing import Dict, List, Optional, Tuple
 
@@ -29,21 +30,25 @@ class TemplateManager:
         self.load_templates()
     
     def load_templates(self) -> None:
-        """Load templates from CSV files"""
+        """Load templates from JSON files"""
         try:
             # Load workout templates
-            workout_path = os.path.join(self.templates_dir, 'workout_templates.csv')
+            workout_path = os.path.join(self.templates_dir, 'workout_templates.json')
             if os.path.exists(workout_path):
-                self.workout_templates = pd.read_csv(workout_path)
+                with open(workout_path, 'r') as f:
+                    workout_data = json.load(f)
+                self.workout_templates = pd.DataFrame(workout_data['workout_templates'])
             else:
                 # Create default templates if file doesn't exist
                 self.workout_templates = self._create_default_workout_templates()
                 self.save_workout_templates()
             
             # Load nutrition templates
-            nutrition_path = os.path.join(self.templates_dir, 'nutrition_templates.csv')
+            nutrition_path = os.path.join(self.templates_dir, 'nutrition_templates.json')
             if os.path.exists(nutrition_path):
-                self.nutrition_templates = pd.read_csv(nutrition_path)
+                with open(nutrition_path, 'r') as f:
+                    nutrition_data = json.load(f)
+                self.nutrition_templates = pd.DataFrame(nutrition_data['nutrition_templates'])
             else:
                 # Create default templates if file doesn't exist
                 self.nutrition_templates = self._create_default_nutrition_templates()
@@ -235,17 +240,21 @@ class TemplateManager:
         }
     
     def save_workout_templates(self) -> None:
-        """Save workout templates to CSV"""
+        """Save workout templates to JSON"""
         os.makedirs(self.templates_dir, exist_ok=True)
-        workout_path = os.path.join(self.templates_dir, 'workout_templates.csv')
-        self.workout_templates.to_csv(workout_path, index=False)
+        workout_path = os.path.join(self.templates_dir, 'workout_templates.json')
+        workout_data = self.workout_templates.to_dict('records')
+        with open(workout_path, 'w') as f:
+            json.dump(workout_data, f, indent=2)
         print(f"Workout templates saved to {workout_path}")
     
     def save_nutrition_templates(self) -> None:
-        """Save nutrition templates to CSV"""
+        """Save nutrition templates to JSON"""
         os.makedirs(self.templates_dir, exist_ok=True)
-        nutrition_path = os.path.join(self.templates_dir, 'nutrition_templates.csv')
-        self.nutrition_templates.to_csv(nutrition_path, index=False)
+        nutrition_path = os.path.join(self.templates_dir, 'nutrition_templates.json')
+        nutrition_data = self.nutrition_templates.to_dict('records')
+        with open(nutrition_path, 'w') as f:
+            json.dump(nutrition_data, f, indent=2)
         print(f"Nutrition templates saved to {nutrition_path}")
     
     def save_all_templates(self) -> None:

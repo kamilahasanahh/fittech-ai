@@ -45,35 +45,51 @@ XGFitness AI is a sophisticated machine learning system that provides personaliz
 - **Firebase Authentication**: Secure user management and data storage
 - **Progressive Form**: Step-by-step input with real-time BMI calculation and goal restrictions
 
-
-## 📁 Project Structure
+## 📁 Clean Project Structure
 
 ```
 xgfitness/
-├── backend/                 # Python ML backend
-│   ├── src/                # Core ML modules
-│   │   ├── thesis_model.py # XGBoost model with 22-feature engineering
-│   │   ├── templates.py    # Template management system
-│   │   ├── validation.py   # Input validation and BMI restrictions
-│   │   ├── config.py       # Configuration management
-│   │   └── calculations.py # BMR/TDEE/BMI calculations
-│   ├── models/             # Trained XGBoost models
-│   ├── logs/               # Application logs
-│   ├── app.py              # Flask API server
-│   ├── train_model.py      # Model training with RandomizedSearchCV
-│   ├── test_suite.py       # Comprehensive test suite
-│   └── requirements.txt    # Python dependencies
-├── frontend/               # React frontend with Indonesian UI
-│   ├── src/
-│   │   ├── components/     # React components with BMI restrictions
-│   │   ├── services/       # Firebase and API services
-│   │   └── utils/          # Validation utilities
-│   └── build/              # Production build
-├── data/                   # Template data
-│   ├── workout_templates.csv    # 9 workout templates
-│   ├── nutrition_templates.csv  # 8 nutrition templates
-│   └── nutrition_macro_summary.csv # Indonesian food database
-└── e267_Data...txt         # Real training data (3,659 samples)
+├── 📄 README.md                    # Project documentation
+├── 📄 requirements.txt             # Consolidated dependencies
+│
+├── 🗂️ backend/                     # Flask API server
+│   ├── 📄 app.py                   # Main Flask application
+│   ├── 📄 setup.py                 # Package setup
+│   ├── 📁 src/                     # Core source code
+│   │   ├── 📄 thesis_model.py      # Main AI model
+│   │   ├── 📄 calculations.py      # BMI/BMR/TDEE calculations
+│   │   ├── 📄 templates.py         # Template management
+│   │   ├── 📄 validation.py        # Input validation
+│   │   ├── 📄 meal_plan_calculator.py  # Meal planning
+│   │   └── 📄 config.py            # Configuration settings
+│   ├── 📁 models/                  # Trained model files
+│   └── 📁 logs/                    # Application logs
+│
+├── 🗂️ frontend/                    # React web application
+│   ├── 📄 package.json             # Node.js dependencies
+│   ├── 📁 src/                     # React source code
+│   ├── 📁 public/                  # Static assets
+│   └── 📁 build/                   # Production build
+│
+├── 🗂️ data/                        # Datasets and templates
+│   ├── 📄 nutrition_database.json  # Food database
+│   ├── 📄 nutrition_templates.json # Nutrition templates
+│   ├── 📄 workout_templates.json   # Workout templates
+│   ├── 📁 meals/                   # Meal plan data
+│   ├── 📁 nutrition/               # Nutrition data
+│   ├── 📁 templates/               # Template definitions
+│   └── 📁 backups/                 # Data backups
+│
+├── 🗂️ tests/                       # Comprehensive test suite
+│   ├── 📄 test_comprehensive.py    # Main test suite
+│   ├── 📄 test_meal_plans.py       # Meal plan tests
+│   └── 📄 test_suite.py            # Additional tests
+│
+└── 🗂️ visualizations/              # Model analysis & charts
+    ├── 📄 generate_clean_pngs.py   # Visualization generator
+    ├── 📄 web_visualization_viewer.py  # Web viewer
+    ├── 📄 launch_viewer.py         # Viewer launcher
+    └── 📈 *.png                    # Generated charts
 ```
 
 ## 🚀 Quick Start

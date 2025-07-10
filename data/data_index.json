@@ -1,0 +1,55 @@
+{
+  "xgfitness_data_structure": {
+    "version": "2.0",
+    "last_updated": "2025-07-10",
+    "description": "Organized XGFitness data structure",
+    "structure": {
+      "templates/": {
+        "description": "Fitness and nutrition templates",
+        "files": {
+          "nutrition_templates.json": "Nutrition calculation templates by goal and BMI",
+          "workout_templates.json": "Workout routines by goal and activity level"
+        }
+      },
+      "nutrition/": {
+        "description": "Food and nutrition data",
+        "files": {
+          "food_database.json": "Indonesian food nutrition database with categories",
+          "macro_summary.csv": "Legacy CSV format (for frontend compatibility)"
+        }
+      },
+      "meals/": {
+        "description": "Meal planning and combinations",
+        "files": {
+          "meal_plans.json": "Organized Indonesian meal combinations with scaling"
+        }
+      },
+      "workouts/": {
+        "description": "Workout-related data (future expansion)",
+        "files": {}
+      },
+      "backups/": {
+        "description": "Backup files and legacy data",
+        "files": {}
+      }
+    }
+  },
+  "api_endpoints": {
+    "nutrition": {
+      "food_database": "/data/nutrition/food_database.json",
+      "templates": "/data/templates/nutrition_templates.json"
+    },
+    "meals": {
+      "meal_plans": "/data/meals/meal_plans.json"
+    },
+    "workouts": {
+      "templates": "/data/templates/workout_templates.json"
+    }
+  },
+  "frontend_dependencies": {
+    "csv_files": [
+      "/public/data/nutrition_macro_summary.csv"
+    ],
+    "note": "Some CSV files retained for frontend compatibility"
+  }
+}

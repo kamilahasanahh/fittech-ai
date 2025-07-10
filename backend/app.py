@@ -26,6 +26,7 @@ from thesis_model import XGFitnessAIModel
 from validation import validate_api_request_data, create_validation_summary, get_validation_rules
 from calculations import calculate_bmr, calculate_tdee, categorize_bmi
 from templates import get_template_manager
+from src.meal_plan_calculator import meal_plan_calculator
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -84,7 +85,11 @@ def home():
             '/templates': 'GET - Get available templates',
             '/validation-rules': 'GET - Get input validation rules',
             '/calculate-metrics': 'POST - Calculate BMI, BMR, TDEE',
-            '/improve-recommendation': 'POST - Get improved recommendations based on feedback'
+            '/improve-recommendation': 'POST - Get improved recommendations based on feedback',
+            '/meal-plan': 'POST - Generate daily meal plan including snacks',
+            '/meal-options/<meal_type>': 'GET - Get available meal options for a specific meal type',
+            '/scale-meal': 'POST - Scale a specific meal to target calories',
+            '/weekly-meal-plan': 'POST - Generate a 7-day meal plan with variety including snacks'
         },
         'documentation': 'Send POST request to /predict with user data'
     })
@@ -462,6 +467,179 @@ def improve_recommendation():
             'timestamp': datetime.now().isoformat()
         }), 500
 
+@app.route('/meal-plan', methods=['POST'])
+def generate_meal_plan():
+    """Generate daily meal plan including snacks based on user requirements"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Extract required parameters
+        target_calories = data.get('target_calories')
+        target_protein = data.get('target_protein')
+        target_carbs = data.get('target_carbs') 
+        target_fat = data.get('target_fat')
+        preferences = data.get('preferences', {})
+        
+        if not target_calories:
+            return jsonify({'error': 'target_calories is required'}), 400
+        
+        # Set defaults for macros if not provided
+        if not target_protein:
+            target_protein = int(target_calories * 0.25 / 4)  # 25% of calories from protein
+        if not target_carbs:
+            target_carbs = int(target_calories * 0.45 / 4)   # 45% of calories from carbs
+        if not target_fat:
+            target_fat = int(target_calories * 0.30 / 9)     # 30% of calories from fat
+        
+        # Generate meal plan
+        meal_plan = meal_plan_calculator.calculate_daily_meal_plan(
+            target_calories=int(target_calories),
+            target_protein=int(target_protein),
+            target_carbs=int(target_carbs),
+            target_fat=int(target_fat),
+            preferences=preferences
+        )
+        
+        if meal_plan.get('success'):
+            return jsonify({
+                'success': True,
+                'meal_plan': meal_plan,
+                'message': 'Meal plan generated successfully including snacks'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': meal_plan.get('error', 'Failed to generate meal plan')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error generating meal plan: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}'
+        }), 500
+
+@app.route('/meal-options/<meal_type>', methods=['GET'])
+def get_meal_options(meal_type):
+    """Get available meal options for a specific meal type (sarapan, makan_siang, makan_malam, snack)"""
+    try:
+        # Validate meal type
+        valid_types = ['sarapan', 'makan_siang', 'makan_malam', 'snack', 'camilan']
+        if meal_type not in valid_types:
+            return jsonify({
+                'error': f'Invalid meal type. Must be one of: {valid_types}'
+            }), 400
+        
+        # Convert camilan to snack for backend compatibility
+        backend_meal_type = 'snack' if meal_type == 'camilan' else meal_type
+        
+        options = meal_plan_calculator.get_meal_options(backend_meal_type)
+        
+        return jsonify({
+            'success': True,
+            'meal_type': meal_type,
+            'options': options
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting meal options: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}'
+        }), 500
+
+@app.route('/scale-meal', methods=['POST'])
+def scale_meal():
+    """Scale a specific meal to target calories"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        meal_id = data.get('meal_id')
+        target_calories = data.get('target_calories')
+        
+        if not meal_id or not target_calories:
+            return jsonify({
+                'error': 'meal_id and target_calories are required'
+            }), 400
+        
+        scaled_meal = meal_plan_calculator.calculate_single_meal(
+            meal_id=meal_id,
+            target_calories=float(target_calories)
+        )
+        
+        if scaled_meal.get('success'):
+            return jsonify({
+                'success': True,
+                'scaled_meal': scaled_meal
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': scaled_meal.get('error', 'Failed to scale meal')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error scaling meal: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}'
+        }), 500
+
+@app.route('/weekly-meal-plan', methods=['POST'])
+def generate_weekly_meal_plan():
+    """Generate a 7-day meal plan with variety including snacks"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        daily_calories = data.get('daily_calories')
+        daily_protein = data.get('daily_protein')
+        daily_carbs = data.get('daily_carbs')
+        daily_fat = data.get('daily_fat')
+        
+        if not daily_calories:
+            return jsonify({'error': 'daily_calories is required'}), 400
+        
+        # Set defaults for macros if not provided
+        if not daily_protein:
+            daily_protein = int(daily_calories * 0.25 / 4)
+        if not daily_carbs:
+            daily_carbs = int(daily_calories * 0.45 / 4)
+        if not daily_fat:
+            daily_fat = int(daily_calories * 0.30 / 9)
+        
+        weekly_plan = meal_plan_calculator.generate_weekly_meal_plan(
+            daily_calories=int(daily_calories),
+            daily_protein=int(daily_protein),
+            daily_carbs=int(daily_carbs),
+            daily_fat=int(daily_fat)
+        )
+        
+        if weekly_plan.get('success'):
+            return jsonify({
+                'success': True,
+                'weekly_plan': weekly_plan,
+                'message': 'Weekly meal plan generated successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': weekly_plan.get('error', 'Failed to generate weekly meal plan')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error generating weekly meal plan: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}'
+        }), 500
+
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors"""
@@ -679,6 +857,14 @@ if __name__ == '__main__':
         print("GET  /model-info     - Get model information")
         print("POST /retrain        - Retrain model (admin)")
         print("POST /improve-recommendation - Get improved recommendations based on feedback")
+        print("POST /meal-plan      - Generate daily meal plan with snacks")
+        print("GET  /meal-options/<meal_type> - Get meal options for specific type")
+        print("POST /scale-meal     - Scale specific meal to target calories")
+        print("POST /weekly-meal-plan - Generate 7-day meal plan")
+        print("POST /meal-plan      - Generate daily meal plan including snacks")
+        print("GET  /meal-options/<meal_type> - Get available meal options for a specific meal type")
+        print("POST /scale-meal     - Scale a specific meal to target calories")
+        print("POST /weekly-meal-plan - Generate a 7-day meal plan with variety including snacks")
         
         # Print example request
         print("\nExample request to /predict:")

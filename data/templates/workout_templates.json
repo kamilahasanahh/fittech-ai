@@ -1,0 +1,139 @@
+{
+  "workout_templates": [
+    {
+      "template_id": 1,
+      "goal": "Fat Loss",
+      "activity_level": "Low Activity",
+      "workout_type": "Full Body",
+      "days_per_week": 2,
+      "workout_schedule": "WXXWXXX",
+      "sets_per_exercise": 3,
+      "exercises_per_session": 6,
+      "cardio_minutes_per_day": 35,
+      "cardio_sessions_per_day": 1,
+      "description": "Basic fat loss routine for low activity individuals"
+    },
+    {
+      "template_id": 2,
+      "goal": "Fat Loss",
+      "activity_level": "Moderate Activity",
+      "workout_type": "Full Body",
+      "days_per_week": 3,
+      "workout_schedule": "WXWXWXX",
+      "sets_per_exercise": 3,
+      "exercises_per_session": 8,
+      "cardio_minutes_per_day": 45,
+      "cardio_sessions_per_day": 1,
+      "description": "Moderate fat loss routine for active individuals"
+    },
+    {
+      "template_id": 3,
+      "goal": "Fat Loss",
+      "activity_level": "High Activity",
+      "workout_type": "Upper/Lower Split",
+      "days_per_week": 4,
+      "workout_schedule": "ABXABXX",
+      "sets_per_exercise": 3,
+      "exercises_per_session": 10,
+      "cardio_minutes_per_day": 55,
+      "cardio_sessions_per_day": 1,
+      "description": "Intensive fat loss routine for highly active individuals"
+    },
+    {
+      "template_id": 4,
+      "goal": "Muscle Gain",
+      "activity_level": "Low Activity",
+      "workout_type": "Full Body",
+      "days_per_week": 2,
+      "workout_schedule": "WXXWXXX",
+      "sets_per_exercise": 4,
+      "exercises_per_session": 6,
+      "cardio_minutes_per_day": 18,
+      "cardio_sessions_per_day": 0,
+      "description": "Basic muscle building routine for beginners"
+    },
+    {
+      "template_id": 5,
+      "goal": "Muscle Gain",
+      "activity_level": "Moderate Activity",
+      "workout_type": "Upper/Lower Split",
+      "days_per_week": 4,
+      "workout_schedule": "ABXABXX",
+      "sets_per_exercise": 4,
+      "exercises_per_session": 8,
+      "cardio_minutes_per_day": 25,
+      "cardio_sessions_per_day": 1,
+      "description": "Intermediate muscle building routine"
+    },
+    {
+      "template_id": 6,
+      "goal": "Muscle Gain",
+      "activity_level": "High Activity",
+      "workout_type": "Push/Pull/Legs",
+      "days_per_week": 3,
+      "workout_schedule": "ABCX",
+      "sets_per_exercise": 4,
+      "exercises_per_session": 10,
+      "cardio_minutes_per_day": 30,
+      "cardio_sessions_per_day": 1,
+      "description": "Advanced muscle building routine"
+    },
+    {
+      "template_id": 7,
+      "goal": "Maintenance",
+      "activity_level": "Low Activity",
+      "workout_type": "Full Body",
+      "days_per_week": 2,
+      "workout_schedule": "WXXWXXX",
+      "sets_per_exercise": 3,
+      "exercises_per_session": 4,
+      "cardio_minutes_per_day": 30,
+      "cardio_sessions_per_day": 0,
+      "description": "Basic maintenance routine for sedentary individuals"
+    },
+    {
+      "template_id": 8,
+      "goal": "Maintenance",
+      "activity_level": "Moderate Activity",
+      "workout_type": "Upper/Lower Split",
+      "days_per_week": 4,
+      "workout_schedule": "ABXABXX",
+      "sets_per_exercise": 3,
+      "exercises_per_session": 6,
+      "cardio_minutes_per_day": 40,
+      "cardio_sessions_per_day": 1,
+      "description": "Moderate maintenance routine"
+    },
+    {
+      "template_id": 9,
+      "goal": "Maintenance",
+      "activity_level": "High Activity",
+      "workout_type": "Push/Pull/Legs",
+      "days_per_week": 3,
+      "workout_schedule": "ABCX",
+      "sets_per_exercise": 3,
+      "exercises_per_session": 8,
+      "cardio_minutes_per_day": 50,
+      "cardio_sessions_per_day": 1,
+      "description": "Advanced maintenance routine"
+    }
+  ],
+  "workout_schedule_legend": {
+    "W": "Workout day",
+    "X": "Rest day",
+    "A": "Upper body or Push day",
+    "B": "Lower body or Pull day", 
+    "C": "Legs day"
+  },
+  "metadata": {
+    "last_updated": "2025-07-10",
+    "description": "Workout templates for different fitness goals and activity levels",
+    "units": {
+      "days_per_week": "number of workout days",
+      "sets_per_exercise": "sets per individual exercise",
+      "exercises_per_session": "total exercises per workout session",
+      "cardio_minutes_per_day": "minutes of cardio per day",
+      "cardio_sessions_per_day": "number of cardio sessions per day"
+    }
+  }
+}

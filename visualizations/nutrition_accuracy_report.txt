@@ -1,0 +1,14 @@
+NUTRITION TEMPLATE PREDICTION ACCURACY REPORT
+==================================================
+
+Overall Accuracy: 94.5%
+
+Per-Template Accuracy:
+Template 1: 96.0%
+Template 2: 92.0%
+Template 3: 94.0%
+Template 4: 98.0%
+Template 5: 96.0%
+Template 6: 94.0%
+Template 7: 92.0%
+Template 8: 94.0%
