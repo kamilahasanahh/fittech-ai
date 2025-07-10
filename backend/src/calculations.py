@@ -1,3 +1,5 @@
+## calculations.py
+
 def calculate_bmr(weight: float, height: float, age: int, gender: str) -> float:
     """Calculate BMR using Harris-Benedict equation from thesis"""
     if gender == 'Male':
@@ -8,11 +10,9 @@ def calculate_bmr(weight: float, height: float, age: int, gender: str) -> float:
 def calculate_tdee(bmr: float, activity_level: str) -> float:
     """Calculate TDEE based on activity level - exact thesis values"""
     multipliers = {
-        'Sedentary': 1.2,
-        'Lightly Active': 1.375,
-        'Moderately Active': 1.55,
-        'Very Active': 1.725,
-        'Extremely Active': 1.9
+        'Low Activity': 1.29,
+        'Moderate Activity': 1.55,
+        'High Activity': 1.81
     }
     return bmr * multipliers[activity_level]
 

@@ -5,10 +5,10 @@ import { authService } from './services/authService';
 import AuthForm from './components/AuthForm';
 import EnhancedUserInputForm from './components/EnhancedUserInputForm';
 import RecommendationDisplay from './components/RecommendationDisplay';
-import WeeklyProgress from './components/WeeklyProgress';
+import DailyProgress from './components/DailyProgress';
 import SystemStatus from './components/SystemStatus';
-import './App.css';
-import './components/enhanced-styles.css';
+import OfflineNotice from './components/OfflineNotice';
+import './styles/App.css';
 
 function App() {
   const [currentView, setCurrentView] = useState('auth');
@@ -19,57 +19,49 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [systemStatus, setSystemStatus] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
     checkSystemHealth();
+    checkAuthState();
     
-    // Listen for auth state changes
-    const unsubscribe = authService.onAuthStateChange((user) => {
-      setUser(user);
-      if (user) {
-        loadUserData();
-        setCurrentView('dashboard');
-      } else {
-        setCurrentView('auth');
-        setUserData(null);
-        setRecommendations(null);
-        setCurrentRecommendation(null);
-      }
-    });
-
-    return unsubscribe;
+    // Listen for online/offline events
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
+
+  const checkAuthState = async () => {
+    try {
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        setCurrentView('dashboard');
+      }
+    } catch (error) {
+      console.error('Error checking auth state:', error);
+    }
+  };
 
   const checkSystemHealth = async () => {
     try {
       const status = await apiService.healthCheck();
       setSystemStatus(status);
     } catch (err) {
-      console.error('System health check failed:', err);
-      setSystemStatus({ status: 'error', message: 'Backend not responding' });
+      console.error('Pemeriksaan kesehatan sistem gagal:', err);
+      setSystemStatus({ status: 'error', message: 'Backend tidak merespons' });
     }
   };
 
-  const loadUserData = async () => {
-    try {
-      const profile = await authService.getUserProfile();
-      const currentRec = await authService.getCurrentRecommendation();
-      
-      if (profile) {
-        setUserData(profile);
-      }
-      
-      if (currentRec) {
-        setCurrentRecommendation(currentRec);
-        setRecommendations(currentRec.recommendations);
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
-  };
-
-  const handleAuthSuccess = (user) => {
-    setUser(user);
+  const handleAuthSuccess = (userData) => {
+    setUser(userData);
     setCurrentView('dashboard');
   };
 
@@ -78,29 +70,23 @@ function App() {
     setError('');
     
     try {
-      console.log('Submitting user data:', formData);
+      console.log('🔄 Mengirim data pengguna:', formData);
       
-      // Get ML recommendations
+      // Dapatkan rekomendasi ML dari backend Flask
       const recommendations = await apiService.getRecommendations(formData);
+      console.log('✅ Rekomendasi diterima:', recommendations);
       
-      // Save user profile and weekly recommendation
-      await authService.saveUserProfile(formData);
-      const saveResult = await authService.saveWeeklyRecommendation(formData, recommendations);
+      // Simpan ke Firebase
+      await authService.saveUserData(formData);
+      await authService.saveRecommendations(recommendations);
       
-      if (saveResult.success) {
-        setUserData(formData);
-        setRecommendations(recommendations);
-        setCurrentView('recommendations');
-        
-        // Reload current recommendation
-        await loadUserData();
-      } else {
-        setError('Failed to save recommendation: ' + saveResult.error);
-      }
+      setUserData(formData);
+      setRecommendations(recommendations);
+      setCurrentView('recommendations');
       
     } catch (err) {
+      console.error('❌ Error mendapatkan rekomendasi:', err);
       setError(err.message);
-      console.error('Error getting recommendations:', err);
     } finally {
       setLoading(false);
     }
@@ -115,7 +101,7 @@ function App() {
       setCurrentRecommendation(null);
       setCurrentView('auth');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Error logout:', error);
     }
   };
 
@@ -130,12 +116,11 @@ function App() {
       setCurrentView('input');
       setError('');
     } else {
-      setError('You have an active weekly plan. Please complete it before creating a new one.');
+      setError('Anda memiliki rencana mingguan yang aktif. Silakan selesaikan terlebih dahulu sebelum membuat yang baru.');
     }
   };
 
   const handleProgressUpdate = (progressData) => {
-    // Update current recommendation with new progress
     if (currentRecommendation) {
       setCurrentRecommendation(prev => ({
         ...prev,
@@ -150,20 +135,22 @@ function App() {
 
   return (
     <div className="App">
+      {!isOnline && <OfflineNotice />}
+      
       {/* Header */}
       <header className="app-header">
         <div className="container">
           <div className="header-content">
             <div className="header-main">
-              <h1>🏋️ FitTech AI</h1>
-              <p>Thesis-Aligned Fitness Recommendation System</p>
+              <h1>🏋️ XGFitness</h1>
+              <p>Sistem Rekomendasi Kebugaran Bertenaga AI</p>
             </div>
             <div className="header-user">
               {user && (
                 <div className="user-info">
-                  <span>Welcome, {user.displayName || 'User'}!</span>
+                  <span>Selamat datang, {user.displayName || 'Pengguna'}!</span>
                   <button onClick={handleLogout} className="btn-secondary small">
-                    Logout
+                    Keluar
                   </button>
                 </div>
               )}
@@ -187,22 +174,19 @@ function App() {
               onClick={() => setCurrentView('input')}
               className={`nav-item ${currentView === 'input' ? 'active' : ''}`}
             >
-              📝 New Plan
+              📝 Rencana Baru
             </button>
-            {currentRecommendation && (
-              <button
-                onClick={() => setCurrentView('progress')}
-                className={`nav-item ${currentView === 'progress' ? 'active' : ''}`}
-              >
-                📈 Progress
-              </button>
-            )}
             <button
               onClick={() => setCurrentView('recommendations')}
               className={`nav-item ${currentView === 'recommendations' ? 'active' : ''}`}
-              disabled={!recommendations}
             >
-              🎯 Recommendations
+              🎯 Rekomendasi
+            </button>
+            <button
+              onClick={() => setCurrentView('progress')}
+              className={`nav-item ${currentView === 'progress' ? 'active' : ''}`}
+            >
+              📈 Progress
             </button>
           </div>
         </div>
@@ -212,227 +196,81 @@ function App() {
       <main className="app-main">
         <div className="container">
           {error && (
-            <div className="error-banner">
-              <h3>⚠️ Error</h3>
-              <p>{error}</p>
-              <button onClick={() => setError('')} className="btn-secondary">
-                Dismiss
+            <div className="error-message">
+              <p>❌ {error}</p>
+              <button onClick={() => setError('')} className="btn-secondary small">
+                Tutup
               </button>
             </div>
           )}
 
-          {currentView === 'dashboard' && (
-            <div className="dashboard-section">
-              <div className="section-header">
-                <h2>Dashboard</h2>
-                <p>Your fitness journey overview</p>
-              </div>
-              
-              <div className="dashboard-grid">
-                {/* User Summary Card */}
-                <div className="dashboard-card">
-                  <h3>👤 Profile Summary</h3>
-                  {userData ? (
-                    <div className="profile-summary">
-                      <div className="profile-item">
-                        <span>Current Goal:</span>
-                        <span>{userData.profile?.fitness_goal || 'Not set'}</span>
-                      </div>
-                      <div className="profile-item">
-                        <span>Activity Level:</span>
-                        <span>{userData.profile?.activity_level || 'Not set'}</span>
-                      </div>
-                      <div className="profile-item">
-                        <span>Current Week:</span>
-                        <span>Week {userData.currentWeek || 1}</span>
-                      </div>
-                      <div className="profile-item">
-                        <span>Total Weeks:</span>
-                        <span>{userData.totalWeeks || 0} completed</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <p>Complete your profile to see summary</p>
-                  )}
-                </div>
-
-                {/* Current Plan Card */}
-                <div className="dashboard-card">
-                  <h3>📅 Current Plan</h3>
-                  {currentRecommendation ? (
-                    <div className="current-plan">
-                      <div className="plan-item">
-                        <span>Week:</span>
-                        <span>Week {currentRecommendation.weekNumber}</span>
-                      </div>
-                      <div className="plan-item">
-                        <span>Progress:</span>
-                        <span>{currentRecommendation.completedDays || 0}/7 days</span>
-                      </div>
-                      <div className="plan-item">
-                        <span>Created:</span>
-                        <span>{new Date(currentRecommendation.createdAt.seconds * 1000).toLocaleDateString()}</span>
-                      </div>
-                      <button
-                        onClick={() => setCurrentView('progress')}
-                        className="btn-primary small"
-                      >
-                        View Progress
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="no-plan">
-                      <p>No active plan</p>
-                      <button
-                        onClick={() => setCurrentView('input')}
-                        className="btn-primary small"
-                      >
-                        Create New Plan
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Quick Actions Card */}
-                <div className="dashboard-card">
-                  <h3>⚡ Quick Actions</h3>
-                  <div className="quick-actions">
-                    <button
-                      onClick={handleNewRecommendation}
-                      className="btn-primary small"
-                    >
-                      🆕 New Weekly Plan
-                    </button>
-                    {recommendations && (
-                      <button
-                        onClick={() => setCurrentView('recommendations')}
-                        className="btn-secondary small"
-                      >
-                        📋 View Current Recommendations
-                      </button>
-                    )}
-                    <button
-                      onClick={checkSystemHealth}
-                      className="btn-secondary small"
-                    >
-                      🔄 Refresh System Status
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {currentView === 'input' && (
-            <div className="input-section">
-              <div className="section-header">
-                <h2>Create Weekly Plan</h2>
-                <p>Generate your personalized weekly fitness recommendations</p>
-              </div>
-              
-              <EnhancedUserInputForm 
-                onSubmit={handleUserSubmit}
-                loading={loading}
-                initialData={userData?.profile}
-              />
-            </div>
+            <EnhancedUserInputForm
+              onSubmit={handleUserSubmit}
+              loading={loading}
+              initialData={userData}
+            />
           )}
 
           {currentView === 'recommendations' && recommendations && (
-            <div className="recommendations-section">
-              <div className="section-header">
-                <h2>Your Weekly Recommendations</h2>
-                <p>AI-generated plan based on your profile and goals</p>
-                
-                <div className="action-buttons">
-                  <button onClick={handleBackToForm} className="btn-secondary">
-                    ← Edit Profile
-                  </button>
-                  <button onClick={handleNewRecommendation} className="btn-primary">
-                    🔄 New Week Plan
-                  </button>
-                </div>
-              </div>
-
-              <RecommendationDisplay 
-                userData={userData?.profile || userData}
-                recommendations={recommendations}
-              />
-            </div>
+            <RecommendationDisplay
+              recommendations={recommendations}
+              userData={userData}
+              onBack={handleBackToForm}
+              onNewRecommendation={handleNewRecommendation}
+            />
           )}
 
           {currentView === 'progress' && (
-            <div className="progress-section">
-              <div className="section-header">
-                <h2>Weekly Progress Tracking</h2>
-                <p>Track your daily adherence and see your improvement</p>
-              </div>
-
-              <WeeklyProgress 
-                currentRecommendation={currentRecommendation}
-                onProgressUpdate={handleProgressUpdate}
-              />
-            </div>
+            <DailyProgress
+              user={user}
+              onProgressUpdate={handleProgressUpdate}
+            />
           )}
 
-          {loading && (
-            <div className="loading-overlay">
-              <div className="loading-spinner">
-                <div className="spinner"></div>
-                <p>Processing your request...</p>
-                <p className="loading-detail">Analyzing profile and generating recommendations</p>
+          {currentView === 'dashboard' && (
+            <div className="dashboard">
+              <div className="welcome-section">
+                <h2>Dashboard</h2>
+                <p>Selamat datang di XGFitness! Pilih menu di atas untuk memulai.</p>
+                
+                {!userData && (
+                  <div className="cta-section">
+                    <h3>Mulai Perjalanan Kebugaran Anda</h3>
+                    <p>Dapatkan rekomendasi kebugaran yang dipersonalisasi berdasarkan profil dan tujuan Anda.</p>
+                    <button 
+                      onClick={() => setCurrentView('input')} 
+                      className="btn-primary"
+                    >
+                      Buat Rencana Kebugaran
+                    </button>
+                  </div>
+                )}
+
+                {userData && recommendations && (
+                  <div className="quick-access">
+                    <h3>Akses Cepat</h3>
+                    <div className="quick-buttons">
+                      <button 
+                        onClick={() => setCurrentView('recommendations')} 
+                        className="btn-primary"
+                      >
+                        Lihat Rekomendasi
+                      </button>
+                      <button 
+                        onClick={() => setCurrentView('progress')} 
+                        className="btn-secondary"
+                      >
+                        Cek Progress
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="app-footer">
-        <div className="container">
-          <div className="footer-content">
-            <div className="footer-section">
-              <h4>System Information</h4>
-              <ul>
-                <li>✅ 75 Total Templates (15 workout + 60 nutrition)</li>
-                <li>✅ XGBoost Classification with 99.73% accuracy</li>
-                <li>✅ Harris-Benedict BMR Formulas</li>
-                <li>✅ Thesis-Aligned TDEE Multipliers</li>
-                <li>✅ Weekly Progress Tracking</li>
-                <li>✅ AI Adaptive Recommendations</li>
-              </ul>
-            </div>
-            
-            <div className="footer-section">
-              <h4>Template Structure</h4>
-              <ul>
-                <li>Workout: 3 goals × 5 activity levels = 15</li>
-                <li>Nutrition: 3 goals × 4 BMI × 5 activities = 60</li>
-                <li>Weight change limits for safety</li>
-                <li>Evidence-based recommendations</li>
-                <li>Weekly adaptation based on progress</li>
-              </ul>
-            </div>
-            
-            <div className="footer-section">
-              <h4>About</h4>
-              <p>
-                This system implements the exact methodology described in the thesis
-                "Implementation of Diet and Physical Exercise Recommendation Systems Using XGBoost"
-                by Kamila Hasanah, Telkom University.
-              </p>
-              <p>
-                Features user authentication, weekly progress tracking, and AI-adaptive
-                recommendations based on adherence and progress data.
-              </p>
-            </div>
-          </div>
-          
-          <div className="footer-bottom">
-            <p>&copy; 2025 FitTech AI - Thesis Implementation with Enhanced Features</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

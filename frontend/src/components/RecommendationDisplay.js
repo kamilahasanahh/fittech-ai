@@ -1,287 +1,347 @@
-// frontend/src/components/RecommendationDisplay.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-const RecommendationDisplay = ({ userData, recommendations }) => {
-  if (!userData || !recommendations) {
-    return <div>No recommendations available</div>;
+const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecommendation }) => {
+  const [nutritionData, setNutritionData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Nutrition data from CSV (per 100g)
+  useEffect(() => {
+    const loadNutritionData = async () => {
+      try {
+        const csvData = [
+          { name: "Mie Telur (Ditambah, Masak)", calories: 138, carbs: 25.16, protein: 4.54, fat: 2.07 },
+          { name: "Roti Gandum", calories: 67, carbs: 12.26, protein: 2.37, fat: 1.07 },
+          { name: "Ayam Goreng tanpa Pelapis (Kulit Dimakan)", calories: 260, carbs: 0.0, protein: 28.62, fat: 15.35 },
+          { name: "Ikan Panggang", calories: 126, carbs: 0.33, protein: 21.94, fat: 3.44 },
+          { name: "Nasi Putih", calories: 130, carbs: 28, protein: 2.7, fat: 0.3 },
+          { name: "Tempe Goreng", calories: 193, carbs: 9.4, protein: 18.3, fat: 10.8 },
+          { name: "Tahu Goreng", calories: 271, carbs: 10.1, protein: 17.2, fat: 20.2 },
+          { name: "Sayur Bayam", calories: 23, carbs: 3.6, protein: 2.9, fat: 0.4 }
+        ];
+        setNutritionData(csvData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading nutrition data:', error);
+        setLoading(false);
+      }
+    };
+
+    loadNutritionData();
+  }, []);
+
+  if (!recommendations) {
+    return (
+      <div className="recommendation-container">
+        <div className="no-recommendations">
+          <h2>🤔 Belum Ada Rekomendasi</h2>
+          <p>Silakan isi formulir profil terlebih dahulu untuk mendapatkan rekomendasi yang dipersonalisasi.</p>
+          <button onClick={onBack} className="btn-primary">
+            Kembali ke Formulir
+          </button>
+        </div>
+      </div>
+    );
   }
 
-  const { exercise_recommendation, nutrition_recommendation, calculated_metrics, template_info } = recommendations;
+  const { workout, nutrition } = recommendations;
+
+  // Calculate user's daily macro targets based on template output
+  const calculateDailyMacros = () => {
+    if (!nutrition || !userData) return null;
+
+    const weight = parseFloat(userData.weight) || 70;
+    
+    // Based on template structure: caloric_intake, protein_per_kg, carbs_per_kg, fat_per_kg
+    return {
+      calories: Math.round(nutrition.caloric_intake || 2000),
+      protein: Math.round((nutrition.protein_per_kg || 1.6) * weight),
+      carbs: Math.round((nutrition.carbs_per_kg || 4) * weight),
+      fat: Math.round((nutrition.fat_per_kg || 1) * weight)
+    };
+  };
+
+  // Calculate food portions based on template requirements
+  const calculateFoodPortions = (targetMacros) => {
+    if (!nutritionData.length || !targetMacros) return [];
+
+    const suggestions = [];
+    
+    // Distribute daily calories across meals
+    const mealDistribution = {
+      sarapan: { percentage: 0.25, name: '🌅 Sarapan' },
+      makan_siang: { percentage: 0.35, name: '☀️ Makan Siang' },
+      makan_malam: { percentage: 0.30, name: '🌙 Makan Malam' },
+      cemilan: { percentage: 0.10, name: '🍎 Cemilan' }
+    };
+
+    Object.entries(mealDistribution).forEach(([mealType, config]) => {
+      const targetCalories = targetMacros.calories * config.percentage;
+      const targetProtein = targetMacros.protein * config.percentage;
+      
+      // Select appropriate foods for this meal
+      let selectedFoods = [];
+      
+      if (mealType === 'sarapan') {
+        selectedFoods = nutritionData.filter(food => 
+          food.name.includes('Roti') || food.name.includes('Telur') || food.name.includes('Mie')
+        );
+      } else if (mealType === 'makan_siang') {
+        selectedFoods = nutritionData.filter(food => 
+          food.name.includes('Nasi') || food.name.includes('Ayam') || food.name.includes('Ikan')
+        );
+      } else if (mealType === 'makan_malam') {
+        selectedFoods = nutritionData.filter(food => 
+          food.name.includes('Ikan') || food.name.includes('Tempe') || food.name.includes('Sayur')
+        );
+      } else {
+        selectedFoods = nutritionData.filter(food => 
+          food.name.includes('Tempe') || food.name.includes('Tahu')
+        );
+      }
+
+      // If no specific foods found, use all available
+      if (selectedFoods.length === 0) {
+        selectedFoods = nutritionData.slice(0, 3);
+      }
+
+      // Calculate portions to meet targets
+      const mealFoods = selectedFoods.slice(0, 3).map(food => {
+        // Calculate how many grams needed to meet portion of target calories
+        const gramsNeeded = Math.min(200, Math.max(50, (targetCalories / 3) / (food.calories / 100)));
+        
+        return {
+          ...food,
+          grams: Math.round(gramsNeeded),
+          actualCalories: Math.round((food.calories / 100) * gramsNeeded),
+          actualProtein: Math.round((food.protein / 100) * gramsNeeded * 10) / 10,
+          actualCarbs: Math.round((food.carbs / 100) * gramsNeeded * 10) / 10,
+          actualFat: Math.round((food.fat / 100) * gramsNeeded * 10) / 10
+        };
+      });
+
+      suggestions.push({
+        meal: config.name,
+        targetCalories: Math.round(targetCalories),
+        targetProtein: Math.round(targetProtein),
+        foods: mealFoods
+      });
+    });
+
+    return suggestions;
+  };
+
+  const dailyMacros = calculateDailyMacros();
+  const foodSuggestions = dailyMacros ? calculateFoodPortions(dailyMacros) : [];
 
   return (
-    <div className="recommendation-display">
-      {/* User Summary */}
-      <div className="user-summary">
-        <h3>Profile Summary</h3>
-        <div className="summary-grid">
-          <div className="summary-item">
-            <span className="label">Age:</span>
-            <span className="value">{userData.age} years</span>
+    <div className="recommendation-container">
+      <div className="recommendation-header">
+        <h2>🎯 Rekomendasi XGFitness Anda</h2>
+        <p>Rekomendasi yang dipersonalisasi berdasarkan profil dan tujuan Anda</p>
+      </div>
+
+      {/* User Profile Summary */}
+      <div className="profile-summary">
+        <h3>👤 Profil Anda</h3>
+        <div className="profile-grid">
+          <div className="profile-item">
+            <span className="label">Usia:</span>
+            <span className="value">{userData?.age} tahun</span>
           </div>
-          <div className="summary-item">
-            <span className="label">Gender:</span>
-            <span className="value">{userData.gender}</span>
+          <div className="profile-item">
+            <span className="label">Jenis Kelamin:</span>
+            <span className="value">{userData?.gender === 'Male' ? 'Pria' : 'Wanita'}</span>
           </div>
-          <div className="summary-item">
-            <span className="label">Height:</span>
-            <span className="value">{userData.height} cm</span>
+          <div className="profile-item">
+            <span className="label">Tinggi:</span>
+            <span className="value">{userData?.height} cm</span>
           </div>
-          <div className="summary-item">
-            <span className="label">Current Weight:</span>
-            <span className="value">{userData.weight} kg</span>
+          <div className="profile-item">
+            <span className="label">Berat:</span>
+            <span className="value">{userData?.weight} kg</span>
           </div>
-          <div className="summary-item">
-            <span className="label">Target Weight:</span>
-            <span className="value">{userData.target_weight} kg</span>
+          <div className="profile-item">
+            <span className="label">Tujuan:</span>
+            <span className="value">{userData?.fitness_goal}</span>
           </div>
-          <div className="summary-item">
-            <span className="label">Goal:</span>
-            <span className="value">{userData.fitness_goal}</span>
-          </div>
-          <div className="summary-item">
-            <span className="label">Activity Level:</span>
-            <span className="value">{userData.activity_level}</span>
+          <div className="profile-item">
+            <span className="label">Tingkat Aktivitas:</span>
+            <span className="value">{userData?.activity_level}</span>
           </div>
         </div>
       </div>
 
-      {/* Calculated Metrics */}
-      <div className="metrics-section">
-        <h3>Your Calculated Metrics</h3>
-        <div className="metrics-grid">
-          <div className="metric-card">
-            <div className="metric-value">{calculated_metrics.bmr}</div>
-            <div className="metric-label">BMR (kcal/day)</div>
-            <div className="metric-description">Basal Metabolic Rate</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">{calculated_metrics.tdee}</div>
-            <div className="metric-label">TDEE (kcal/day)</div>
-            <div className="metric-description">Total Daily Energy Expenditure</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">{calculated_metrics.bmi}</div>
-            <div className="metric-label">BMI</div>
-            <div className="metric-description">{calculated_metrics.bmi_category}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Exercise Recommendations */}
-      <div className="exercise-section">
-        <div className="section-header">
-          <h3>🏋️ Exercise Recommendations</h3>
-          <span className="template-id">Template ID: {exercise_recommendation.template_id}</span>
-        </div>
-        
-        <div className="recommendation-grid">
-          <div className="recommendation-card exercise">
-            <div className="card-icon">💪</div>
-            <div className="card-content">
-              <h4>Training Volume</h4>
-              <div className="main-value">{exercise_recommendation.training_volume}</div>
-              <div className="unit">sets per muscle group per week</div>
-              <div className="description">
-                Optimal volume for {userData.fitness_goal.toLowerCase()} based on your {userData.activity_level.toLowerCase()} lifestyle
+      {/* Workout Recommendations */}
+      {workout && (
+        <div className="workout-section">
+          <h3>🏋️ Program Latihan Harian</h3>
+          <div className="workout-details">
+            <div className="workout-card">
+              <h4>📅 Jadwal Mingguan</h4>
+              <div className="workout-grid">
+                <div className="workout-item">
+                  <span className="label">Jenis Olahraga:</span>
+                  <span className="value">{workout.workout_type || 'Strength Training'}</span>
+                </div>
+                <div className="workout-item">
+                  <span className="label">Hari per Minggu:</span>
+                  <span className="value">{workout.days_per_week || 3} hari</span>
+                </div>
+                <div className="workout-item">
+                  <span className="label">Set Harian:</span>
+                  <span className="value">{workout.sets_per_exercise || 3} set</span>
+                </div>
+                <div className="workout-item">
+                  <span className="label">Latihan per Sesi:</span>
+                  <span className="value">{workout.exercises_per_session || 5} latihan</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="recommendation-card exercise">
-            <div className="card-icon">📅</div>
-            <div className="card-content">
-              <h4>Training Frequency</h4>
-              <div className="main-value">{exercise_recommendation.training_frequency}</div>
-              <div className="unit">sessions per week</div>
-              <div className="description">
-                Balanced approach providing optimal stimulus and recovery time
-              </div>
-            </div>
-          </div>
-
-          <div className="recommendation-card exercise">
-            <div className="card-icon">❤️</div>
-            <div className="card-content">
-              <h4>Cardio Volume</h4>
-              <div className="main-value">{exercise_recommendation.cardio_volume}</div>
-              <div className="unit">minutes per week</div>
-              <div className="description">
-                Cardiovascular training to support your {userData.fitness_goal.toLowerCase()} goals
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Nutrition Recommendations */}
-      <div className="nutrition-section">
-        <div className="section-header">
-          <h3>🥗 Nutrition Recommendations</h3>
-          <span className="template-id">Template ID: {nutrition_recommendation.template_id}</span>
-        </div>
-
-        <div className="recommendation-grid">
-          <div className="recommendation-card nutrition calories">
-            <div className="card-icon">🔥</div>
-            <div className="card-content">
-              <h4>Daily Calories</h4>
-              <div className="main-value">{nutrition_recommendation.daily_calories}</div>
-              <div className="unit">kcal per day</div>
-              <div className="description">
-                {userData.fitness_goal === 'Muscle Gain' && 'Moderate surplus for muscle growth'}
-                {userData.fitness_goal === 'Fat Loss' && 'Controlled deficit for fat loss'}
-                {userData.fitness_goal === 'Maintenance' && 'Maintenance calories for stability'}
-              </div>
-            </div>
-          </div>
-
-          <div className="recommendation-card nutrition protein">
-            <div className="card-icon">🥩</div>
-            <div className="card-content">
-              <h4>Protein</h4>
-              <div className="main-value">{nutrition_recommendation.daily_protein}g</div>
-              <div className="unit">per day</div>
-              <div className="description">
-                {(nutrition_recommendation.daily_protein / userData.weight).toFixed(1)}g per kg bodyweight
-              </div>
-            </div>
-          </div>
-
-          <div className="recommendation-card nutrition carbs">
-            <div className="card-icon">🍞</div>
-            <div className="card-content">
-              <h4>Carbohydrates</h4>
-              <div className="main-value">{nutrition_recommendation.daily_carbs}g</div>
-              <div className="unit">per day</div>
-              <div className="description">
-                {(nutrition_recommendation.daily_carbs / userData.weight).toFixed(1)}g per kg bodyweight
-              </div>
-            </div>
-          </div>
-
-          <div className="recommendation-card nutrition fats">
-            <div className="card-icon">🥑</div>
-            <div className="card-content">
-              <h4>Fats</h4>
-              <div className="main-value">{nutrition_recommendation.daily_fat}g</div>
-              <div className="unit">per day</div>
-              <div className="description">
-                Essential fats for hormone production and health
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Macronutrient Breakdown */}
-        <div className="macro-breakdown">
-          <h4>Macronutrient Distribution</h4>
-          <div className="macro-bars">
-            {(() => {
-              const proteinCals = nutrition_recommendation.daily_protein * 4;
-              const carbCals = nutrition_recommendation.daily_carbs * 4;
-              const fatCals = nutrition_recommendation.daily_fat * 9;
-              const totalCals = proteinCals + carbCals + fatCals;
-              
-              const proteinPct = Math.round((proteinCals / totalCals) * 100);
-              const carbPct = Math.round((carbCals / totalCals) * 100);
-              const fatPct = Math.round((fatCals / totalCals) * 100);
-
-              return (
-                <>
-                  <div className="macro-bar">
-                    <div className="macro-label">Protein ({proteinPct}%)</div>
-                    <div className="bar">
-                      <div className="fill protein" style={{width: `${proteinPct}%`}}></div>
-                    </div>
-                    <div className="macro-value">{nutrition_recommendation.daily_protein}g = {proteinCals} kcal</div>
+            {workout.cardio_minutes_per_day && (
+              <div className="cardio-card">
+                <h4>🏃 Kardio Harian</h4>
+                <div className="cardio-details">
+                  <div className="cardio-item">
+                    <span className="label">Durasi per Hari:</span>
+                    <span className="value">{workout.cardio_minutes_per_day} menit</span>
                   </div>
-                  
-                  <div className="macro-bar">
-                    <div className="macro-label">Carbs ({carbPct}%)</div>
-                    <div className="bar">
-                      <div className="fill carbs" style={{width: `${carbPct}%`}}></div>
-                    </div>
-                    <div className="macro-value">{nutrition_recommendation.daily_carbs}g = {carbCals} kcal</div>
+                  <div className="cardio-item">
+                    <span className="label">Sesi per Hari:</span>
+                    <span className="value">{workout.cardio_sessions_per_day || 1} sesi</span>
                   </div>
-                  
-                  <div className="macro-bar">
-                    <div className="macro-label">Fats ({fatPct}%)</div>
-                    <div className="bar">
-                      <div className="fill fats" style={{width: `${fatPct}%`}}></div>
-                    </div>
-                    <div className="macro-value">{nutrition_recommendation.daily_fat}g = {fatCals} kcal</div>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        </div>
-      </div>
+                </div>
+              </div>
+            )}
 
-      {/* System Information */}
-      {template_info && (
-        <div className="system-info">
-          <h3>🤖 AI System Information</h3>
-          <div className="info-grid">
-            <div className="info-item">
-              <span className="label">Total Templates:</span>
-              <span className="value">{template_info.total_templates}</span>
-            </div>
-            <div className="info-item">
-              <span className="label">Workout Templates:</span>
-              <span className="value">{template_info.workout_templates}</span>
-            </div>
-            <div className="info-item">
-              <span className="label">Nutrition Templates:</span>
-              <span className="value">{template_info.nutrition_templates}</span>
-            </div>
-            <div className="info-item">
-              <span className="label">Thesis Aligned:</span>
-              <span className="value">{template_info.thesis_aligned ? '✅ Yes' : '❌ No'}</span>
-            </div>
-          </div>
-          
-          <div className="system-details">
-            <p><strong>Methodology:</strong> XGBoost classification using 75 evidence-based templates</p>
-            <p><strong>Template Structure:</strong> 15 workout (3 goals × 5 activities) + 60 nutrition (3 goals × 4 BMI × 5 activities)</p>
-            <p><strong>Calculations:</strong> Harris-Benedict BMR equations with exact TDEE multipliers from research</p>
+            {workout.workout_schedule && (
+              <div className="schedule-card">
+                <h4>📋 Jadwal yang Disarankan</h4>
+                <p className="schedule-text">{workout.workout_schedule}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Guidelines */}
-      <div className="guidelines-section">
-        <h3>📋 Guidelines & Tips</h3>
-        
-        <div className="guidelines-grid">
-          <div className="guideline-card">
-            <h4>🏋️ Exercise Guidelines</h4>
-            <ul>
-              <li>Focus on compound movements (squats, deadlifts, bench press)</li>
-              <li>Progressive overload: gradually increase weight or reps</li>
-              <li>Rest 48-72 hours between training same muscle groups</li>
-              <li>Include warm-up and cool-down in every session</li>
-            </ul>
-          </div>
+      {/* Nutrition Recommendations */}
+      {nutrition && dailyMacros && (
+        <div className="nutrition-section">
+          <h3>🍎 Program Nutrisi Harian</h3>
           
-          <div className="guideline-card">
-            <h4>🥗 Nutrition Guidelines</h4>
-            <ul>
-              <li>Eat protein with every meal to support muscle synthesis</li>
-              <li>Time carbohydrates around workouts for energy</li>
-              <li>Include healthy fats for hormone production</li>
-              <li>Stay hydrated: aim for 2-3 liters of water daily</li>
-            </ul>
+          <div className="nutrition-targets">
+            <h4>🎯 Target Harian Berdasarkan Template</h4>
+            <div className="macro-grid">
+              <div className="macro-card calories">
+                <div className="macro-icon">🔥</div>
+                <div className="macro-info">
+                  <span className="macro-label">Asupan Kalori</span>
+                  <span className="macro-value">{dailyMacros.calories} kkal</span>
+                </div>
+              </div>
+              <div className="macro-card protein">
+                <div className="macro-icon">🥩</div>
+                <div className="macro-info">
+                  <span className="macro-label">Asupan Protein</span>
+                  <span className="macro-value">{dailyMacros.protein} gram</span>
+                </div>
+              </div>
+              <div className="macro-card carbs">
+                <div className="macro-icon">🍞</div>
+                <div className="macro-info">
+                  <span className="macro-label">Asupan Karbohidrat</span>
+                  <span className="macro-value">{dailyMacros.carbs} gram</span>
+                </div>
+              </div>
+              <div className="macro-card fat">
+                <div className="macro-icon">🥑</div>
+                <div className="macro-info">
+                  <span className="macro-label">Asupan Lemak</span>
+                  <span className="macro-value">{dailyMacros.fat} gram</span>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="guideline-card">
-            <h4>📈 Progress Tracking</h4>
-            <ul>
-              <li>Weigh yourself at the same time each day</li>
-              <li>Take progress photos weekly</li>
-              <li>Track your workouts and strength gains</li>
-              <li>Monitor energy levels and sleep quality</li>
-            </ul>
+
+          {/* Food Suggestions with Calculated Portions */}
+          {!loading && foodSuggestions.length > 0 && (
+            <div className="food-suggestions">
+              <h4>🍽️ Porsi Makanan Indonesia Berdasarkan Template</h4>
+              <p className="suggestions-subtitle">Porsi yang dihitung untuk mencapai target nutrisi harian Anda</p>
+              
+              {foodSuggestions.map((meal, index) => (
+                <div key={index} className="meal-section">
+                  <h5 className="meal-title">{meal.meal}</h5>
+                  <div className="meal-target">
+                    <span>Target: {meal.targetCalories} kkal | {meal.targetProtein}g protein</span>
+                  </div>
+                  
+                  <div className="food-list">
+                    {meal.foods.map((food, foodIndex) => (
+                      <div key={foodIndex} className="food-item-calculated">
+                        <div className="food-header">
+                          <span className="food-name">{food.name}</span>
+                          <span className="food-portion">{food.grams}g</span>
+                        </div>
+                        <div className="food-macros">
+                          <span className="macro">🔥 {food.actualCalories} kkal</span>
+                          <span className="macro">🥩 {food.actualProtein}g protein</span>
+                          <span className="macro">🍞 {food.actualCarbs}g karbo</span>
+                          <span className="macro">🥑 {food.actualFat}g lemak</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Template Information */}
+      <div className="template-info">
+        <h4>📊 Informasi Template</h4>
+        <div className="template-details">
+          <p><strong>Template berdasarkan:</strong></p>
+          <ul>
+            <li>Tujuan: {userData?.fitness_goal}</li>
+            <li>Level aktivitas: {userData?.activity_level}</li>
+            <li>BMI kategori: {userData?.bmi_category || 'Normal'}</li>
+            <li>Kalkulasi nutrisi per kg berat badan</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="recommendation-actions">
+        <button onClick={onBack} className="btn-secondary">
+          ← Kembali ke Formulir
+        </button>
+        <button onClick={onNewRecommendation} className="btn-primary">
+          🆕 Buat Rekomendasi Baru
+        </button>
+      </div>
+
+      {/* Tips Section */}
+      <div className="tips-section">
+        <h4>💡 Tips Sukses dengan Porsi yang Tepat</h4>
+        <div className="tips-grid">
+          <div className="tip-card">
+            <span className="tip-icon">⚖️</span>
+            <p>Gunakan timbangan digital untuk mengukur porsi makanan secara akurat</p>
+          </div>
+          <div className="tip-card">
+            <span className="tip-icon">📱</span>
+            <p>Catat asupan makanan harian di fitur progress tracking</p>
+          </div>
+          <div className="tip-card">
+            <span className="tip-icon">🥗</span>
+            <p>Variasikan sumber protein dan karbohidrat setiap harinya</p>
+          </div>
+          <div className="tip-card">
+            <span className="tip-icon">💧</span>
+            <p>Minum 2-3 liter air putih setiap hari untuk metabolisme optimal</p>
           </div>
         </div>
       </div>

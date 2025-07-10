@@ -1,192 +1,173 @@
-// frontend/src/services/authService.js
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  updateProfile,
-  sendPasswordResetEmail,
-  onAuthStateChanged
+import { 
+  onAuthStateChanged, 
+  signOut as firebaseSignOut,
+  updateProfile 
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
-import { auth, db } from './firebaseConfig'; // Fixed: Import from firebaseConfig instead of self
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  orderBy 
+} from 'firebase/firestore';
+import { auth, db } from './firebaseConfig';
 
 class AuthService {
   constructor() {
     this.currentUser = null;
     this.authStateListeners = [];
+  }
 
-    // Listen for auth state changes
-    onAuthStateChanged(auth, (user) => {
-      this.currentUser = user;
-      this.authStateListeners.forEach(listener => listener(user));
+  // Get current user
+  getCurrentUser() {
+    return new Promise((resolve) => {
+      if (this.currentUser) {
+        resolve(this.currentUser);
+        return;
+      }
+
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        unsubscribe();
+        this.currentUser = user;
+        resolve(user);
+      });
     });
   }
 
-  // Register new user
-  async register(email, password, userData) {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Update profile with display name
-      await updateProfile(user, {
-        displayName: `${userData.firstName} ${userData.lastName}`
-      });
-
-      // Create user document in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        createdAt: new Date(),
-        lastLogin: new Date(),
-        profileCompleted: false,
-        currentWeek: 1,
-        totalWeeks: 0
-      });
-
-      return { success: true, user };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
+  // Listen to auth state changes
+  onAuthStateChange(callback) {
+    return onAuthStateChanged(auth, (user) => {
+      this.currentUser = user;
+      callback(user);
+    });
   }
 
-  // Login user
-  async login(email, password) {
+  // Sign out
+  async signOut() {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Update last login
-      await updateDoc(doc(db, 'users', user.uid), {
-        lastLogin: new Date()
-      });
-
-      return { success: true, user };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Logout user
-  async logout() {
-    try {
-      await signOut(auth);
+      await firebaseSignOut(auth);
+      this.currentUser = null;
       return { success: true };
     } catch (error) {
+      console.error('Sign out error:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Reset password
-  async resetPassword(email) {
+  // Update user profile
+  async updateUserProfile(updates) {
     try {
-      await sendPasswordResetEmail(auth, email);
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  }
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
 
-  // Save user fitness profile
-  async saveUserProfile(profileData) {
-    if (!this.currentUser) throw new Error('User not authenticated');
+      // Update Firebase Auth profile
+      if (updates.displayName) {
+        await updateProfile(this.currentUser, {
+          displayName: updates.displayName
+        });
+      }
 
-    try {
+      // Update Firestore user document
       const userRef = doc(db, 'users', this.currentUser.uid);
-
       await updateDoc(userRef, {
-        profile: profileData,
-        profileCompleted: true,
-        profileUpdatedAt: new Date()
+        ...updates,
+        updatedAt: new Date()
       });
 
       return { success: true };
     } catch (error) {
+      console.error('Update profile error:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Save weekly recommendation
-  async saveWeeklyRecommendation(profileData, recommendations) {
-    if (!this.currentUser) throw new Error('User not authenticated');
-
+  // Save user data to Firestore
+  async saveUserData(userData) {
     try {
-      const weekId = `${this.currentUser.uid}_week_${Date.now()}`;
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
 
-      // Save to weekly_recommendations collection
-      await setDoc(doc(db, 'weekly_recommendations', weekId), {
+      const userRef = doc(db, 'users', this.currentUser.uid);
+      await setDoc(userRef, {
+        ...userData,
+        uid: this.currentUser.uid,
+        email: this.currentUser.email,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }, { merge: true });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Save user data error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get user data from Firestore
+  async getUserData() {
+    try {
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
+
+      const userRef = doc(db, 'users', this.currentUser.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        return { success: true, data: userSnap.data() };
+      } else {
+        return { success: false, error: 'User data not found' };
+      }
+    } catch (error) {
+      console.error('Get user data error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Save recommendation
+  async saveRecommendation(recommendationData) {
+    try {
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
+
+      const recommendationsRef = collection(db, 'recommendations');
+      const docRef = await addDoc(recommendationsRef, {
+        ...recommendationData,
         userId: this.currentUser.uid,
-        weekNumber: await this.getCurrentWeekNumber(),
-        profileData,
-        recommendations,
-        createdAt: new Date(),
-        status: 'active',
-        completedDays: 0,
-        adherenceData: {},
-        weeklyProgress: {}
+        createdAt: new Date()
       });
 
-      // Update user's current week
-      await this.incrementUserWeek();
-
-      return { success: true, weekId };
+      return { success: true, id: docRef.id };
     } catch (error) {
+      console.error('Save recommendation error:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Get user's current week number
-  async getCurrentWeekNumber() {
-    if (!this.currentUser) return 1;
-
+  // Get user recommendations
+  async getUserRecommendations() {
     try {
-      const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
-      const userData = userDoc.data();
-      return userData?.currentWeek || 1;
-    } catch (error) {
-      console.error('Error getting current week:', error);
-      return 1;
-    }
-  }
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
 
-  // Increment user's week counter
-  async incrementUserWeek() {
-    if (!this.currentUser) return;
-
-    try {
-      const userRef = doc(db, 'users', this.currentUser.uid);
-      const userDoc = await getDoc(userRef);
-      const userData = userDoc.data();
-
-      const newWeekNumber = (userData?.currentWeek || 0) + 1;
-      const totalWeeks = (userData?.totalWeeks || 0) + 1;
-
-      await updateDoc(userRef, {
-        currentWeek: newWeekNumber,
-        totalWeeks: totalWeeks
-      });
-    } catch (error) {
-      console.error('Error incrementing week:', error);
-    }
-  }
-
-  // Get user's recommendation history
-  async getRecommendationHistory(limit = 10) {
-    if (!this.currentUser) return [];
-
-    try {
+      const recommendationsRef = collection(db, 'recommendations');
       const q = query(
-        collection(db, 'weekly_recommendations'),
+        recommendationsRef,
         where('userId', '==', this.currentUser.uid),
-        orderBy('createdAt', 'desc'),
-        limit(limit)
+        orderBy('createdAt', 'desc')
       );
 
       const querySnapshot = await getDocs(q);
       const recommendations = [];
-
       querySnapshot.forEach((doc) => {
         recommendations.push({
           id: doc.id,
@@ -194,112 +175,63 @@ class AuthService {
         });
       });
 
-      return recommendations;
+      return { success: true, data: recommendations };
     } catch (error) {
-      console.error('Error getting recommendation history:', error);
-      return [];
-    }
-  }
-
-  // Get current active recommendation
-  async getCurrentRecommendation() {
-    if (!this.currentUser) return null;
-
-    try {
-      const q = query(
-        collection(db, 'weekly_recommendations'),
-        where('userId', '==', this.currentUser.uid),
-        where('status', '==', 'active'),
-        orderBy('createdAt', 'desc'),
-        limit(1)
-      );
-
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        return {
-          id: doc.id,
-          ...doc.data()
-        };
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Error getting current recommendation:', error);
-      return null;
-    }
-  }
-
-  // Update weekly progress
-  async updateWeeklyProgress(weekId, progressData) {
-    if (!this.currentUser) throw new Error('User not authenticated');
-
-    try {
-      const weekRef = doc(db, 'weekly_recommendations', weekId);
-
-      await updateDoc(weekRef, {
-        adherenceData: progressData.adherenceData,
-        completedDays: progressData.completedDays,
-        weeklyProgress: progressData.weeklyProgress,
-        lastUpdated: new Date()
-      });
-
-      return { success: true };
-    } catch (error) {
+      console.error('Get recommendations error:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Check if user can create new recommendation (weekly limit)
-  async canCreateNewRecommendation() {
-    if (!this.currentUser) return false;
-
+  // Save daily progress
+  async saveDailyProgress(progressData) {
     try {
-      const currentRec = await this.getCurrentRecommendation();
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
 
-      if (!currentRec) return true;
+      const progressRef = collection(db, 'dailyProgress');
+      const docRef = await addDoc(progressRef, {
+        ...progressData,
+        userId: this.currentUser.uid,
+        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+        createdAt: new Date()
+      });
 
-      // Check if current recommendation is older than 7 days
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-
-      const createdAt = currentRec.createdAt.toDate();
-      return createdAt < weekAgo;
+      return { success: true, id: docRef.id };
     } catch (error) {
-      console.error('Error checking recommendation eligibility:', error);
-      return true;
+      console.error('Save progress error:', error);
+      return { success: false, error: error.message };
     }
   }
 
-  // Get user profile data
-  async getUserProfile() {
-    if (!this.currentUser) return null;
-
+  // Get user daily progress
+  async getUserProgress(limit = 30) {
     try {
-      const userDoc = await getDoc(doc(db, 'users', this.currentUser.uid));
-      return userDoc.exists() ? userDoc.data() : null;
-    } catch (error) {
-      console.error('Error getting user profile:', error);
-      return null;
-    }
-  }
+      if (!this.currentUser) {
+        throw new Error('No authenticated user');
+      }
 
-  // Add auth state listener
-  onAuthStateChange(callback) {
-    this.authStateListeners.push(callback);
-
-    // Return unsubscribe function
-    return () => {
-      this.authStateListeners = this.authStateListeners.filter(
-        listener => listener !== callback
+      const progressRef = collection(db, 'dailyProgress');
+      const q = query(
+        progressRef,
+        where('userId', '==', this.currentUser.uid),
+        orderBy('createdAt', 'desc')
       );
-    };
-  }
 
-  // Get current user
-  getCurrentUser() {
-    return this.currentUser;
+      const querySnapshot = await getDocs(q);
+      const progress = [];
+      querySnapshot.forEach((doc) => {
+        progress.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+
+      return { success: true, data: progress.slice(0, limit) };
+    } catch (error) {
+      console.error('Get progress error:', error);
+      return { success: false, error: error.message };
+    }
   }
 }
 

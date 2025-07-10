@@ -1,61 +1,33 @@
-// frontend/src/components/SystemStatus.js
 import React from 'react';
 
 const SystemStatus = ({ status }) => {
   if (!status) {
     return (
       <div className="system-status loading">
-        <span className="status-indicator">⏳</span>
-        <span>Checking system status...</span>
+        <span>⏳ Memeriksa status sistem...</span>
       </div>
     );
   }
 
-  const getStatusDisplay = () => {
-    if (status.status === 'healthy') {
-      return {
-        indicator: '✅',
-        text: 'System Online',
-        className: 'healthy'
-      };
-    } else if (status.status === 'error') {
-      return {
-        indicator: '❌',
-        text: 'System Offline',
-        className: 'error'
-      };
-    } else {
-      return {
-        indicator: '⚠️',
-        text: 'System Issues',
-        className: 'warning'
-      };
-    }
-  };
-
-  const statusDisplay = getStatusDisplay();
+  const isHealthy = status.status === 'healthy';
+  const hasMLSystem = status.model_loaded || status.ml_system_loaded;
 
   return (
-    <div className={`system-status ${statusDisplay.className}`}>
-      <span className="status-indicator">{statusDisplay.indicator}</span>
-      <span className="status-text">{statusDisplay.text}</span>
+    <div className={`system-status ${isHealthy ? 'healthy' : 'error'}`}>
+      <span>{isHealthy ? '✅' : '❌'} {isHealthy ? 'Sistem Online' : 'Sistem Offline'}</span>
       
-      {status.ml_system_loaded && (
+      {hasMLSystem && (
         <div className="status-details">
-          <span>🤖 ML System Ready</span>
-          {status.total_templates && (
-            <span>📊 {status.total_templates} Templates</span>
-          )}
-          {status.thesis_aligned && (
-            <span>🎓 Thesis Aligned</span>
-          )}
+          <span>🤖 Model XGBoost Siap</span>
+          {status.total_templates && <span>📊 {status.total_templates} Template</span>}
+          {status.thesis_aligned && <span>🎓 Sesuai Penelitian</span>}
+          {status.single_model && <span>🔗 Model Tunggal</span>}
         </div>
       )}
       
-      {status.status === 'error' && (
+      {!isHealthy && (
         <div className="status-error">
-          <p>⚠️ Backend server is not responding</p>
-          <p>Make sure the Flask server is running on port 5000</p>
+          <p>⚠️ Server backend tidak merespons. Jalankan server Flask di port 5000</p>
         </div>
       )}
     </div>

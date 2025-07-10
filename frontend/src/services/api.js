@@ -57,7 +57,7 @@ class ApiService {
       const response = await this.api.post('/predict', userData);
       
       if (response.data.success) {
-        return response.data.recommendations;
+        return response.data;
       } else {
         throw new Error(response.data.error || 'Failed to get recommendations');
       }
@@ -115,7 +115,7 @@ class ApiService {
 
   // Validate user data before sending
   validateUserData(userData) {
-    const required = ['age', 'gender', 'height', 'weight', 'target_weight', 'fitness_goal', 'activity_level'];
+    const required = ['age', 'gender', 'height', 'weight', 'fitness_goal', 'activity_level'];
     const missing = required.filter(field => !userData[field]);
     
     if (missing.length > 0) {
@@ -135,10 +135,6 @@ class ApiService {
       throw new Error('Weight must be between 45 and 150 kg');
     }
 
-    if (userData.target_weight < 45 || userData.target_weight > 150) {
-      throw new Error('Target weight must be between 45 and 150 kg');
-    }
-
     if (!['Male', 'Female'].includes(userData.gender)) {
       throw new Error('Gender must be Male or Female');
     }
@@ -147,7 +143,7 @@ class ApiService {
       throw new Error('Invalid fitness goal');
     }
 
-    if (!['Sedentary', 'Lightly Active', 'Moderately Active', 'Very Active', 'Extremely Active'].includes(userData.activity_level)) {
+    if (!['Low Activity', 'Moderate Activity', 'High Activity'].includes(userData.activity_level)) {
       throw new Error('Invalid activity level');
     }
 
@@ -197,9 +193,7 @@ export const FITNESS_GOALS = [
 ];
 
 export const ACTIVITY_LEVELS = [
-  { value: 'Sedentary', label: 'Sedentary', description: 'Little or no exercise', multiplier: 1.2 },
-  { value: 'Lightly Active', label: 'Lightly Active', description: 'Light exercise 1-3 days/week', multiplier: 1.375 },
-  { value: 'Moderately Active', label: 'Moderately Active', description: 'Moderate exercise 3-5 days/week', multiplier: 1.55 },
-  { value: 'Very Active', label: 'Very Active', description: 'Hard exercise 6-7 days/week', multiplier: 1.725 },
-  { value: 'Extremely Active', label: 'Extremely Active', description: 'Very hard exercise, physical job or training twice daily', multiplier: 1.9 }
+  { value: 'Low Activity', label: 'Low Activity', description: 'Minimal exercise or sedentary lifestyle', multiplier: 1.29 },
+  { value: 'Moderate Activity', label: 'Moderate Activity', description: 'Regular exercise 3-5 days/week', multiplier: 1.55 },
+  { value: 'High Activity', label: 'High Activity', description: 'Intense exercise 6-7 days/week or very active job', multiplier: 1.81 }
 ];
