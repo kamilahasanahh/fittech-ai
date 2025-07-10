@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { nutritionService } from '../services/nutritionService';
 
 const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecommendation }) => {
   const [nutritionData, setNutritionData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Nutrition data from CSV (per 100g)
+  // Load nutrition data from CSV file
   useEffect(() => {
     const loadNutritionData = async () => {
       try {
-        const csvData = [
-          { name: "Mie Telur (Ditambah, Masak)", calories: 138, carbs: 25.16, protein: 4.54, fat: 2.07 },
-          { name: "Roti Gandum", calories: 67, carbs: 12.26, protein: 2.37, fat: 1.07 },
-          { name: "Ayam Goreng tanpa Pelapis (Kulit Dimakan)", calories: 260, carbs: 0.0, protein: 28.62, fat: 15.35 },
-          { name: "Ikan Panggang", calories: 126, carbs: 0.33, protein: 21.94, fat: 3.44 },
-          { name: "Nasi Putih", calories: 130, carbs: 28, protein: 2.7, fat: 0.3 },
-          { name: "Tempe Goreng", calories: 193, carbs: 9.4, protein: 18.3, fat: 10.8 },
-          { name: "Tahu Goreng", calories: 271, carbs: 10.1, protein: 17.2, fat: 20.2 },
-          { name: "Sayur Bayam", calories: 23, carbs: 3.6, protein: 2.9, fat: 0.4 }
-        ];
+        const csvData = await nutritionService.loadNutritionData();
         setNutritionData(csvData);
         setLoading(false);
       } catch (error) {
@@ -78,25 +70,17 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
       const targetCalories = targetMacros.calories * config.percentage;
       const targetProtein = targetMacros.protein * config.percentage;
       
-      // Select appropriate foods for this meal
+      // Select appropriate foods for this meal using nutrition service
       let selectedFoods = [];
       
       if (mealType === 'sarapan') {
-        selectedFoods = nutritionData.filter(food => 
-          food.name.includes('Roti') || food.name.includes('Telur') || food.name.includes('Mie')
-        );
+        selectedFoods = nutritionService.getFoodsByCategory('breakfast');
       } else if (mealType === 'makan_siang') {
-        selectedFoods = nutritionData.filter(food => 
-          food.name.includes('Nasi') || food.name.includes('Ayam') || food.name.includes('Ikan')
-        );
+        selectedFoods = nutritionService.getFoodsByCategory('lunch');
       } else if (mealType === 'makan_malam') {
-        selectedFoods = nutritionData.filter(food => 
-          food.name.includes('Ikan') || food.name.includes('Tempe') || food.name.includes('Sayur')
-        );
+        selectedFoods = nutritionService.getFoodsByCategory('dinner');
       } else {
-        selectedFoods = nutritionData.filter(food => 
-          food.name.includes('Tempe') || food.name.includes('Tahu')
-        );
+        selectedFoods = nutritionService.getFoodsByCategory('snack');
       }
 
       // If no specific foods found, use all available

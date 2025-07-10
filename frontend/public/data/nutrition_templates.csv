@@ -1,0 +1,9 @@
+template_id,goal,bmi_category,caloric_intake,protein_per_kg,carbs_per_kg,fat_per_kg
+1,Fat Loss,Normal,0.80,2.3,2.75,0.85
+2,Fat Loss,Overweight,0.75,2.15,2.25,0.80
+3,Fat Loss,Obese,0.70,2.45,1.75,0.80
+4,Muscle Gain,Underweight,1.15,2.3,4.75,1.0
+5,Muscle Gain,Normal,1.10,2.1,4.25,0.95
+6,Maintenance,Underweight,1.00,1.8,3.25,0.90
+7,Maintenance,Normal,0.95,1.8,3.25,0.85
+8,Maintenance,Overweight,0.90,1.8,3.25,0.80
