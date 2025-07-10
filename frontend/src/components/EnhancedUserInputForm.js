@@ -16,6 +16,7 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
   const [submissionError, setSubmissionError] = useState('');
   const [bmi, setBmi] = useState(null);
   const [bmiCategory, setBmiCategory] = useState(null);
+  const [storedDataLoaded, setStoredDataLoaded] = useState(false);
 
   // Indonesian fitness goals and activity levels (only 3 goals as requested)
   const FITNESS_GOALS = {
@@ -63,6 +64,38 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
     { number: 3, label: 'Level Aktivitas' },
     { number: 4, label: 'Konfirmasi' }
   ];
+
+  // Load stored user data on component mount
+  useEffect(() => {
+    const loadStoredData = () => {
+      try {
+        const storedData = localStorage.getItem('fittech_user_data');
+        if (storedData) {
+          const parsedData = JSON.parse(storedData);
+          
+          // Only load age and height if they exist and are valid
+          if (parsedData.age && parsedData.height) {
+            setFormData(prev => ({
+              ...prev,
+              age: parsedData.age.toString(),
+              height: parsedData.height.toString(),
+              gender: parsedData.gender || ''
+            }));
+            setStoredDataLoaded(true);
+            
+            // Show a brief message that stored data was loaded
+            setTimeout(() => {
+              setStoredDataLoaded(false);
+            }, 3000);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading stored user data:', error);
+      }
+    };
+
+    loadStoredData();
+  }, []);
 
   // Calculate BMI and update category whenever height or weight changes
   useEffect(() => {
@@ -260,6 +293,19 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
 
       console.log('🔄 Submitting form data to parent:', submissionData);
       
+      // Save age, height, and gender to localStorage for future use
+      try {
+        const dataToStore = {
+          age: submissionData.age,
+          height: submissionData.height,
+          gender: submissionData.gender
+        };
+        localStorage.setItem('fittech_user_data', JSON.stringify(dataToStore));
+        console.log('💾 Saved user data to localStorage:', dataToStore);
+      } catch (error) {
+        console.error('Error saving user data to localStorage:', error);
+      }
+      
       // Call the parent's submit handler (which handles API calls and state updates)
       await onSubmit(submissionData);
       
@@ -303,6 +349,57 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
         <div className="error-banner">
           <h3>Terjadi Kesalahan</h3>
           <p>{submissionError}</p>
+        </div>
+      )}
+
+      {storedDataLoaded && (
+        <div className="info-banner" style={{
+          backgroundColor: '#dbeafe',
+          border: '1px solid #3b82f6',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '20px',
+          color: '#1e40af'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>💾</span>
+              <div>
+                <strong>Data Tersimpan Ditemukan!</strong>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.9em' }}>
+                  Usia, tinggi badan, dan jenis kelamin Anda telah dimuat dari penyimpanan lokal. 
+                  Anda hanya perlu memasukkan berat badan saat ini.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem('fittech_user_data');
+                setFormData({
+                  age: '',
+                  gender: '',
+                  height: '',
+                  weight: '',
+                  fitness_goal: '',
+                  activity_level: ''
+                });
+                setStoredDataLoaded(false);
+              }}
+              style={{
+                background: 'none',
+                border: '1px solid #3b82f6',
+                borderRadius: '4px',
+                padding: '4px 8px',
+                fontSize: '0.8em',
+                color: '#3b82f6',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Mulai Baru
+            </button>
+          </div>
         </div>
       )}
 
@@ -399,6 +496,11 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
               />
               {validationErrors.weight && (
                 <span className="error-text">{validationErrors.weight}</span>
+              )}
+              {storedDataLoaded && (
+                <small style={{ color: '#059669', fontSize: '0.8em', fontWeight: '500' }}>
+                  ⚡ Hanya berat badan yang perlu diperbarui - data lainnya sudah tersimpan!
+                </small>
               )}
             </div>
 
