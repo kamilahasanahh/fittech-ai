@@ -8,6 +8,7 @@ import AuthForm from './components/AuthForm';
 import EnhancedUserInputForm from './components/EnhancedUserInputForm';
 import RecommendationDisplay from './components/RecommendationDisplay';
 import DailyProgress from './components/DailyProgress';
+import Dashboard from './components/Dashboard';
 import SystemStatus from './components/SystemStatus';
 import OfflineNotice from './components/OfflineNotice';
 import './styles/App.css';
@@ -236,45 +237,12 @@ function App() {
           )}
 
           {currentView === 'dashboard' && (
-            <div className="dashboard">
-              <div className="welcome-section">
-                <h2>Dashboard</h2>
-                <p>Selamat datang di XGFitness! Pilih menu di atas untuk memulai.</p>
-                
-                {!userData && (
-                  <div className="cta-section">
-                    <h3>Mulai Perjalanan Kebugaran Anda</h3>
-                    <p>Dapatkan rekomendasi kebugaran yang dipersonalisasi berdasarkan profil dan tujuan Anda.</p>
-                    <button 
-                      onClick={() => setCurrentView('input')} 
-                      className="btn-primary"
-                    >
-                      Buat Rencana Kebugaran
-                    </button>
-                  </div>
-                )}
-
-                {userData && recommendations && (
-                  <div className="quick-access">
-                    <h3>Akses Cepat</h3>
-                    <div className="quick-buttons">
-                      <button 
-                        onClick={() => setCurrentView('recommendations')} 
-                        className="btn-primary"
-                      >
-                        Lihat Rekomendasi
-                      </button>
-                      <button 
-                        onClick={() => setCurrentView('progress')} 
-                        className="btn-secondary"
-                      >
-                        Cek Progress
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <Dashboard
+              user={user}
+              userData={userData}
+              recommendations={recommendations}
+              onNavigate={setCurrentView}
+            />
           )}
         </div>
       </main>
