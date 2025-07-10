@@ -73,16 +73,22 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
         if (storedData) {
           const parsedData = JSON.parse(storedData);
           
-          // Only load age and height if they exist and are valid
+          // Load gender regardless of other fields
+          const updatedFormData = { ...formData };
+          
+          if (parsedData.gender) {
+            // Normalize gender to lowercase to match form values
+            updatedFormData.gender = parsedData.gender.toLowerCase();
+          }
+          
+          // Load age and height if they exist and are valid
           if (parsedData.age && parsedData.height) {
-            setFormData(prev => ({
-              ...prev,
-              age: parsedData.age.toString(),
-              height: parsedData.height.toString(),
-              gender: parsedData.gender || ''
-            }));
+            updatedFormData.age = parsedData.age.toString();
+            updatedFormData.height = parsedData.height.toString();
             setStoredDataLoaded(true);
           }
+          
+          setFormData(updatedFormData);
         }
       } catch (error) {
         console.error('Error loading stored user data:', error);

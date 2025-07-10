@@ -1166,6 +1166,88 @@ class XGFitnessAIModel:
         
         return metrics
     
+    def _calculate_enhanced_confidence(self, proba, user_data, model_type, predicted_class):
+        """
+        Calculate enhanced confidence scores based on prediction probabilities and user characteristics
+        
+        Args:
+            proba: Prediction probabilities from the model
+            user_data: User profile data
+            model_type: 'workout' or 'nutrition'
+            predicted_class: The predicted class (encoded)
+            
+        Returns:
+            float: Confidence score between 0 and 1
+        """
+        # Get the probability for the predicted class
+        predicted_prob = proba[0][predicted_class]
+        
+        # Base confidence from model probability
+        base_confidence = predicted_prob
+        
+        # Calculate probability spread (how confident the model is vs alternatives)
+        sorted_probs = np.sort(proba[0])[::-1]  # Sort in descending order
+        if len(sorted_probs) > 1:
+            prob_spread = sorted_probs[0] - sorted_probs[1]  # Difference between top 2
+        else:
+            prob_spread = 0.0
+        
+        # User profile confidence factors
+        age = user_data.get('age', 25)
+        activity_level = user_data.get('activity_level', 'moderate')
+        fitness_goal = user_data.get('fitness_goal', 'general_fitness')
+        
+        # Age-based confidence adjustment
+        if age < 18 or age > 65:
+            age_factor = 0.8  # Lower confidence for extreme ages
+        elif 25 <= age <= 45:
+            age_factor = 1.0  # Peak confidence for typical fitness age range
+        else:
+            age_factor = 0.9  # Moderate confidence for other ages
+        
+        # Activity level confidence
+        activity_factors = {
+            'sedentary': 0.85,
+            'light': 0.9,
+            'moderate': 1.0,
+            'active': 0.95,
+            'very_active': 0.9
+        }
+        activity_factor = activity_factors.get(activity_level, 0.9)
+        
+        # Goal-specific confidence adjustments
+        goal_factors = {
+            'weight_loss': 0.95,
+            'muscle_gain': 0.9,
+            'general_fitness': 1.0,
+            'endurance': 0.9,
+            'strength': 0.9
+        }
+        goal_factor = goal_factors.get(fitness_goal, 0.9)
+        
+        # Model type specific adjustments
+        if model_type == 'workout':
+            # Workout recommendations are more variable
+            model_factor = 0.9
+        else:  # nutrition
+            # Nutrition recommendations are more standardized
+            model_factor = 1.0
+        
+        # Calculate final confidence score
+        confidence = (
+            base_confidence * 0.5 +  # Base model confidence
+            prob_spread * 0.3 +      # Probability spread
+            age_factor * 0.1 +       # Age factor
+            activity_factor * 0.05 + # Activity factor
+            goal_factor * 0.03 +     # Goal factor
+            model_factor * 0.02      # Model type factor
+        )
+        
+        # Ensure confidence is between 0 and 1
+        confidence = max(0.0, min(1.0, confidence))
+        
+        return confidence
+    
     def predict_with_confidence(self, user_data):
         """
         Make predictions with confidence scores for honest validation
@@ -1513,6 +1595,168 @@ class XGFitnessAIModel:
         
         print(f"Augmented data: {original_size} -> {len(augmented_df)} samples (+{len(augmented_samples)})")
         return augmented_df
+    
+    def _assess_input_quality(self, user_data):
+        """
+        Assess the quality and completeness of user input data
+        
+        Args:
+            user_data: User profile data
+            
+        Returns:
+            float: Quality score between 0 and 1
+        """
+        quality_score = 0.0
+        total_checks = 0
+        
+        # Age validation
+        age = user_data.get('age', 0)
+        if 18 <= age <= 80:
+            quality_score += 1.0
+        elif 16 <= age <= 85:
+            quality_score += 0.7
+        elif 14 <= age <= 90:
+            quality_score += 0.4
+        total_checks += 1
+        
+        # Height validation
+        height = user_data.get('height', 0)
+        if 150 <= height <= 200:
+            quality_score += 1.0
+        elif 140 <= height <= 210:
+            quality_score += 0.8
+        elif 130 <= height <= 220:
+            quality_score += 0.5
+        total_checks += 1
+        
+        # Weight validation
+        weight = user_data.get('weight', 0)
+        if 40 <= weight <= 150:
+            quality_score += 1.0
+        elif 30 <= weight <= 180:
+            quality_score += 0.8
+        elif 25 <= weight <= 200:
+            quality_score += 0.6
+        total_checks += 1
+        
+        # Gender validation
+        gender = user_data.get('gender', '').lower()
+        if gender in ['male', 'female']:
+            quality_score += 1.0
+        total_checks += 1
+        
+        # Activity level validation
+        activity_level = user_data.get('activity_level', '').lower()
+        valid_activities = ['sedentary', 'light', 'moderate', 'active', 'very_active']
+        if any(activity in activity_level for activity in valid_activities):
+            quality_score += 1.0
+        total_checks += 1
+        
+        # Fitness goal validation
+        fitness_goal = user_data.get('fitness_goal', '').lower()
+        valid_goals = ['weight_loss', 'muscle_gain', 'general_fitness', 'endurance', 'strength', 'maintenance']
+        if any(goal in fitness_goal for goal in valid_goals):
+            quality_score += 1.0
+        total_checks += 1
+        
+        # BMI consistency check
+        if all([age > 0, height > 0, weight > 0]):
+            bmi = weight / ((height / 100) ** 2)
+            if 16 <= bmi <= 40:  # Reasonable BMI range
+                quality_score += 1.0
+            elif 14 <= bmi <= 45:
+                quality_score += 0.7
+            total_checks += 1
+        
+        # Calculate final quality score
+        if total_checks > 0:
+            final_score = quality_score / total_checks
+        else:
+            final_score = 0.0
+        
+        return final_score
+    
+    def _assess_template_certainty(self, user_data, model_type):
+        """
+        Assess how well the user profile matches available templates
+        
+        Args:
+            user_data: User profile data
+            model_type: 'workout' or 'nutrition'
+            
+        Returns:
+            float: Certainty score between 0 and 1
+        """
+        certainty_score = 0.5  # Base score
+        
+        # Calculate BMI and category
+        height = user_data.get('height', 0)
+        weight = user_data.get('weight', 0)
+        age = user_data.get('age', 25)
+        activity_level = user_data.get('activity_level', 'moderate')
+        fitness_goal = user_data.get('fitness_goal', 'general_fitness')
+        
+        if height > 0 and weight > 0:
+            bmi = weight / ((height / 100) ** 2)
+            
+            # BMI category matching
+            if 18.5 <= bmi <= 24.9:
+                bmi_category = 'Normal'
+                certainty_score += 0.2  # Normal BMI is most common
+            elif 25 <= bmi <= 29.9:
+                bmi_category = 'Overweight'
+                certainty_score += 0.15
+            elif bmi >= 30:
+                bmi_category = 'Obese'
+                certainty_score += 0.1
+            elif bmi < 18.5:
+                bmi_category = 'Underweight'
+                certainty_score += 0.1
+            else:
+                bmi_category = 'Unknown'
+                certainty_score -= 0.1
+        
+        # Age group matching
+        if 25 <= age <= 45:
+            certainty_score += 0.15  # Most common fitness age range
+        elif 18 <= age <= 55:
+            certainty_score += 0.1
+        else:
+            certainty_score -= 0.1  # Less common age ranges
+        
+        # Activity level matching
+        activity_scores = {
+            'moderate': 0.1,  # Most common
+            'light': 0.05,
+            'active': 0.05,
+            'sedentary': 0.0,
+            'very_active': 0.0
+        }
+        certainty_score += activity_scores.get(activity_level.lower(), 0.0)
+        
+        # Goal matching
+        goal_scores = {
+            'general_fitness': 0.1,  # Most common
+            'weight_loss': 0.08,
+            'muscle_gain': 0.08,
+            'maintenance': 0.05,
+            'endurance': 0.03,
+            'strength': 0.03
+        }
+        certainty_score += goal_scores.get(fitness_goal.lower(), 0.0)
+        
+        # Model type adjustment
+        if model_type == 'nutrition':
+            # Nutrition templates are more standardized
+            certainty_score += 0.05
+        else:  # workout
+            # Workout templates are more variable
+            certainty_score -= 0.05
+        
+        # Ensure score is between 0 and 1
+        certainty_score = max(0.0, min(1.0, certainty_score))
+        
+        return certainty_score
     
     def get_confidence_explanation(self, user_data, confidence_scores):
         """
