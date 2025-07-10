@@ -157,7 +157,14 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
       {/* Quick Stats */}
       <div className="metric-cards">
         {getMetricCards().map((metric, index) => (
-          <div key={index} className="metric-card" style={{ borderLeft: `4px solid ${metric.color}` }}>
+          <div 
+            key={index} 
+            className="metric-card" 
+            style={{ 
+              borderLeft: `4px solid ${metric.color}`,
+              '--metric-color': metric.color 
+            }}
+          >
             <div className="metric-icon">{metric.icon}</div>
             <div className="metric-content">
               <div className="metric-value">
@@ -239,7 +246,7 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
 
       {/* Quick Actions */}
       <div className="quick-actions">
-        <h3>� Aksi Cepat</h3>
+        <h3>⚡ Aksi Cepat</h3>
         <div className="action-grid">
           <button 
             className="action-card"
