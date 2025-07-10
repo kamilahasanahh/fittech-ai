@@ -47,6 +47,19 @@ function App() {
       if (currentUser) {
         setUser(currentUser);
         setCurrentView('dashboard');
+        
+        // Load saved recommendations if they exist
+        try {
+          const currentRec = await recommendationService.getCurrentRecommendation(currentUser.uid);
+          if (currentRec) {
+            console.log('✅ Found existing recommendation on app load:', currentRec);
+            setRecommendations(currentRec.recommendations);
+            setUserData(currentRec.userData);
+            setCurrentRecommendation(currentRec);
+          }
+        } catch (error) {
+          console.error('Error loading existing recommendations:', error);
+        }
       }
     } catch (error) {
       console.error('Error checking auth state:', error);
@@ -101,6 +114,45 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Load saved recommendations when navigating to recommendations page
+  const loadSavedRecommendations = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      console.log('🔄 Loading saved recommendations...');
+      
+      // Get current active recommendation
+      const currentRec = await recommendationService.getCurrentRecommendation(user.uid);
+      if (currentRec) {
+        console.log('✅ Found saved recommendation:', currentRec);
+        setRecommendations(currentRec.recommendations);
+        setUserData(currentRec.userData);
+        setCurrentRecommendation(currentRec);
+      } else {
+        console.log('ℹ️ No saved recommendation found');
+        setRecommendations(null);
+        setUserData(null);
+      }
+    } catch (error) {
+      console.error('❌ Error loading saved recommendations:', error);
+      setError('Gagal memuat rekomendasi yang tersimpan');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Enhanced navigation handler
+  const handleNavigate = async (view) => {
+    if (view === 'recommendations') {
+      // Load saved recommendations when navigating to recommendations page
+      if (!recommendations) {
+        await loadSavedRecommendations();
+      }
+    }
+    setCurrentView(view);
   };
 
   const handleLogout = async () => {
@@ -173,25 +225,25 @@ function App() {
         <div className="container">
           <div className="nav-items">
             <button
-              onClick={() => setCurrentView('dashboard')}
+              onClick={() => handleNavigate('dashboard')}
               className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
             >
               📊 Dashboard
             </button>
             <button
-              onClick={() => setCurrentView('input')}
+              onClick={() => handleNavigate('input')}
               className={`nav-item ${currentView === 'input' ? 'active' : ''}`}
             >
               📝 Rencana Baru
             </button>
             <button
-              onClick={() => setCurrentView('recommendations')}
+              onClick={() => handleNavigate('recommendations')}
               className={`nav-item ${currentView === 'recommendations' ? 'active' : ''}`}
             >
               🎯 Rekomendasi
             </button>
             <button
-              onClick={() => setCurrentView('progress')}
+              onClick={() => handleNavigate('progress')}
               className={`nav-item ${currentView === 'progress' ? 'active' : ''}`}
             >
               📈 Progress
@@ -220,13 +272,32 @@ function App() {
             />
           )}
 
-          {currentView === 'recommendations' && recommendations && (
-            <RecommendationDisplay
-              recommendations={recommendations}
-              userData={userData}
-              onBack={handleBackToForm}
-              onNewRecommendation={handleNewRecommendation}
-            />
+          {currentView === 'recommendations' && (
+            <div className="recommendations-wrapper">
+              {loading && (
+                <div className="loading-message">
+                  <div className="spinner"></div>
+                  <p>Memuat rekomendasi...</p>
+                </div>
+              )}
+              {!loading && recommendations && (
+                <RecommendationDisplay
+                  recommendations={recommendations}
+                  userData={userData}
+                  onBack={handleBackToForm}
+                  onNewRecommendation={handleNewRecommendation}
+                />
+              )}
+              {!loading && !recommendations && (
+                <div className="no-recommendations">
+                  <h2>🤔 Belum Ada Rekomendasi</h2>
+                  <p>Anda belum memiliki rekomendasi yang tersimpan. Silakan buat rencana baru untuk mendapatkan rekomendasi yang dipersonalisasi.</p>
+                  <button onClick={() => setCurrentView('input')} className="btn-primary">
+                    Buat Rencana Baru
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
           {currentView === 'progress' && (
@@ -241,7 +312,7 @@ function App() {
               user={user}
               userData={userData}
               recommendations={recommendations}
-              onNavigate={setCurrentView}
+              onNavigate={handleNavigate}
             />
           )}
         </div>
