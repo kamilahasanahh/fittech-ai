@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../services/firebaseConfig';
 import { recommendationService } from '../services/recommendationService';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import RecommendationFeedback from './RecommendationFeedback';
 
 const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendation }) => {
   const [progressData, setProgressData] = useState({
@@ -748,6 +749,20 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
             </div>
           </div>
         </div>
+      )}
+
+      {/* Recommendation Feedback Section */}
+      {currentRecommendation && (
+        <RecommendationFeedback
+          currentRecommendation={currentRecommendation}
+          userProfile={userProfile}
+          user={user}
+          onRecommendationUpdate={(newRecommendation) => {
+            // Handle recommendation update
+            console.log('New recommendation applied:', newRecommendation);
+            // You can add logic here to update the current recommendation
+          }}
+        />
       )}
 
       <div className="progress-tips">

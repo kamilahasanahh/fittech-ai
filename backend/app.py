@@ -83,7 +83,8 @@ def home():
             '/health': 'GET - Check API health',
             '/templates': 'GET - Get available templates',
             '/validation-rules': 'GET - Get input validation rules',
-            '/calculate-metrics': 'POST - Calculate BMI, BMR, TDEE'
+            '/calculate-metrics': 'POST - Calculate BMI, BMR, TDEE',
+            '/improve-recommendation': 'POST - Get improved recommendations based on feedback'
         },
         'documentation': 'Send POST request to /predict with user data'
     })
@@ -388,6 +389,79 @@ def retrain_model():
             'error': 'Error during model retraining'
         }), 500
 
+@app.route('/improve-recommendation', methods=['POST'])
+def improve_recommendation():
+    """
+    Generate improved recommendations based on user feedback
+    
+    Expected JSON input:
+    {
+        "currentRecommendation": {...},
+        "userProfile": {...},
+        "feedback": {
+            "workoutDifficulty": "too_hard",
+            "workoutEnjoyment": "enjoyed",
+            "workoutEffectiveness": "effective",
+            "nutritionSatisfaction": "satisfied",
+            "energyLevel": "good",
+            "recovery": "good",
+            "overallSatisfaction": "satisfied"
+        }
+    }
+    """
+    global model
+    
+    try:
+        # Check if model is available
+        if not model or not model.is_trained:
+            return jsonify({
+                'success': False,
+                'error': 'Model not available. Please try again later.',
+                'code': 'MODEL_UNAVAILABLE'
+            }), 503
+        
+        # Get JSON data
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No JSON data provided',
+                'code': 'NO_DATA'
+            }), 400
+        
+        current_recommendation = data.get('currentRecommendation', {})
+        user_profile = data.get('userProfile', {})
+        feedback = data.get('feedback', {})
+        
+        if not current_recommendation or not user_profile or not feedback:
+            return jsonify({
+                'success': False,
+                'error': 'Missing required data: currentRecommendation, userProfile, or feedback',
+                'code': 'MISSING_DATA'
+            }), 400
+        
+        # Analyze feedback and generate suggestions
+        suggestions = analyze_feedback_and_suggest_improvements(
+            current_recommendation, user_profile, feedback, model
+        )
+        
+        return jsonify({
+            'success': True,
+            'suggestions': suggestions
+        })
+        
+    except Exception as e:
+        logger.error(f"Error improving recommendation: {str(e)}")
+        logger.error(traceback.format_exc())
+        
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error during recommendation improvement',
+            'code': 'IMPROVEMENT_ERROR',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors"""
@@ -432,6 +506,154 @@ def convert_numpy_types(obj):
     else:
         return obj
 
+def analyze_feedback_and_suggest_improvements(current_recommendation, user_profile, feedback, model):
+    """
+    Analyze user feedback and suggest improvements to recommendations
+    """
+    try:
+        workout_changes = []
+        nutrition_changes = []
+        new_recommendation = current_recommendation.copy()
+        
+        # Analyze workout difficulty feedback
+        if feedback.get('workoutDifficulty') == 'too_hard':
+            workout_changes.append("Kurangi intensitas latihan")
+            # Suggest easier template
+            current_goal = current_recommendation.get('workout_recommendation', {}).get('goal', 'Maintenance')
+            current_activity = current_recommendation.get('workout_recommendation', {}).get('activity_level', 'Moderate Activity')
+            
+            # Try to find easier template
+            if current_activity == 'High Activity':
+                new_activity = 'Moderate Activity'
+            elif current_activity == 'Moderate Activity':
+                new_activity = 'Low Activity'
+            else:
+                new_activity = current_activity
+                
+            new_template_id = model.template_manager.find_workout_template(current_goal, new_activity)
+            if new_template_id:
+                new_template = model.template_manager.get_workout_template(new_template_id)
+                new_recommendation['workout_recommendation'] = new_template
+                
+        elif feedback.get('workoutDifficulty') == 'too_easy':
+            workout_changes.append("Tingkatkan intensitas latihan")
+            # Suggest harder template
+            current_goal = current_recommendation.get('workout_recommendation', {}).get('goal', 'Maintenance')
+            current_activity = current_recommendation.get('workout_recommendation', {}).get('activity_level', 'Low Activity')
+            
+            # Try to find harder template
+            if current_activity == 'Low Activity':
+                new_activity = 'Moderate Activity'
+            elif current_activity == 'Moderate Activity':
+                new_activity = 'High Activity'
+            else:
+                new_activity = current_activity
+                
+            new_template_id = model.template_manager.find_workout_template(current_goal, new_activity)
+            if new_template_id:
+                new_template = model.template_manager.get_workout_template(new_template_id)
+                new_recommendation['workout_recommendation'] = new_template
+        
+        # Analyze workout enjoyment
+        if feedback.get('workoutEnjoyment') == 'disliked':
+            workout_changes.append("Pertimbangkan jenis latihan yang berbeda")
+            # Suggest different workout type
+            current_workout_type = current_recommendation.get('workout_recommendation', {}).get('workout_type', 'Full Body')
+            if current_workout_type == 'Full Body':
+                new_workout_type = 'Upper/Lower Split'
+            elif current_workout_type == 'Upper/Lower Split':
+                new_workout_type = 'Push/Pull/Legs'
+            else:
+                new_workout_type = 'Full Body'
+            
+            # Update workout type in recommendation
+            if 'workout_recommendation' in new_recommendation:
+                new_recommendation['workout_recommendation']['workout_type'] = new_workout_type
+        
+        # Analyze nutrition satisfaction
+        if feedback.get('nutritionSatisfaction') == 'unsatisfied':
+            nutrition_changes.append("Sesuaikan rencana nutrisi")
+            # Suggest different nutrition approach
+            current_goal = current_recommendation.get('nutrition_recommendation', {}).get('goal', 'Maintenance')
+            current_bmi = user_profile.get('bmi_category', 'Normal')
+            
+            # Try different nutrition template
+            available_templates = model.template_manager.nutrition_templates
+            alternative_templates = available_templates[
+                (available_templates['goal'] == current_goal) & 
+                (available_templates['bmi_category'] != current_bmi)
+            ]
+            
+            if not alternative_templates.empty:
+                new_template = alternative_templates.iloc[0].to_dict()
+                new_recommendation['nutrition_recommendation'] = new_template
+        
+        # Analyze energy and recovery
+        if feedback.get('energyLevel') == 'low' or feedback.get('recovery') == 'poor':
+            nutrition_changes.append("Tingkatkan nutrisi pemulihan")
+            # Suggest higher protein or different macro ratios
+            current_nutrition = new_recommendation.get('nutrition_recommendation', {})
+            if current_nutrition:
+                # Increase protein slightly
+                current_nutrition['protein_per_kg'] = min(current_nutrition.get('protein_per_kg', 2.0) + 0.2, 3.0)
+                # Recalculate targets
+                weight = user_profile.get('weight', 70)
+                current_nutrition['target_protein'] = int(weight * current_nutrition['protein_per_kg'])
+        
+        # Analyze overall satisfaction
+        if feedback.get('overallSatisfaction') == 'unsatisfied':
+            if not workout_changes:
+                workout_changes.append("Pertimbangkan menyesuaikan frekuensi atau intensitas latihan")
+            if not nutrition_changes:
+                nutrition_changes.append("Tinjau target nutrisi")
+        
+        # Generate suggestion messages
+        workout_changes_text = " dan ".join(workout_changes) if workout_changes else None
+        nutrition_changes_text = " dan ".join(nutrition_changes) if nutrition_changes else None
+        
+        # Generate detailed reasoning
+        reasoning_parts = []
+        
+        if feedback.get('workoutDifficulty') == 'too_hard':
+            reasoning_parts.append("Latihan Anda terasa terlalu menantang, jadi saya telah menyarankan tingkat intensitas yang lebih mudah dikelola.")
+        elif feedback.get('workoutDifficulty') == 'too_easy':
+            reasoning_parts.append("Latihan Anda terasa terlalu mudah, jadi saya telah meningkatkan intensitas untuk membantu Anda berkembang lebih cepat.")
+        
+        if feedback.get('workoutEnjoyment') == 'disliked':
+            reasoning_parts.append("Anda tidak menyukai jenis latihan saat ini, jadi saya telah menyarankan pendekatan yang berbeda.")
+        
+        if feedback.get('nutritionSatisfaction') == 'unsatisfied':
+            reasoning_parts.append("Rencana nutrisi Anda tidak memuaskan, jadi saya telah menyesuaikan rasio makronutrien.")
+        
+        if feedback.get('energyLevel') == 'low' or feedback.get('recovery') == 'poor':
+            reasoning_parts.append("Anda mengalami energi rendah atau pemulihan yang buruk, jadi saya telah mengoptimalkan nutrisi Anda untuk pemulihan yang lebih baik.")
+        
+        if feedback.get('overallSatisfaction') == 'unsatisfied':
+            reasoning_parts.append("Secara keseluruhan, Anda tidak puas dengan rencana saat ini, jadi saya telah membuat penyesuaian yang komprehensif.")
+        
+        if not reasoning_parts:
+            reasoning_parts.append("Berdasarkan feedback Anda, saya telah membuat penyesuaian yang ditargetkan untuk lebih sesuai dengan kebutuhan dan preferensi Anda.")
+        
+        reasoning = " ".join(reasoning_parts)
+        
+        return {
+            'workoutChanges': workout_changes_text,
+            'nutritionChanges': nutrition_changes_text,
+            'newRecommendation': new_recommendation,
+            'confidence': 'medium',
+            'reasoning': reasoning
+        }
+        
+    except Exception as e:
+        logger.error(f"Error analyzing feedback: {str(e)}")
+        return {
+            'workoutChanges': "Tidak dapat menganalisis feedback latihan",
+            'nutritionChanges': "Tidak dapat menganalisis feedback nutrisi", 
+            'newRecommendation': current_recommendation,
+            'confidence': 'low',
+            'reasoning': 'Terjadi kesalahan selama analisis'
+        }
+
 def create_app():
     """Application factory"""
     # Initialize model
@@ -456,6 +678,7 @@ if __name__ == '__main__':
         print("GET  /validation-rules - Get validation rules")
         print("GET  /model-info     - Get model information")
         print("POST /retrain        - Retrain model (admin)")
+        print("POST /improve-recommendation - Get improved recommendations based on feedback")
         
         # Print example request
         print("\nExample request to /predict:")

@@ -182,7 +182,7 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
             <div className="rec-actions">
               <button 
                 className="btn-primary small"
-                onClick={() => onNavigate('recommendations')}
+                onClick={() => onNavigate('recommendation')}
               >
                 Lihat Detail
               </button>

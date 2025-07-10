@@ -1,5 +1,5 @@
 // frontend/src/App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from './services/api';
 import { authService } from './services/authService';
 import { recommendationService } from './services/recommendationService';
@@ -12,9 +12,14 @@ import Dashboard from './components/Dashboard';
 import SystemStatus from './components/SystemStatus';
 import OfflineNotice from './components/OfflineNotice';
 import './styles/App.css';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import AuthPage from './pages/AuthPage';
+import DashboardPage from './pages/DashboardPage';
+import RecommendationPage from './pages/RecommendationPage';
+import ProgressPage from './pages/ProgressPage';
+import InputPage from './pages/InputPage';
 
 function App() {
-  const [currentView, setCurrentView] = useState('auth');
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [recommendations, setRecommendations] = useState(null);
@@ -23,6 +28,9 @@ function App() {
   const [error, setError] = useState('');
   const [systemStatus, setSystemStatus] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     checkSystemHealth();
@@ -41,12 +49,18 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (user && location.pathname === '/recommendation') {
+      loadSavedRecommendations();
+    }
+  }, [location.pathname, user]);
+
   const checkAuthState = async () => {
     try {
       const currentUser = await authService.getCurrentUser();
       if (currentUser) {
         setUser(currentUser);
-        setCurrentView('dashboard');
+        navigate('/dashboard');
         
         // Load saved recommendations if they exist
         try {
@@ -78,7 +92,7 @@ function App() {
 
   const handleAuthSuccess = (userData) => {
     setUser(userData);
-    setCurrentView('dashboard');
+    navigate('/dashboard');
   };
 
   const handleUserSubmit = async (formData) => {
@@ -106,7 +120,7 @@ function App() {
       
       setUserData(formData);
       setRecommendations(recommendations);
-      setCurrentView('recommendations');
+      navigate('/recommendation');
       
     } catch (err) {
       console.error('❌ Error mendapatkan rekomendasi:', err);
@@ -144,42 +158,6 @@ function App() {
     }
   };
 
-  // Enhanced navigation handler
-  const handleNavigate = async (view) => {
-    if (view === 'recommendations') {
-      // Load saved recommendations when navigating to recommendations page
-      if (!recommendations) {
-        await loadSavedRecommendations();
-      }
-    }
-    setCurrentView(view);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await authService.signOut();
-      setUser(null);
-      setUserData(null);
-      setRecommendations(null);
-      setCurrentRecommendation(null);
-      setCurrentView('auth');
-    } catch (error) {
-      console.error('Error logout:', error);
-    }
-  };
-
-  const handleBackToForm = () => {
-    setCurrentView('input');
-    setError('');
-  };
-
-  const handleNewRecommendation = async () => {
-    // For now, always allow creating new recommendations
-    // TODO: Implement logic to check if user has active recommendation
-    setCurrentView('input');
-    setError('');
-  };
-
   const handleProgressUpdate = (progressData) => {
     if (currentRecommendation) {
       setCurrentRecommendation(prev => ({
@@ -189,9 +167,18 @@ function App() {
     }
   };
 
-  if (currentView === 'auth') {
-    return <AuthForm onAuthSuccess={handleAuthSuccess} />;
-  }
+  const handleLogout = async () => {
+    try {
+      await authService.signOut();
+      setUser(null);
+      setUserData(null);
+      setRecommendations(null);
+      setCurrentRecommendation(null);
+      navigate('/');
+    } catch (error) {
+      console.error('Error logout:', error);
+    }
+  };
 
   return (
     <div className="App">
@@ -224,30 +211,10 @@ function App() {
       <nav className="app-navigation">
         <div className="container">
           <div className="nav-items">
-            <button
-              onClick={() => handleNavigate('dashboard')}
-              className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
-            >
-              📊 Dashboard
-            </button>
-            <button
-              onClick={() => handleNavigate('input')}
-              className={`nav-item ${currentView === 'input' ? 'active' : ''}`}
-            >
-              📝 Rencana Baru
-            </button>
-            <button
-              onClick={() => handleNavigate('recommendations')}
-              className={`nav-item ${currentView === 'recommendations' ? 'active' : ''}`}
-            >
-              🎯 Rekomendasi
-            </button>
-            <button
-              onClick={() => handleNavigate('progress')}
-              className={`nav-item ${currentView === 'progress' ? 'active' : ''}`}
-            >
-              📈 Progress
-            </button>
+            <button onClick={() => navigate('/dashboard')} className={`nav-item${window.location.pathname === '/dashboard' ? ' active' : ''}`}>📊 Dashboard</button>
+            <button onClick={() => navigate('/input')} className={`nav-item${window.location.pathname === '/input' ? ' active' : ''}`}>📝 Rencana Baru</button>
+            <button onClick={() => navigate('/recommendation')} className={`nav-item${window.location.pathname === '/recommendation' ? ' active' : ''}`}>🎯 Rekomendasi</button>
+            <button onClick={() => navigate('/progress')} className={`nav-item${window.location.pathname === '/progress' ? ' active' : ''}`}>📈 Progress</button>
           </div>
         </div>
       </nav>
@@ -263,58 +230,13 @@ function App() {
               </button>
             </div>
           )}
-
-          {currentView === 'input' && (
-            <EnhancedUserInputForm
-              onSubmit={handleUserSubmit}
-              loading={loading}
-              initialData={userData}
-            />
-          )}
-
-          {currentView === 'recommendations' && (
-            <div className="recommendations-wrapper">
-              {loading && (
-                <div className="loading-message">
-                  <div className="spinner"></div>
-                  <p>Memuat rekomendasi...</p>
-                </div>
-              )}
-              {!loading && recommendations && (
-                <RecommendationDisplay
-                  recommendations={recommendations}
-                  userData={userData}
-                  onBack={handleBackToForm}
-                  onNewRecommendation={handleNewRecommendation}
-                />
-              )}
-              {!loading && !recommendations && (
-                <div className="no-recommendations">
-                  <h2>🤔 Belum Ada Rekomendasi</h2>
-                  <p>Anda belum memiliki rekomendasi yang tersimpan. Silakan buat rencana baru untuk mendapatkan rekomendasi yang dipersonalisasi.</p>
-                  <button onClick={() => setCurrentView('input')} className="btn-primary">
-                    Buat Rencana Baru
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {currentView === 'progress' && (
-            <DailyProgress
-              user={user}
-              onProgressUpdate={handleProgressUpdate}
-            />
-          )}
-
-          {currentView === 'dashboard' && (
-            <Dashboard
-              user={user}
-              userData={userData}
-              recommendations={recommendations}
-              onNavigate={handleNavigate}
-            />
-          )}
+          <Routes>
+            <Route path="/" element={<AuthPage onAuthSuccess={handleAuthSuccess} />} />
+            <Route path="/dashboard" element={<DashboardPage user={user} userData={userData} recommendations={recommendations} onNavigate={navigate} />} />
+            <Route path="/input" element={<InputPage onSubmit={handleUserSubmit} loading={loading} initialData={userData} />} />
+            <Route path="/recommendation" element={<RecommendationPage recommendations={recommendations} userData={userData} onBack={() => navigate('/input')} onNewRecommendation={() => navigate('/input')} loading={loading} error={error} />} />
+            <Route path="/progress" element={<ProgressPage user={user} onProgressUpdate={handleProgressUpdate} userProfile={userData} currentRecommendation={currentRecommendation} />} />
+          </Routes>
         </div>
       </main>
     </div>
