@@ -10,7 +10,7 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
     hydration: false,
     notes: ''
   });
-  const [streak, setStreak] = useState(0);
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [recommendationHistory, setRecommendationHistory] = useState([]);
@@ -106,12 +106,7 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
         });
       }
       
-      // Load streak
-      const userRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists()) {
-        setStreak(userDoc.data().currentStreak || 0);
-      }
+
     } catch (error) {
       console.error('Error loading progress:', error);
     } finally {
@@ -149,19 +144,7 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
         updatedAt: new Date()
       });
 
-      // Update streak if all goals completed
-      if (newData.workout && newData.nutrition && newData.hydration) {
-        const userRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userRef);
-        const currentStreak = userDoc.exists() ? (userDoc.data().currentStreak || 0) : 0;
-        
-        await setDoc(userRef, {
-          currentStreak: currentStreak + 1,
-          lastActiveDate: today
-        }, { merge: true });
-        
-        setStreak(currentStreak + 1);
-      }
+
 
       onProgressUpdate && onProgressUpdate(newData);
     } catch (error) {
@@ -261,11 +244,7 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
           </div>
         </div>
 
-        <div className="streak-info">
-          <div className="streak-number">{streak}</div>
-          <div className="streak-label">Hari Berturut-turut</div>
-          <div className="streak-icon">🔥</div>
-        </div>
+
       </div>
 
       <div className="daily-goals">
@@ -502,7 +481,7 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
           <div className="celebration-content">
             <h3>🎉 Selamat!</h3>
             <p>Anda telah menyelesaikan semua target hari ini!</p>
-            <p>Streak Anda: <strong>{streak} hari</strong> 🔥</p>
+            <p>Terus pertahankan konsistensi Anda!</p>
             <button className="btn-primary">
               Bagikan Pencapaian
             </button>

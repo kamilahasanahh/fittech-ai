@@ -2342,35 +2342,7 @@ body {
   margin: 0;
 }
 
-.streak-info {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  min-width: 120px;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
 
-.streak-number {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.streak-label {
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  opacity: 0.9;
-}
-
-.streak-icon {
-  font-size: 1.5rem;
-}
 
 .daily-goals {
   background: #fff;
@@ -2912,10 +2884,7 @@ body {
     grid-template-columns: 1fr;
   }
   
-  .streak-info {
-    min-width: auto;
-    width: 100%;
-  }
+
   
   .history-header {
     flex-direction: column;
@@ -2942,9 +2911,7 @@ body {
     border-radius: 0;
   }
   
-  .streak-number {
-    font-size: 2rem;
-  }
+
   
   .goal-icon {
     font-size: 1.5rem;

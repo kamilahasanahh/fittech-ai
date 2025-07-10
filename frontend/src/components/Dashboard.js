@@ -10,7 +10,6 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
     progressData: [],
     stats: {
       totalRecommendations: 0,
-      currentStreak: 0,
       lastWeightEntry: null
     }
   });
@@ -40,7 +39,6 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
         progressData: progress.success ? progress.data : [],
         stats: {
           totalRecommendations: history.success ? history.data.length : 0,
-          currentStreak: calculateStreak(progress.success ? progress.data : []),
           lastWeightEntry: userData?.weight || null
         }
       });
@@ -51,24 +49,7 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
     }
   };
 
-  const calculateStreak = (progressData) => {
-    // Simple streak calculation - count consecutive days with any activity
-    let streak = 0;
-    const today = new Date();
-    
-    for (let i = 0; i < progressData.length; i++) {
-      const progressDate = new Date(progressData[i].date);
-      const daysDiff = Math.floor((today - progressDate) / (1000 * 60 * 60 * 24));
-      
-      if (daysDiff === i && (progressData[i].workout || progressData[i].nutrition)) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    
-    return streak;
-  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('id-ID', {
       day: 'numeric',
@@ -113,14 +94,7 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
         status: 'Kalori Basal',
         color: '#FF5722'
       },
-      {
-        title: 'Streak',
-        value: dashboardData.stats.currentStreak,
-        unit: 'hari',
-        icon: '⚡',
-        status: 'Konsistensi',
-        color: '#9C27B0'
-      }
+
     ];
   };
 
