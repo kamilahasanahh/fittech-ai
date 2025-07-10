@@ -82,11 +82,6 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
               gender: parsedData.gender || ''
             }));
             setStoredDataLoaded(true);
-            
-            // Show a brief message that stored data was loaded
-            setTimeout(() => {
-              setStoredDataLoaded(false);
-            }, 3000);
           }
         }
       } catch (error) {

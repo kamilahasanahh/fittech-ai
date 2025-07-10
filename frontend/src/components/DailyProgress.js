@@ -8,7 +8,21 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
     workout: false,
     nutrition: false,
     hydration: false,
-    notes: ''
+    notes: '',
+    mood: '',
+    workoutRating: 0,
+    energyLevel: 0,
+    sleepQuality: 0,
+    stressLevel: 0,
+    recommendationEffectiveness: 0,
+    weight: '',
+    bodyFat: '',
+    measurements: {
+      chest: '',
+      waist: '',
+      arms: '',
+      thighs: ''
+    }
   });
 
   const [loading, setLoading] = useState(false);
@@ -102,7 +116,21 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
           workout: data.workout || false,
           nutrition: data.nutrition || false,
           hydration: data.hydration || false,
-          notes: data.notes || ''
+          notes: data.notes || '',
+          mood: data.mood || '',
+          workoutRating: data.workoutRating || 0,
+          energyLevel: data.energyLevel || 0,
+          sleepQuality: data.sleepQuality || 0,
+          stressLevel: data.stressLevel || 0,
+          recommendationEffectiveness: data.recommendationEffectiveness || 0,
+          weight: data.weight || '',
+          bodyFat: data.bodyFat || '',
+          measurements: data.measurements || {
+            chest: '',
+            waist: '',
+            arms: '',
+            thighs: ''
+          }
         });
       }
       
@@ -173,6 +201,27 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
     setTimeout(() => saveProgress(newData), 1000);
   };
 
+  const handleFeedbackChange = (field, value) => {
+    const newData = {
+      ...progressData,
+      [field]: value
+    };
+    setProgressData(newData);
+    saveProgress(newData);
+  };
+
+  const handleMeasurementChange = (field, value) => {
+    const newData = {
+      ...progressData,
+      measurements: {
+        ...progressData.measurements,
+        [field]: value
+      }
+    };
+    setProgressData(newData);
+    saveProgress(newData);
+  };
+
   const getCompletionPercentage = () => {
     const goals = [progressData.workout, progressData.nutrition, progressData.hydration];
     const completed = goals.filter(Boolean).length;
@@ -190,6 +239,38 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
     } else {
       return "🌟 Mulai hari ini dengan semangat! Setiap langkah kecil berarti!";
     }
+  };
+
+  // Helper functions for feedback
+  const getMoodEmoji = (mood) => {
+    const moodEmojis = {
+      'excellent': '😄',
+      'good': '🙂',
+      'neutral': '😐',
+      'bad': '😔',
+      'terrible': '😢'
+    };
+    return moodEmojis[mood] || '😐';
+  };
+
+  const getRatingStars = (rating) => {
+    return '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
+  };
+
+  const getLevelLabel = (level) => {
+    if (level >= 4) return 'Sangat Tinggi';
+    if (level >= 3) return 'Tinggi';
+    if (level >= 2) return 'Sedang';
+    if (level >= 1) return 'Rendah';
+    return 'Sangat Rendah';
+  };
+
+  const getEffectivenessLabel = (rating) => {
+    if (rating >= 4) return 'Sangat Efektif';
+    if (rating >= 3) return 'Efektif';
+    if (rating >= 2) return 'Cukup Efektif';
+    if (rating >= 1) return 'Kurang Efektif';
+    return 'Tidak Efektif';
   };
 
   if (loading) {
@@ -314,6 +395,217 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
           disabled={saving}
         />
         {saving && <p className="saving-indicator">💾 Menyimpan...</p>}
+      </div>
+
+      {/* Mood & Feedback Section */}
+      <div className="feedback-section">
+        <h3>😊 Feedback Harian</h3>
+        
+        <div className="feedback-grid">
+          {/* Mood */}
+          <div className="feedback-card">
+            <h4>Bagaimana mood Anda hari ini?</h4>
+            <div className="mood-selector">
+              {[
+                { value: 'excellent', label: 'Sangat Baik', emoji: '😄' },
+                { value: 'good', label: 'Baik', emoji: '🙂' },
+                { value: 'neutral', label: 'Biasa', emoji: '😐' },
+                { value: 'bad', label: 'Kurang', emoji: '😔' },
+                { value: 'terrible', label: 'Buruk', emoji: '😢' }
+              ].map(mood => (
+                <button
+                  key={mood.value}
+                  className={`mood-btn ${progressData.mood === mood.value ? 'selected' : ''}`}
+                  onClick={() => handleFeedbackChange('mood', mood.value)}
+                  disabled={saving}
+                >
+                  <span className="mood-emoji">{mood.emoji}</span>
+                  <span className="mood-label">{mood.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Workout Rating */}
+          <div className="feedback-card">
+            <h4>Rate workout Anda hari ini (1-5)</h4>
+            <div className="rating-selector">
+              {[1, 2, 3, 4, 5].map(rating => (
+                <button
+                  key={rating}
+                  className={`rating-btn ${progressData.workoutRating === rating ? 'selected' : ''}`}
+                  onClick={() => handleFeedbackChange('workoutRating', rating)}
+                  disabled={saving}
+                >
+                  {rating}
+                </button>
+              ))}
+            </div>
+            {progressData.workoutRating > 0 && (
+              <div className="rating-display">
+                <span className="stars">{getRatingStars(progressData.workoutRating)}</span>
+                <span className="rating-text">({progressData.workoutRating}/5)</span>
+              </div>
+            )}
+          </div>
+
+          {/* Energy Level */}
+          <div className="feedback-card">
+            <h4>Level energi Anda hari ini</h4>
+            <div className="level-selector">
+              {[1, 2, 3, 4, 5].map(level => (
+                <button
+                  key={level}
+                  className={`level-btn ${progressData.energyLevel === level ? 'selected' : ''}`}
+                  onClick={() => handleFeedbackChange('energyLevel', level)}
+                  disabled={saving}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+            {progressData.energyLevel > 0 && (
+              <div className="level-display">
+                <span className="level-text">{getLevelLabel(progressData.energyLevel)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Sleep Quality */}
+          <div className="feedback-card">
+            <h4>Kualitas tidur malam kemarin</h4>
+            <div className="level-selector">
+              {[1, 2, 3, 4, 5].map(level => (
+                <button
+                  key={level}
+                  className={`level-btn ${progressData.sleepQuality === level ? 'selected' : ''}`}
+                  onClick={() => handleFeedbackChange('sleepQuality', level)}
+                  disabled={saving}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+            {progressData.sleepQuality > 0 && (
+              <div className="level-display">
+                <span className="level-text">{getLevelLabel(progressData.sleepQuality)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Stress Level */}
+          <div className="feedback-card">
+            <h4>Level stres Anda hari ini</h4>
+            <div className="level-selector">
+              {[1, 2, 3, 4, 5].map(level => (
+                <button
+                  key={level}
+                  className={`level-btn ${progressData.stressLevel === level ? 'selected' : ''}`}
+                  onClick={() => handleFeedbackChange('stressLevel', level)}
+                  disabled={saving}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+            {progressData.stressLevel > 0 && (
+              <div className="level-display">
+                <span className="level-text">{getLevelLabel(progressData.stressLevel)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Recommendation Effectiveness */}
+          <div className="feedback-card">
+            <h4>Seberapa efektif rekomendasi untuk Anda?</h4>
+            <div className="level-selector">
+              {[1, 2, 3, 4, 5].map(level => (
+                <button
+                  key={level}
+                  className={`level-btn ${progressData.recommendationEffectiveness === level ? 'selected' : ''}`}
+                  onClick={() => handleFeedbackChange('recommendationEffectiveness', level)}
+                  disabled={saving}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+            {progressData.recommendationEffectiveness > 0 && (
+              <div className="level-display">
+                <span className="level-text">{getEffectivenessLabel(progressData.recommendationEffectiveness)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Body Measurements Section */}
+      <div className="measurements-section">
+        <h3>📏 Pengukuran Tubuh</h3>
+        <div className="measurements-grid">
+          <div className="measurement-input">
+            <label>Berat Badan (kg)</label>
+            <input
+              type="number"
+              placeholder="Contoh: 65.5"
+              value={progressData.weight}
+              onChange={(e) => handleFeedbackChange('weight', e.target.value)}
+              disabled={saving}
+              step="0.1"
+            />
+          </div>
+          <div className="measurement-input">
+            <label>Body Fat %</label>
+            <input
+              type="number"
+              placeholder="Contoh: 15.2"
+              value={progressData.bodyFat}
+              onChange={(e) => handleFeedbackChange('bodyFat', e.target.value)}
+              disabled={saving}
+              step="0.1"
+            />
+          </div>
+          <div className="measurement-input">
+            <label>Lingkar Dada (cm)</label>
+            <input
+              type="number"
+              placeholder="Contoh: 95"
+              value={progressData.measurements.chest}
+              onChange={(e) => handleMeasurementChange('chest', e.target.value)}
+              disabled={saving}
+            />
+          </div>
+          <div className="measurement-input">
+            <label>Lingkar Pinggang (cm)</label>
+            <input
+              type="number"
+              placeholder="Contoh: 80"
+              value={progressData.measurements.waist}
+              onChange={(e) => handleMeasurementChange('waist', e.target.value)}
+              disabled={saving}
+            />
+          </div>
+          <div className="measurement-input">
+            <label>Lingkar Lengan (cm)</label>
+            <input
+              type="number"
+              placeholder="Contoh: 32"
+              value={progressData.measurements.arms}
+              onChange={(e) => handleMeasurementChange('arms', e.target.value)}
+              disabled={saving}
+            />
+          </div>
+          <div className="measurement-input">
+            <label>Lingkar Paha (cm)</label>
+            <input
+              type="number"
+              placeholder="Contoh: 55"
+              value={progressData.measurements.thighs}
+              onChange={(e) => handleMeasurementChange('thighs', e.target.value)}
+              disabled={saving}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Recommendation History Section */}

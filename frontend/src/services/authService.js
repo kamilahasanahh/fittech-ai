@@ -196,15 +196,17 @@ class AuthService {
         throw new Error('No authenticated user');
       }
 
-      const progressRef = collection(db, 'dailyProgress');
-      const docRef = await addDoc(progressRef, {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const progressRef = doc(db, 'userProgress', `${currentUser.uid}_${today}`);
+      
+      await setDoc(progressRef, {
         ...progressData,
         userId: currentUser.uid,
-        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-        createdAt: new Date()
-      });
+        date: today,
+        updatedAt: new Date()
+      }, { merge: true });
 
-      return { success: true, id: docRef.id };
+      return { success: true, id: progressRef.id };
     } catch (error) {
       console.error('Save progress error:', error);
       return { success: false, error: error.message };
@@ -219,22 +221,24 @@ class AuthService {
         throw new Error('No authenticated user');
       }
 
-      const progressRef = collection(db, 'dailyProgress');
-      const q = query(
-        progressRef,
-        where('userId', '==', currentUser.uid),
-        orderBy('createdAt', 'desc')
-      );
-
-      const querySnapshot = await getDocs(q);
+      // Get all progress documents for this user
+      const progressRef = collection(db, 'userProgress');
+      const querySnapshot = await getDocs(progressRef);
+      
       const progress = [];
       querySnapshot.forEach((doc) => {
-        progress.push({
-          id: doc.id,
-          ...doc.data()
-        });
+        const data = doc.data();
+        // Only include documents for the current user
+        if (data.userId === currentUser.uid) {
+          progress.push({
+            id: doc.id,
+            ...data
+          });
+        }
       });
 
+      // Sort by date (newest first) and limit results
+      progress.sort((a, b) => new Date(b.date) - new Date(a.date));
       return { success: true, data: progress.slice(0, limit) };
     } catch (error) {
       console.error('Get progress error:', error);
