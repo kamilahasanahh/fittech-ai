@@ -60,10 +60,9 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
     
     // Distribute daily calories across meals
     const mealDistribution = {
-      sarapan: { percentage: 0.25, name: '🌅 Sarapan' },
-      makan_siang: { percentage: 0.35, name: '☀️ Makan Siang' },
-      makan_malam: { percentage: 0.30, name: '🌙 Makan Malam' },
-      cemilan: { percentage: 0.10, name: '🍎 Cemilan' }
+      sarapan: { percentage: 0.30, name: '🌅 Sarapan' },
+      makan_siang: { percentage: 0.40, name: '☀️ Makan Siang' },
+      makan_malam: { percentage: 0.30, name: '🌙 Makan Malam' }
     };
 
     Object.entries(mealDistribution).forEach(([mealType, config]) => {
@@ -79,8 +78,6 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
         selectedFoods = nutritionService.getFoodsByCategory('lunch');
       } else if (mealType === 'makan_malam') {
         selectedFoods = nutritionService.getFoodsByCategory('dinner');
-      } else {
-        selectedFoods = nutritionService.getFoodsByCategory('snack');
       }
 
       // If no specific foods found, use all available
