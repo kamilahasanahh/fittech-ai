@@ -66,8 +66,9 @@ from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder  
 from sklearn.metrics import (accuracy_score, f1_score, precision_score, recall_score, 
                            classification_report, confusion_matrix, roc_auc_score,
-                           balanced_accuracy_score, cohen_kappa_score)
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier, StackingClassifier
+                           balanced_accuracy_score, cohen_kappa_score, mean_squared_error,
+                           mean_absolute_error, r2_score)
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, VotingClassifier, StackingClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 import xgboost as xgb
@@ -103,6 +104,11 @@ class XGFitnessAIModel:
         # Core XGBoost model components (following puremodel.py approach)
         self.workout_model = None
         self.nutrition_model = None
+        
+        # Random Forest baseline models for academic comparison
+        self.workout_rf_model = None
+        self.nutrition_rf_model = None
+        
         self.scaler = StandardScaler()
         self.workout_encoder = LabelEncoder()
         self.nutrition_encoder = LabelEncoder()
@@ -1289,6 +1295,519 @@ class XGFitnessAIModel:
         
         return self.training_info
     
+    def train_all_models(self, df_training, random_state=42):
+        """
+        Train both XGBoost and Random Forest models for comprehensive comparison
+        
+        Args:
+            df_training: Training dataset
+            random_state: Random seed for reproducibility
+            
+        Returns:
+            Dictionary with combined training information
+        """
+        print("\n🚀 COMPREHENSIVE MODEL TRAINING: XGBoost + Random Forest Baselines")
+        print("="*80)
+        
+        # Train XGBoost models first
+        print("\n📈 STEP 1: Training XGBoost Models...")
+        xgb_training_info = self.train_models(df_training, random_state)
+        
+        # Train Random Forest baseline models
+        print("\n🌲 STEP 2: Training Random Forest Baseline Models...")
+        rf_training_info = self.train_random_forest_baselines(df_training, random_state)
+        
+        # Create comprehensive comparison
+        print("\n📊 STEP 3: Generating Model Comparison...")
+        comparison_data = self.compare_model_performance()
+        
+        # Combine all training information
+        comprehensive_info = {
+            'xgb_training_info': xgb_training_info,
+            'rf_training_info': rf_training_info,
+            'comparison_data': comparison_data,
+            'training_completed_at': datetime.now().isoformat()
+        }
+        
+        print("\n✅ COMPREHENSIVE TRAINING COMPLETED!")
+        print("="*80)
+        print("Both XGBoost and Random Forest models have been trained and compared.")
+        print("Use compare_model_performance() to view detailed comparison tables.")
+        
+        return comprehensive_info
+    
+    def train_random_forest_baselines(self, df_training, random_state=42):
+        """
+        Train Random Forest baseline models for academic comparison with XGBoost
+        
+        Args:
+            df_training: Training dataset
+            random_state: Random seed for reproducibility
+            
+        Returns:
+            Dictionary with Random Forest model performance metrics
+        """
+        print("\n🌲 Training Random Forest Baseline Models for Academic Comparison...")
+        print("="*80)
+        
+        # Prepare data (same as XGBoost training)
+        X, y_workout, y_nutrition, df_enhanced = self.prepare_training_data(df_training)
+        
+        # Split data based on the 'split' column if available, otherwise use standard split
+        if 'split' in df_training.columns:
+            train_mask = df_enhanced['split'] == 'train'
+            val_mask = df_enhanced['split'] == 'validation' 
+            test_mask = df_enhanced['split'] == 'test'
+            
+            X_train = X[train_mask]
+            X_val = X[val_mask]
+            X_test = X[test_mask]
+            
+            y_w_train = y_workout[train_mask]
+            y_w_val = y_workout[val_mask]
+            y_w_test = y_workout[test_mask]
+            
+            y_n_train = y_nutrition[train_mask]
+            y_n_val = y_nutrition[val_mask]
+            y_n_test = y_nutrition[test_mask]
+            
+            print(f"Using predefined splits for Random Forest:")
+            print(f"  Training: {len(X_train)} samples")
+            print(f"  Validation: {len(X_val)} samples")
+            print(f"  Test: {len(X_test)} samples")
+            
+        else:
+            # Fallback to standard split if no split column
+            print("No split column found, using standard train/val/test split for Random Forest...")
+            
+            # First split: 70% training, 30% for validation+test
+            X_train, X_temp, y_w_train, y_w_temp, y_n_train, y_n_temp = train_test_split(
+                X, y_workout, y_nutrition, test_size=0.3, random_state=random_state,
+                stratify=y_workout
+            )
+            
+            # Second split: 15% validation, 15% test from the remaining 30%
+            X_val, X_test, y_w_val, y_w_test, y_n_val, y_n_test = train_test_split(
+                X_temp, y_w_temp, y_n_temp, test_size=0.5, random_state=random_state,
+                stratify=y_w_temp
+            )
+        
+        # Scale features (same scaler as XGBoost for fair comparison)
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_val_scaled = self.scaler.transform(X_val)
+        X_test_scaled = self.scaler.transform(X_test)
+        
+        # Use same label encoders as XGBoost for consistency
+        workout_label_encoder = LabelEncoder()
+        nutrition_label_encoder = LabelEncoder()
+        
+        # Fit on all possible template IDs to ensure consistency
+        all_workout_ids = list(range(1, 10))  # Template IDs 1-9
+        all_nutrition_ids = list(range(1, 9))  # Template IDs 1-8
+        
+        workout_label_encoder.fit(all_workout_ids)
+        nutrition_label_encoder.fit(all_nutrition_ids)
+        
+        # Transform to continuous indices
+        y_w_train_encoded = workout_label_encoder.transform(y_w_train)
+        y_w_val_encoded = workout_label_encoder.transform(y_w_val)
+        y_w_test_encoded = workout_label_encoder.transform(y_w_test)
+        
+        y_n_train_encoded = nutrition_label_encoder.transform(y_n_train)
+        y_n_val_encoded = nutrition_label_encoder.transform(y_n_val)
+        y_n_test_encoded = nutrition_label_encoder.transform(y_n_test)
+        
+        # Store encoders for Random Forest models
+        self.workout_rf_label_encoder = workout_label_encoder
+        self.nutrition_rf_label_encoder = nutrition_label_encoder
+        
+        print(f"Random Forest - Workout classes: {sorted(np.unique(y_w_train_encoded))}")
+        print(f"Random Forest - Nutrition classes: {sorted(np.unique(y_n_train_encoded))}")
+        
+        # Calculate class weights for Random Forest (same as XGBoost)
+        from sklearn.utils.class_weight import compute_class_weight
+        
+        workout_classes = np.unique(y_w_train_encoded)
+        workout_class_weights = compute_class_weight(
+            'balanced', 
+            classes=workout_classes, 
+            y=y_w_train_encoded
+        )
+        workout_weight_dict = dict(zip(workout_classes, workout_class_weights))
+        
+        nutrition_classes = np.unique(y_n_train_encoded)
+        nutrition_class_weights = compute_class_weight(
+            'balanced',
+            classes=nutrition_classes,
+            y=y_n_train_encoded
+        )
+        nutrition_weight_dict = dict(zip(nutrition_classes, nutrition_class_weights))
+        
+        # Random Forest hyperparameter distributions for fair comparison
+        rf_workout_param_distributions = {
+            'n_estimators': [100, 200, 300],
+            'max_depth': [10, 20, 30, None],
+            'min_samples_split': [2, 5, 10],
+            'min_samples_leaf': [1, 2, 4],
+            'max_features': ['sqrt', 'log2', None],
+            'bootstrap': [True, False],
+            'class_weight': ['balanced', 'balanced_subsample']
+        }
+        
+        rf_nutrition_param_distributions = {
+            'n_estimators': [100, 200, 300],
+            'max_depth': [10, 20, 30, None],
+            'min_samples_split': [2, 5, 10],
+            'min_samples_leaf': [1, 2, 4],
+            'max_features': ['sqrt', 'log2', None],
+            'bootstrap': [True, False]
+        }
+        
+        # Train Random Forest workout model (classification)
+        print("\n🌲 Training Random Forest Workout Model (Classification)...")
+        
+        rf_workout = RandomForestClassifier(
+            random_state=random_state,
+            n_jobs=-1,
+            verbose=0
+        )
+        
+        rf_workout_search = RandomizedSearchCV(
+            rf_workout,
+            param_distributions=rf_workout_param_distributions,
+            n_iter=20,  # Same as XGBoost for fair comparison
+            cv=5,  # 5-fold CV for Random Forest
+            scoring='f1_weighted',
+            random_state=random_state,
+            n_jobs=-1,
+            verbose=1
+        )
+        
+        rf_workout_search.fit(X_train_scaled, y_w_train_encoded)
+        self.workout_rf_model = rf_workout_search.best_estimator_
+        rf_workout_val_score = self.workout_rf_model.score(X_val_scaled, y_w_val_encoded)
+        
+        print(f"Best Random Forest workout parameters: {rf_workout_search.best_params_}")
+        print(f"Random Forest workout validation score: {rf_workout_val_score:.4f}")
+        
+        # Train Random Forest nutrition model (classification - same as XGBoost)
+        print("\n🌲 Training Random Forest Nutrition Model (Classification)...")
+        
+        rf_nutrition = RandomForestClassifier(
+            random_state=random_state,
+            n_jobs=-1,
+            verbose=0
+        )
+        
+        rf_nutrition_search = RandomizedSearchCV(
+            rf_nutrition,
+            param_distributions=rf_nutrition_param_distributions,
+            n_iter=20,  # Same as XGBoost for fair comparison
+            cv=5,  # 5-fold CV for Random Forest
+            scoring='accuracy',
+            random_state=random_state,
+            n_jobs=-1,
+            verbose=1
+        )
+        
+        rf_nutrition_search.fit(X_train_scaled, y_n_train_encoded)
+        self.nutrition_rf_model = rf_nutrition_search.best_estimator_
+        rf_nutrition_val_score = self.nutrition_rf_model.score(X_val_scaled, y_n_val_encoded)
+        
+        print(f"Best Random Forest nutrition parameters: {rf_nutrition_search.best_params_}")
+        print(f"Random Forest nutrition validation score: {rf_nutrition_val_score:.4f}")
+        
+        # Evaluate Random Forest models on test set
+        print("\n🌲 Evaluating Random Forest Models on Test Set...")
+        
+        # Random Forest workout evaluation
+        rf_y_w_pred = self.workout_rf_model.predict(X_test_scaled)
+        rf_y_w_pred_proba = self.workout_rf_model.predict_proba(X_test_scaled)
+        rf_workout_accuracy = accuracy_score(y_w_test_encoded, rf_y_w_pred)
+        rf_workout_f1 = f1_score(y_w_test_encoded, rf_y_w_pred, average='weighted')
+        
+        # Random Forest nutrition evaluation
+        rf_y_n_pred = self.nutrition_rf_model.predict(X_test_scaled)
+        rf_y_n_pred_proba = self.nutrition_rf_model.predict_proba(X_test_scaled)
+        rf_nutrition_accuracy = accuracy_score(y_n_test_encoded, rf_y_n_pred)
+        rf_nutrition_f1 = f1_score(y_n_test_encoded, rf_y_n_pred, average='weighted')
+        
+        # Calculate comprehensive metrics for Random Forest models
+        print("\nCalculating comprehensive metrics for Random Forest workout model...")
+        rf_workout_metrics = self._calculate_comprehensive_metrics(
+            y_w_test_encoded, rf_y_w_pred, rf_y_w_pred_proba, 
+            model_name="Random Forest Workout Model", encoder=self.workout_rf_label_encoder
+        )
+        
+        print("\nCalculating comprehensive metrics for Random Forest nutrition model...")
+        rf_nutrition_metrics = self._calculate_comprehensive_metrics(
+            y_n_test_encoded, rf_y_n_pred, rf_y_n_pred_proba, 
+            model_name="Random Forest Nutrition Model", encoder=self.nutrition_rf_label_encoder
+        )
+        
+        # Feature importance analysis for Random Forest models
+        print("\n=== Random Forest Feature Importance Analysis ===")
+        
+        # Get feature importance for Random Forest models
+        try:
+            rf_workout_importance = self.workout_rf_model.feature_importances_
+        except:
+            rf_workout_importance = np.ones(len(self.feature_columns)) / len(self.feature_columns)
+            
+        try:
+            rf_nutrition_importance = self.nutrition_rf_model.feature_importances_
+        except:
+            rf_nutrition_importance = np.ones(len(self.feature_columns)) / len(self.feature_columns)
+        
+        feature_names = self.feature_columns
+        
+        print("\nRandom Forest Workout Model - Top 10 Most Important Features:")
+        rf_workout_feat_importance = list(zip(feature_names, rf_workout_importance))
+        rf_workout_feat_importance.sort(key=lambda x: x[1], reverse=True)
+        for i, (feature, importance) in enumerate(rf_workout_feat_importance[:10]):
+            print(f"  {i+1}. {feature}: {importance:.4f}")
+        
+        print("\nRandom Forest Nutrition Model - Top 10 Most Important Features:")
+        rf_nutrition_feat_importance = list(zip(feature_names, rf_nutrition_importance))
+        rf_nutrition_feat_importance.sort(key=lambda x: x[1], reverse=True)
+        for i, (feature, importance) in enumerate(rf_nutrition_feat_importance[:10]):
+            print(f"  {i+1}. {feature}: {importance:.4f}")
+        
+        # Store Random Forest training information
+        rf_training_info = {
+            'training_samples': len(X_train),
+            'validation_samples': len(X_val),
+            'test_samples': len(X_test),
+            'total_samples': len(X),
+            'rf_workout_metrics': rf_workout_metrics,
+            'rf_nutrition_metrics': rf_nutrition_metrics,
+            'rf_workout_accuracy': rf_workout_accuracy,
+            'rf_workout_f1': rf_workout_f1,
+            'rf_nutrition_accuracy': rf_nutrition_accuracy,
+            'rf_nutrition_f1': rf_nutrition_f1,
+            'rf_workout_feature_importance': dict(rf_workout_feat_importance),
+            'rf_nutrition_feature_importance': dict(rf_nutrition_feat_importance),
+            'rf_trained_at': datetime.now().isoformat()
+        }
+        
+        print("\n🌲 Random Forest baseline training completed!")
+        print(f"Random Forest Workout model - Test Accuracy: {rf_workout_accuracy:.4f}, F1: {rf_workout_f1:.4f}")
+        print(f"Random Forest Nutrition model - Test Accuracy: {rf_nutrition_accuracy:.4f}, F1: {rf_nutrition_f1:.4f}")
+        
+        # Store Random Forest training info for later comparison
+        self.rf_training_info = rf_training_info
+        
+        return rf_training_info
+    
+    def compare_model_performance(self):
+        """
+        Create comprehensive comparison table between XGBoost and Random Forest models
+        
+        Returns:
+            Dictionary with detailed comparison metrics
+        """
+        if not self.is_trained or self.workout_rf_model is None:
+            raise ValueError("Both XGBoost and Random Forest models must be trained before comparison")
+        
+        print("\n📊 COMPREHENSIVE MODEL COMPARISON: XGBoost vs Random Forest")
+        print("="*80)
+        
+        # Extract metrics from training info
+        xgb_workout_metrics = self.training_info.get('workout_metrics', {})
+        xgb_nutrition_metrics = self.training_info.get('nutrition_metrics', {})
+        
+        # Get Random Forest metrics (assuming they're stored in training_info)
+        rf_workout_metrics = getattr(self, 'rf_training_info', {}).get('rf_workout_metrics', {})
+        rf_nutrition_metrics = getattr(self, 'rf_training_info', {}).get('rf_nutrition_metrics', {})
+        
+        # Create comparison table
+        comparison_data = {
+            'workout_model': {
+                'metric': [
+                    'Accuracy',
+                    'Balanced Accuracy', 
+                    'F1 Score (Weighted)',
+                    'F1 Score (Macro)',
+                    'Precision (Weighted)',
+                    'Recall (Weighted)',
+                    'Cohen\'s Kappa',
+                    'Top-2 Accuracy',
+                    'Top-3 Accuracy',
+                    'AUC-ROC (Weighted)'
+                ],
+                'xgboost': [
+                    xgb_workout_metrics.get('accuracy', 0),
+                    xgb_workout_metrics.get('balanced_accuracy', 0),
+                    xgb_workout_metrics.get('f1_weighted', 0),
+                    xgb_workout_metrics.get('f1_macro', 0),
+                    xgb_workout_metrics.get('precision_weighted', 0),
+                    xgb_workout_metrics.get('recall_weighted', 0),
+                    xgb_workout_metrics.get('cohen_kappa', 0),
+                    xgb_workout_metrics.get('top2_accuracy', 0),
+                    xgb_workout_metrics.get('top3_accuracy', 0),
+                    xgb_workout_metrics.get('auc_roc', 0) if xgb_workout_metrics.get('auc_roc') else 0
+                ],
+                'random_forest': [
+                    rf_workout_metrics.get('accuracy', 0),
+                    rf_workout_metrics.get('balanced_accuracy', 0),
+                    rf_workout_metrics.get('f1_weighted', 0),
+                    rf_workout_metrics.get('f1_macro', 0),
+                    rf_workout_metrics.get('precision_weighted', 0),
+                    rf_workout_metrics.get('recall_weighted', 0),
+                    rf_workout_metrics.get('cohen_kappa', 0),
+                    rf_workout_metrics.get('top2_accuracy', 0),
+                    rf_workout_metrics.get('top3_accuracy', 0),
+                    rf_workout_metrics.get('auc_roc', 0) if rf_workout_metrics.get('auc_roc') else 0
+                ]
+            },
+            'nutrition_model': {
+                'metric': [
+                    'Accuracy',
+                    'Balanced Accuracy',
+                    'F1 Score (Weighted)',
+                    'F1 Score (Macro)',
+                    'Precision (Weighted)',
+                    'Recall (Weighted)',
+                    'Cohen\'s Kappa',
+                    'Top-2 Accuracy',
+                    'Top-3 Accuracy',
+                    'AUC-ROC (Weighted)'
+                ],
+                'xgboost': [
+                    xgb_nutrition_metrics.get('accuracy', 0),
+                    xgb_nutrition_metrics.get('balanced_accuracy', 0),
+                    xgb_nutrition_metrics.get('f1_weighted', 0),
+                    xgb_nutrition_metrics.get('f1_macro', 0),
+                    xgb_nutrition_metrics.get('precision_weighted', 0),
+                    xgb_nutrition_metrics.get('recall_weighted', 0),
+                    xgb_nutrition_metrics.get('cohen_kappa', 0),
+                    xgb_nutrition_metrics.get('top2_accuracy', 0),
+                    xgb_nutrition_metrics.get('top3_accuracy', 0),
+                    xgb_nutrition_metrics.get('auc_roc', 0) if xgb_nutrition_metrics.get('auc_roc') else 0
+                ],
+                'random_forest': [
+                    rf_nutrition_metrics.get('accuracy', 0),
+                    rf_nutrition_metrics.get('balanced_accuracy', 0),
+                    rf_nutrition_metrics.get('f1_weighted', 0),
+                    rf_nutrition_metrics.get('f1_macro', 0),
+                    rf_nutrition_metrics.get('precision_weighted', 0),
+                    rf_nutrition_metrics.get('recall_weighted', 0),
+                    rf_nutrition_metrics.get('cohen_kappa', 0),
+                    rf_nutrition_metrics.get('top2_accuracy', 0),
+                    rf_nutrition_metrics.get('top3_accuracy', 0),
+                    rf_nutrition_metrics.get('auc_roc', 0) if rf_nutrition_metrics.get('auc_roc') else 0
+                ]
+            }
+        }
+        
+        # Print comparison tables
+        print("\n🏋️ WORKOUT MODEL COMPARISON:")
+        print("-" * 80)
+        print(f"{'Metric':<25} {'XGBoost':<12} {'Random Forest':<15} {'Difference':<12}")
+        print("-" * 80)
+        
+        for i, metric in enumerate(comparison_data['workout_model']['metric']):
+            xgb_val = comparison_data['workout_model']['xgboost'][i]
+            rf_val = comparison_data['workout_model']['random_forest'][i]
+            diff = xgb_val - rf_val
+            diff_str = f"{diff:+.4f}" if diff != 0 else "0.0000"
+            
+            print(f"{metric:<25} {xgb_val:<12.4f} {rf_val:<15.4f} {diff_str:<12}")
+        
+        print("\n🥗 NUTRITION MODEL COMPARISON:")
+        print("-" * 80)
+        print(f"{'Metric':<25} {'XGBoost':<12} {'Random Forest':<15} {'Difference':<12}")
+        print("-" * 80)
+        
+        for i, metric in enumerate(comparison_data['nutrition_model']['metric']):
+            xgb_val = comparison_data['nutrition_model']['xgboost'][i]
+            rf_val = comparison_data['nutrition_model']['random_forest'][i]
+            diff = xgb_val - rf_val
+            diff_str = f"{diff:+.4f}" if diff != 0 else "0.0000"
+            
+            print(f"{metric:<25} {xgb_val:<12.4f} {rf_val:<15.4f} {diff_str:<12}")
+        
+        # Calculate overall performance summary
+        print("\n📈 OVERALL PERFORMANCE SUMMARY:")
+        print("-" * 50)
+        
+        # Workout model summary
+        xgb_workout_avg = np.mean([
+            xgb_workout_metrics.get('accuracy', 0),
+            xgb_workout_metrics.get('f1_weighted', 0),
+            xgb_workout_metrics.get('balanced_accuracy', 0)
+        ])
+        
+        rf_workout_avg = np.mean([
+            rf_workout_metrics.get('accuracy', 0),
+            rf_workout_metrics.get('f1_weighted', 0),
+            rf_workout_metrics.get('balanced_accuracy', 0)
+        ])
+        
+        # Nutrition model summary
+        xgb_nutrition_avg = np.mean([
+            xgb_nutrition_metrics.get('accuracy', 0),
+            xgb_nutrition_metrics.get('f1_weighted', 0),
+            xgb_nutrition_metrics.get('balanced_accuracy', 0)
+        ])
+        
+        rf_nutrition_avg = np.mean([
+            rf_nutrition_metrics.get('accuracy', 0),
+            rf_nutrition_metrics.get('f1_weighted', 0),
+            rf_nutrition_metrics.get('balanced_accuracy', 0)
+        ])
+        
+        print(f"Workout Model Average Performance:")
+        print(f"  XGBoost: {xgb_workout_avg:.4f}")
+        print(f"  Random Forest: {rf_workout_avg:.4f}")
+        print(f"  XGBoost Advantage: {xgb_workout_avg - rf_workout_avg:+.4f}")
+        
+        print(f"\nNutrition Model Average Performance:")
+        print(f"  XGBoost: {xgb_nutrition_avg:.4f}")
+        print(f"  Random Forest: {rf_nutrition_avg:.4f}")
+        print(f"  XGBoost Advantage: {xgb_nutrition_avg - rf_nutrition_avg:+.4f}")
+        
+        # Academic insights
+        print("\n🎓 ACADEMIC INSIGHTS:")
+        print("-" * 50)
+        
+        if xgb_workout_avg > rf_workout_avg:
+            print(f"✅ XGBoost outperforms Random Forest for workout recommendations")
+            print(f"   Improvement: {((xgb_workout_avg/rf_workout_avg - 1) * 100):.2f}%")
+        else:
+            print(f"⚠️ Random Forest performs better for workout recommendations")
+            print(f"   XGBoost deficit: {((rf_workout_avg/xgb_workout_avg - 1) * 100):.2f}%")
+        
+        if xgb_nutrition_avg > rf_nutrition_avg:
+            print(f"✅ XGBoost outperforms Random Forest for nutrition recommendations")
+            print(f"   Improvement: {((xgb_nutrition_avg/rf_nutrition_avg - 1) * 100):.2f}%")
+        else:
+            print(f"⚠️ Random Forest performs better for nutrition recommendations")
+            print(f"   XGBoost deficit: {((rf_nutrition_avg/xgb_nutrition_avg - 1) * 100):.2f}%")
+        
+        # Feature importance comparison
+        print("\n🔍 FEATURE IMPORTANCE COMPARISON:")
+        print("-" * 50)
+        
+        xgb_workout_importance = self.training_info.get('workout_feature_importance', {})
+        rf_workout_importance = getattr(self, 'rf_training_info', {}).get('rf_workout_feature_importance', {})
+        
+        if xgb_workout_importance and rf_workout_importance:
+            # Get top 5 features for each model
+            xgb_top_features = sorted(xgb_workout_importance.items(), key=lambda x: x[1], reverse=True)[:5]
+            rf_top_features = sorted(rf_workout_importance.items(), key=lambda x: x[1], reverse=True)[:5]
+            
+            print("Top 5 Most Important Features - Workout Model:")
+            print("XGBoost:")
+            for i, (feature, importance) in enumerate(xgb_top_features):
+                print(f"  {i+1}. {feature}: {importance:.4f}")
+            
+            print("Random Forest:")
+            for i, (feature, importance) in enumerate(rf_top_features):
+                print(f"  {i+1}. {feature}: {importance:.4f}")
+        
+        return comparison_data
+    
     def _calculate_comprehensive_metrics(self, y_true, y_pred, y_pred_proba, model_name, encoder):
         """
         Calculate comprehensive performance metrics for model evaluation
@@ -1989,15 +2508,20 @@ class XGFitnessAIModel:
         model_data = {
             'workout_model': self.workout_model,
             'nutrition_model': self.nutrition_model,
+            'workout_rf_model': self.workout_rf_model,
+            'nutrition_rf_model': self.nutrition_rf_model,
             'scaler': self.scaler,
             'workout_label_encoder': getattr(self, 'workout_label_encoder', None),
             'nutrition_label_encoder': getattr(self, 'nutrition_label_encoder', None),
+            'workout_rf_label_encoder': getattr(self, 'workout_rf_label_encoder', None),
+            'nutrition_rf_label_encoder': getattr(self, 'nutrition_rf_label_encoder', None),
             'feature_columns': self.feature_columns,
             'workout_templates': self.workout_templates,
             'nutrition_templates': self.nutrition_templates,
             'training_info': self.training_info,
+            'rf_training_info': getattr(self, 'rf_training_info', None),
             'is_trained': self.is_trained,
-            'model_version': '2.0',
+            'model_version': '2.1',
             'saved_at': datetime.now().isoformat()
         }
         
@@ -2006,8 +2530,10 @@ class XGFitnessAIModel:
             pickle.dump(model_data, f)
         
         print(f"✅ Model successfully saved to: {filepath}")
-        print(f"   - Workout model: {type(self.workout_model).__name__}")
-        print(f"   - Nutrition model: {type(self.nutrition_model).__name__}")
+        print(f"   - XGBoost Workout model: {type(self.workout_model).__name__}")
+        print(f"   - XGBoost Nutrition model: {type(self.nutrition_model).__name__}")
+        print(f"   - Random Forest Workout model: {type(self.workout_rf_model).__name__ if self.workout_rf_model else 'Not trained'}")
+        print(f"   - Random Forest Nutrition model: {type(self.nutrition_rf_model).__name__ if self.nutrition_rf_model else 'Not trained'}")
         print(f"   - Training info: {len(self.training_info)} metrics")
     
     def load_model(self, filepath):
@@ -2029,13 +2555,18 @@ class XGFitnessAIModel:
         # Restore model components
         self.workout_model = model_data['workout_model']
         self.nutrition_model = model_data['nutrition_model']
+        self.workout_rf_model = model_data.get('workout_rf_model')
+        self.nutrition_rf_model = model_data.get('nutrition_rf_model')
         self.scaler = model_data['scaler']
         self.workout_label_encoder = model_data.get('workout_label_encoder')
         self.nutrition_label_encoder = model_data.get('nutrition_label_encoder')
+        self.workout_rf_label_encoder = model_data.get('workout_rf_label_encoder')
+        self.nutrition_rf_label_encoder = model_data.get('nutrition_rf_label_encoder')
         self.feature_columns = model_data['feature_columns']
         self.workout_templates = model_data['workout_templates']
         self.nutrition_templates = model_data['nutrition_templates']
         self.training_info = model_data['training_info']
+        self.rf_training_info = model_data.get('rf_training_info')
         self.is_trained = model_data['is_trained']
         
         model_version = model_data.get('model_version', '1.0')
@@ -2044,11 +2575,16 @@ class XGFitnessAIModel:
         print(f"✅ Model successfully loaded!")
         print(f"   - Model version: {model_version}")
         print(f"   - Saved at: {saved_at}")
-        print(f"   - Workout model: {type(self.workout_model).__name__}")
-        print(f"   - Nutrition model: {type(self.nutrition_model).__name__}")
+        print(f"   - XGBoost Workout model: {type(self.workout_model).__name__}")
+        print(f"   - XGBoost Nutrition model: {type(self.nutrition_model).__name__}")
+        print(f"   - Random Forest Workout model: {type(self.workout_rf_model).__name__ if self.workout_rf_model else 'Not available'}")
+        print(f"   - Random Forest Nutrition model: {type(self.nutrition_rf_model).__name__ if self.nutrition_rf_model else 'Not available'}")
         print(f"   - Training samples: {self.training_info.get('training_samples', 'Unknown')}")
-        print(f"   - Workout accuracy: {self.training_info.get('workout_accuracy', 0):.4f}")
-        print(f"   - Nutrition accuracy: {self.training_info.get('nutrition_accuracy', 0):.4f}")
+        print(f"   - XGBoost Workout accuracy: {self.training_info.get('workout_accuracy', 0):.4f}")
+        print(f"   - XGBoost Nutrition accuracy: {self.training_info.get('nutrition_accuracy', 0):.4f}")
+        if self.rf_training_info:
+            print(f"   - Random Forest Workout accuracy: {self.rf_training_info.get('rf_workout_accuracy', 0):.4f}")
+            print(f"   - Random Forest Nutrition accuracy: {self.rf_training_info.get('rf_nutrition_accuracy', 0):.4f}")
     
     def test_confidence_improvements(self):
         """
