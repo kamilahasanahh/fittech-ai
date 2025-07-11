@@ -109,20 +109,20 @@ source .venv/bin/activate   # Linux/Mac
 ```bash
 # Activate virtual environment
 .venv\Scripts\activate      # Windows
+pip install -r requirements.txt
 
 # Install dependencies and train models
 cd backend
-pip install -r requirements.txt
-python train_model.py      # Train XGBoost models with feature engineering
-python app.py              # Start Flask API server
+python train_model.py     
+python app.py             
 ```
 
 ### Frontend Setup
 ```bash
 cd frontend
 npm install
-npm run build              # Production build
-npm start                  # Development server
+npm run build
+npm start                
 ```
 
 ### Testing

@@ -31,7 +31,7 @@ def main():
     # Create training dataset
     print("🔍 Creating training dataset...")
     training_data = model.create_training_dataset(
-        real_data_file='../data/backups/e267_Data on age, gender, height, weight, activity levels for each household member.txt',
+        real_data_file='e267_Data on age, gender, height, weight, activity levels for each household member.txt',
         total_samples=2000,
         random_state=42
     )
@@ -129,13 +129,35 @@ def main():
                 print(f"    Nutrition: {conf['nutrition_confidence']:.3f}")
                 print(f"  💬 Message: {conf['confidence_message']}")
                 
-                # Show explanation if available
-                explanation = conf.get('confidence_explanation', {})
-                if explanation:
-                    print(f"  📝 Summary: {explanation.get('summary', 'N/A')}")
-                    tips = explanation.get('improvement_tips', [])
-                    if tips:
-                        print(f"  💡 Tips: {len(tips)} improvement suggestions")
+                # Show actual recommendations
+                workout = result.get('workout_recommendation', {})
+                nutrition = result.get('nutrition_recommendation', {})
+                
+                print(f"  🏋️ Workout Plan:")
+                print(f"    Type: {workout.get('workout_type', 'N/A')}")
+                print(f"    Days/Week: {workout.get('days_per_week', 'N/A')}")
+                print(f"    Schedule: {workout.get('workout_schedule', 'N/A')}")
+                print(f"    Sets per Exercise: {workout.get('sets_per_exercise', 'N/A')}")
+                print(f"    Exercises per Session: {workout.get('exercises_per_session', 'N/A')}")
+                print(f"    Cardio Minutes/Day: {workout.get('cardio_minutes_per_day', 'N/A')}")
+                print(f"    Cardio Sessions/Day: {workout.get('cardio_sessions_per_day', 'N/A')}")
+                
+                print(f"  🥗 Nutrition Plan:")
+                # Calculate actual values based on user data
+                user_weight = example['data']['weight']
+                calories = nutrition.get('target_calories', 0)  # Fixed: use target_calories
+                protein_per_kg = nutrition.get('protein_per_kg', 0)
+                carbs_per_kg = nutrition.get('carbs_per_kg', 0)
+                fat_per_kg = nutrition.get('fat_per_kg', 0)
+                
+                protein_grams = protein_per_kg * user_weight
+                carbs_grams = carbs_per_kg * user_weight
+                fat_grams = fat_per_kg * user_weight
+                
+                print(f"    Caloric Intake: {calories:.0f} kcal")
+                print(f"    Protein: {protein_grams:.0f}g ({protein_per_kg:.1f}g/kg)")
+                print(f"    Carbohydrates: {carbs_grams:.0f}g ({carbs_per_kg:.1f}g/kg)")
+                print(f"    Fats: {fat_grams:.0f}g ({fat_per_kg:.1f}g/kg)")
             else:
                 print(f"  ❌ Error: {result['error']}")
         except Exception as e:

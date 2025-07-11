@@ -40,19 +40,19 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
   const ACTIVITY_LEVELS = {
     'Low Activity': {
       label: 'Aktivitas Rendah',
-      description: 'Olahraga ringan dengan intensitas rendah',
+      description: 'Kurang dari 150 menit aktivitas fisik sedang ATAU kurang dari 75 menit aktivitas fisik berat per minggu',
       multiplier: '1.29',
       icon: '🚶‍♂️'
     },
     'Moderate Activity': {
       label: 'Aktivitas Sedang',
-      description: 'Olahraga teratur dengan intensitas sedang',
+      description: '150-300 menit aktivitas fisik sedang ATAU 75-150 menit aktivitas fisik berat per minggu',
       multiplier: '1.55',
       icon: '🏃‍♂️'
     },
     'High Activity': {
       label: 'Aktivitas Tinggi',
-      description: 'Olahraga intensif dengan frekuensi tinggi',
+      description: 'Lebih dari 300 menit aktivitas fisik sedang ATAU lebih dari 150 menit aktivitas fisik berat per minggu',
       multiplier: '1.81',
       icon: '🏋️‍♂️'
     }
@@ -616,6 +616,36 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                 </div>
               ))}
             </div>
+            
+            {/* Informational card */}
+            <div className="info-card" style={{
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #e9ecef',
+              borderRadius: '12px',
+              padding: '16px',
+              marginTop: '20px',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                marginBottom: '8px'
+              }}>
+                <span style={{ fontSize: '20px' }}>💡</span>
+                <strong style={{ color: '#495057' }}>Informasi</strong>
+              </div>
+              <p style={{
+                margin: 0,
+                color: '#6c757d',
+                fontSize: '14px',
+                lineHeight: '1.4'
+              }}>
+                Aktivitas fisik = semua gerakan tubuh (olahraga + pekerjaan + aktivitas harian) yang membuat Anda bergerak aktif dan berkeringat
+              </p>
+            </div>
+            
             {validationErrors.activity_level && (
               <span className="error-text">{validationErrors.activity_level}</span>
             )}

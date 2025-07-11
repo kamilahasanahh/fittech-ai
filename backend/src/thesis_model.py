@@ -28,6 +28,39 @@ import json
 from datetime import datetime
 warnings.filterwarnings('ignore')
 
+# Helper functions
+def categorize_bmi(bmi):
+    """Categorize BMI into standard WHO categories"""
+    if bmi < 18.5:
+        return 'Underweight'
+    elif bmi < 25:
+        return 'Normal'
+    elif bmi < 30:
+        return 'Overweight'
+    else:
+        return 'Obese'
+
+def calculate_bmr(weight_kg, height_cm, age, gender):
+    """Calculate Basal Metabolic Rate using Harris-Benedict equation"""
+    if gender == 'Male':
+        return 88.362 + (13.397 * weight_kg) + (4.799 * height_cm) - (5.677 * age)
+    else:
+        return 447.593 + (9.247 * weight_kg) + (3.098 * height_cm) - (4.330 * age)
+
+def calculate_tdee(bmr, activity_level):
+    """Calculate Total Daily Energy Expenditure"""
+    multipliers = {
+        'Low Activity': 1.29,
+        'Moderate Activity': 1.55,
+        'High Activity': 1.81
+    }
+    return bmr * multipliers.get(activity_level, 1.29)
+
+def get_template_manager(templates_dir):
+    """Get template manager instance"""
+    from templates import TemplateManager
+    return TemplateManager(templates_dir)
+
 # Machine Learning imports (following puremodel.py structure)
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder  
@@ -81,24 +114,25 @@ class XGFitnessAIModel:
             'High Activity': 1.81
         }
         
-        # Feature columns optimized for performance (includes all 11 enhanced features)
+        # Feature columns optimized - DRASTICALLY REDUCED to prevent overfitting
         self.feature_columns = [
-            # Core features (essential)
+            # Core demographics only
             'age', 'gender_encoded', 'height_cm', 'weight_kg', 'bmi',
-            'bmr', 'tdee', 'activity_encoded', 'goal_encoded', 'bmi_category_encoded',
             
-            # Key interaction features (most predictive)
-            'bmi_goal_interaction', 'age_activity_interaction', 'bmi_activity_interaction',
-            'age_goal_interaction', 'gender_goal_interaction',
+            # Basic metabolic features
+            'bmr', 'tdee', 
             
-            # Essential metabolic ratios
-            'bmr_per_kg', 'tdee_bmr_ratio', 'calorie_need_per_kg',
+            # Activity level (encoded, not raw activity data)
+            'activity_encoded',
             
-            # Health deviation scores
-            'bmi_deviation', 'weight_height_ratio',
+            # Goal (but not interactions that might cause overfitting)
+            'goal_encoded',
             
-            # Key boolean flags
-            'high_metabolism', 'very_active', 'young_adult'
+            # BMI category 
+            'bmi_category_encoded',
+            
+            # Only essential ratios
+            'tdee_bmr_ratio'
         ]
         
         # Training metadata
@@ -148,26 +182,38 @@ class XGFitnessAIModel:
             # Fallback to basic templates if file not found
             templates = [
                 {'template_id': 1, 'goal': 'Fat Loss', 'bmi_category': 'Normal', 
-                 'caloric_intake': 0.80, 'protein_per_kg': 2.3, 'carbs_per_kg': 2.75, 'fat_per_kg': 0.85},
+                 'caloric_intake_multiplier': 0.80, 'protein_per_kg': 2.3, 'carbs_per_kg': 2.75, 'fat_per_kg': 0.85},
                 {'template_id': 2, 'goal': 'Fat Loss', 'bmi_category': 'Overweight', 
-                 'caloric_intake': 0.75, 'protein_per_kg': 2.15, 'carbs_per_kg': 2.25, 'fat_per_kg': 0.80},
+                 'caloric_intake_multiplier': 0.75, 'protein_per_kg': 2.15, 'carbs_per_kg': 2.25, 'fat_per_kg': 0.80},
                 {'template_id': 3, 'goal': 'Fat Loss', 'bmi_category': 'Obese', 
-                 'caloric_intake': 0.70, 'protein_per_kg': 2.45, 'carbs_per_kg': 1.75, 'fat_per_kg': 0.80}
+                 'caloric_intake_multiplier': 0.70, 'protein_per_kg': 2.45, 'carbs_per_kg': 1.75, 'fat_per_kg': 0.80}
             ]
             return pd.DataFrame(templates)
     
     def load_real_data(self, file_path='e267_Data on age, gender, height, weight, activity levels for each household member.txt'):
         """
         Load and process real data from the dataset file
+        If file doesn't exist, return empty DataFrame to trigger dummy data generation
         """
         print(f"Loading real data from {file_path}...")
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            print(f"⚠️ Data file not found: {file_path}")
+            print("Returning empty DataFrame - will use dummy data generation")
+            return pd.DataFrame()
         
         # Read the tab-separated file
         try:
             df_raw = pd.read_csv(file_path, sep='\t', encoding='utf-8')
         except:
             # Try different encoding if utf-8 fails
-            df_raw = pd.read_csv(file_path, sep='\t', encoding='latin-1')
+            try:
+                df_raw = pd.read_csv(file_path, sep='\t', encoding='latin-1')
+            except Exception as e:
+                print(f"❌ Error reading file: {e}")
+                print("Returning empty DataFrame - will use dummy data generation")
+                return pd.DataFrame()
         
         print(f"Raw data shape: {df_raw.shape}")
         print(f"Columns: {list(df_raw.columns)}")
@@ -243,29 +289,50 @@ class XGFitnessAIModel:
             
             bmi_category = categorize_bmi(bmi)
             
-            # Determine activity level from moderate and vigorous activity with more realistic logic
-            total_activity = 0
+            # Process activity data using WHO guidelines - keep original values
+            mod_act_hours = 0
+            vig_act_hours = 0
+            has_activity_data = False
+            
+            # Process moderate activity (keep as hours for direct input)
             try:
                 if not pd.isna(mod_act) and str(mod_act).strip():
-                    total_activity += float(mod_act)
+                    mod_act_hours = float(mod_act)
+                    if mod_act_hours >= 0:  # Validate non-negative
+                        has_activity_data = True
             except (ValueError, TypeError):
-                pass  # Skip invalid moderate activity values
+                pass  # Keep as 0 for invalid values
                 
+            # Process vigorous activity (keep as hours for direct input)
             try:
                 if not pd.isna(vig_act) and str(vig_act).strip():
-                    total_activity += float(vig_act) * 2  # Vigorous counts double
+                    vig_act_hours = float(vig_act)
+                    if vig_act_hours >= 0:  # Validate non-negative
+                        has_activity_data = True
             except (ValueError, TypeError):
-                pass  # Skip invalid vigorous activity values
+                pass  # Keep as 0 for invalid values
             
-            # More nuanced activity level assignment considering age and gender
-            if total_activity >= 300:  # 5+ hours equivalent per week
-                activity_level = 'High Activity'
-            elif total_activity >= 150:  # 2.5+ hours equivalent per week
-                activity_level = 'Moderate Activity'
+            # Convert to minutes for WHO guidelines calculation
+            mod_act_minutes = mod_act_hours * 60
+            vig_act_minutes = vig_act_hours * 60
+            
+            # Determine activity level using WHO guidelines
+            if has_activity_data:
+                # Use WHO guidelines for activity classification
+                if (mod_act_minutes >= 300 or vig_act_minutes >= 150):
+                    activity_level = 'High Activity'
+                    activity_multiplier = 1.81
+                elif (mod_act_minutes >= 150 or vig_act_minutes >= 75):
+                    activity_level = 'Moderate Activity'
+                    activity_multiplier = 1.55
+                else:
+                    activity_level = 'Low Activity'
+                    activity_multiplier = 1.29
             else:
-                # For low recorded activity, use age and gender patterns
+                # For missing activity data, impute based on demographics
+                # Use age, gender, and BMI patterns from available data
                 if age < 30:
-                    # Young adults more likely to be active even if not recorded
+                    # Young adults more likely to be active
                     if gender == 'Male':
                         activity_level = np.random.choice(['Moderate Activity', 'Low Activity'], p=[0.6, 0.4])
                     else:
@@ -279,6 +346,14 @@ class XGFitnessAIModel:
                 else:
                     # Older adults (45-65)
                     activity_level = np.random.choice(['Moderate Activity', 'Low Activity'], p=[0.2, 0.8])
+                
+                # Set multiplier based on assigned level
+                if activity_level == 'High Activity':
+                    activity_multiplier = 1.81
+                elif activity_level == 'Moderate Activity':
+                    activity_multiplier = 1.55
+                else:
+                    activity_multiplier = 1.29
             
             # Assign realistic fitness goals based on BMI, age, and gender with sophisticated logic
             if bmi_category == 'Underweight':
@@ -368,9 +443,9 @@ class XGFitnessAIModel:
                 print(f"⚠️ No template found for: goal={fitness_goal}, activity={activity_level}, bmi={bmi_category}")
                 continue
             
-            # Add controlled noise to reduce nutrition model overfitting
+            # Add MINIMAL noise to prevent overfitting while preserving assignment logic
             workout_id, nutrition_id = self._add_template_assignment_noise(
-                workout_id, nutrition_id, fitness_goal, activity_level, bmi_category, noise_prob=0.12
+                workout_id, nutrition_id, fitness_goal, activity_level, bmi_category, noise_prob=0.02  # MINIMAL 2% to fix mismatches
             )
             
             # Verify nutrition template is one of the 8 valid IDs
@@ -388,6 +463,10 @@ class XGFitnessAIModel:
                 'bmr': round(bmr, 1),
                 'tdee': round(tdee, 1),
                 'activity_level': activity_level,
+                'activity_multiplier': activity_multiplier,
+                'Mod_act': round(mod_act_hours, 2),  # Direct input hours
+                'Vig_act': round(vig_act_hours, 2),  # Direct input hours
+                'has_activity_data': has_activity_data,
                 'fitness_goal': fitness_goal,
                 'workout_template_id': workout_id,
                 'nutrition_template_id': nutrition_id,
@@ -465,6 +544,28 @@ class XGFitnessAIModel:
                                                 p=[0.1, 0.4, 0.5])
                 activity_confidence = 0.80  # High confidence for older adults (predictable patterns)
             
+            # Generate synthetic activity data based on activity level (in hours)
+            if activity_level == 'High Activity':
+                # High activity: >5 hours moderate OR >2.5 hours vigorous per week
+                mod_act_hours = np.random.normal(5.8, 0.8)
+                vig_act_hours = np.random.normal(2.8, 0.5)
+                activity_multiplier = 1.81
+            elif activity_level == 'Moderate Activity':
+                # Moderate activity: 2.5-5 hours moderate OR 1.25-2.5 hours vigorous per week
+                mod_act_hours = np.random.normal(3.75, 0.6)
+                vig_act_hours = np.random.normal(1.87, 0.3)
+                activity_multiplier = 1.55
+            else:  # Low Activity
+                # Low activity: <2.5 hours moderate OR <1.25 hours vigorous per week
+                mod_act_hours = np.random.normal(1.67, 0.4)
+                vig_act_hours = np.random.normal(0.83, 0.25)
+                activity_multiplier = 1.29
+            
+            # Ensure non-negative values
+            mod_act_hours = max(0, mod_act_hours)
+            vig_act_hours = max(0, vig_act_hours)
+            has_activity_data = True
+            
             # Calculate physiological metrics
             bmr = calculate_bmr(weight_kg, height_cm, age, gender)
             tdee = calculate_tdee(bmr, activity_level)
@@ -506,9 +607,9 @@ class XGFitnessAIModel:
                 print(f"⚠️ No template found for: goal={fitness_goal}, activity={activity_level}, bmi={bmi_category}")
                 continue
             
-            # Add controlled noise to reduce nutrition model overfitting (less for dummy data)
+            # Add MINIMAL noise to prevent overfitting while preserving assignment logic
             workout_id, nutrition_id = self._add_template_assignment_noise(
-                workout_id, nutrition_id, fitness_goal, activity_level, bmi_category, noise_prob=0.08
+                workout_id, nutrition_id, fitness_goal, activity_level, bmi_category, noise_prob=0.02  # MINIMAL 2% for all data
             )
             
             # Verify nutrition template is one of the 8 valid IDs
@@ -529,6 +630,10 @@ class XGFitnessAIModel:
                 'bmr': round(bmr, 1),
                 'tdee': round(tdee, 1),
                 'activity_level': activity_level,
+                'activity_multiplier': activity_multiplier,
+                'Mod_act': round(mod_act_hours, 2),  # Direct input hours
+                'Vig_act': round(vig_act_hours, 2),  # Direct input hours
+                'has_activity_data': has_activity_data,
                 'fitness_goal': fitness_goal,
                 'workout_template_id': workout_id,
                 'nutrition_template_id': nutrition_id,
@@ -546,107 +651,146 @@ class XGFitnessAIModel:
         
         return df
     
-    def create_training_dataset(self, real_data_file='e267_Data on age, gender, height, weight, activity levels for each household member.txt', 
-                               total_samples=2000, random_state=42):
+    def create_training_dataset(self, real_data_file='data/backups/e267_Data on age, gender, height, weight, activity levels for each household member.txt', 
+                               equal_goal_distribution=True, splits=(0.70, 0.15, 0.15), total_samples=None, random_state=42):
         """
-        Create training dataset with maximum real data (ages 18-65) and minimal dummy data only if needed
-        """
-        print("Creating complete training dataset with maximum real data usage...")
+        Create training dataset with exact user requirements:
+        - 70/15/15 data splits (or minimum train ≥2520, val ≥540, test ≥540)
+        - Equal fitness goal distribution (33.3% each goal)
+        - Real data from e267_Data file
         
-        # Load real data
+        Args:
+            real_data_file: Path to the real data file
+            equal_goal_distribution: Whether to balance fitness goals equally
+            splits: Data split ratios (train, val, test)
+            total_samples: Legacy parameter - ignored (for backward compatibility)
+            random_state: Random seed for reproducibility
+        """
+        print("Creating training dataset with user specifications...")
+        print(f"- Data splits: {int(splits[0]*100)}/{int(splits[1]*100)}/{int(splits[2]*100)} (train/val/test)")
+        print(f"- Equal fitness goal distribution: {equal_goal_distribution}")
+        if total_samples is not None:
+            print(f"- Note: total_samples parameter ({total_samples}) is ignored - using minimum size requirements instead")
+        
+        # Load real data - MUST use real data for training/validation
         real_df = self.load_real_data(real_data_file)
         
         if len(real_df) == 0:
-            print("⚠️ No real data available, falling back to dummy data generation")
-            return self.generate_dummy_data_with_confidence(total_samples, random_state)
+            raise FileNotFoundError(f"❌ CRITICAL: Real data file not found at {real_data_file}. "
+                                   f"Real data is REQUIRED for training and validation. "
+                                   f"Please ensure the e267_Data file is available.")
         
-        available_real = len(real_df)
-        print(f"Available real data samples (ages 18-65): {available_real}")
+        print(f"✅ Successfully loaded {len(real_df)} real data samples")
         
-        # Use as much real data as possible, only generate dummy if we need more
-        if available_real >= total_samples:
-            # We have enough real data for the entire dataset
-            print(f"Using {total_samples} real samples (no dummy data needed)")
+        # Step 1: Split ALL real data first using 70/15/15 splits
+        print("📊 Step 1: Splitting ALL real data first...")
+        processed_df = real_df.copy()
+        processed_df['data_source'] = 'real'
+        
+        # Shuffle the data before splitting
+        processed_df = processed_df.sample(frac=1, random_state=random_state).reset_index(drop=True)
+        
+        # Calculate split sizes for ALL real data
+        total_real = len(processed_df)
+        train_size = int(total_real * splits[0])  # 70%
+        val_size = int(total_real * splits[1])    # 15%
+        test_size = total_real - train_size - val_size  # Remaining ~15%
+        
+        print(f"Real data split sizes:")
+        print(f"  Training: {train_size} samples ({train_size/total_real*100:.1f}%)")
+        print(f"  Validation: {val_size} samples ({val_size/total_real*100:.1f}%)")
+        print(f"  Test: {test_size} samples ({test_size/total_real*100:.1f}%)")
+        
+        # Split the real data
+        train_real = processed_df.iloc[:train_size].copy()
+        val_data = processed_df.iloc[train_size:train_size+val_size].copy()
+        test_data = processed_df.iloc[train_size+val_size:].copy()
+        
+        # Step 2: Handle goal distribution in training set and augment if needed
+        print("📈 Step 2: Analyzing training set goal distribution...")
+        
+        train_goal_counts = train_real['fitness_goal'].value_counts()
+        print(f"Training set goal distribution (from real data split):")
+        for goal, count in train_goal_counts.items():
+            print(f"  {goal}: {count} samples")
+        
+        if equal_goal_distribution:
+            # For equal distribution, find the goal with MOST samples and use that as target
+            max_goal_count = train_goal_counts.max()
+            print(f"📊 Implementing equal goal distribution (target: {max_goal_count} per goal)...")
+            print(f"This ensures all-rounded model performance across all fitness goals")
             
-            # Sample the requested amount from real data
-            final_df = real_df.sample(n=total_samples, random_state=random_state)
+            balanced_train_data = []
+            total_synthetic_added = 0
             
-            # Create splits from real data - 70% train, 15% val, 15% test but last 15% will be dummy later
-            train_size = int(total_samples * 0.70)  # 70% real training data
-            val_size = int(total_samples * 0.15)    # 15% real validation data
-            test_size = total_samples - train_size - val_size  # Remaining for test (will be replaced with dummy)
+            for goal in ['Fat Loss', 'Muscle Gain', 'Maintenance']:
+                goal_data = train_real[train_real['fitness_goal'] == goal].copy()
+                current_count = len(goal_data)
+                
+                if current_count < max_goal_count:
+                    # Need to augment this goal to reach max_goal_count
+                    shortage = max_goal_count - current_count
+                    print(f"  {goal}: {current_count} real + {shortage} synthetic = {max_goal_count}")
+                    
+                    # Generate synthetic data specifically for this goal
+                    synthetic_data = self._generate_goal_specific_data(goal, shortage, random_state)
+                    synthetic_data['data_source'] = 'synthetic'
+                    total_synthetic_added += shortage
+                    
+                    # Combine real and synthetic for this goal
+                    goal_combined = pd.concat([goal_data, synthetic_data], ignore_index=True)
+                    balanced_train_data.append(goal_combined)
+                else:
+                    # Keep all real data for this goal (it's the max)
+                    print(f"  {goal}: {current_count} real + 0 synthetic = {current_count}")
+                    balanced_train_data.append(goal_data)
             
-            # Split the data - use real data for train and validation only
-            train_data = final_df.iloc[:train_size].copy()
-            val_data = final_df.iloc[train_size:train_size+val_size].copy()
+            # Combine all balanced training data
+            train_data = pd.concat(balanced_train_data, ignore_index=True)
+            train_data = train_data.sample(frac=1, random_state=random_state).reset_index(drop=True)
             
-            # Generate logical dummy data for the test set (last 15%)
-            print(f"Generating {test_size} logical dummy samples for test set...")
-            dummy_test_data = self.generate_dummy_data_with_confidence(test_size, random_state)
-            
-            # Mark splits and data source
-            train_data['split'] = 'train'
-            val_data['split'] = 'validation'  
-            dummy_test_data['split'] = 'test'
-            
-            # Mark data sources
-            train_data['data_source'] = 'real'
-            val_data['data_source'] = 'real'
-            dummy_test_data['data_source'] = 'dummy'
-            
-            # Combine all data
-            final_df = pd.concat([train_data, val_data, dummy_test_data], ignore_index=True)
-            
-            print(f"Data split: {train_size} real train, {val_size} real val, {test_size} dummy test")
-            print(f"Real data usage: {(train_size + val_size)/total_samples*100:.1f}% real, {test_size/total_samples*100:.1f}% dummy")
+            print(f"📊 Training set augmentation summary:")
+            print(f"  Total real training samples: {len(train_real)}")
+            print(f"  Total synthetic samples added: {total_synthetic_added}")
+            print(f"  Final training set size: {len(train_data)}")
             
         else:
-            # Use real data for training/validation and generate dummy for test
-            real_train_size = int(available_real * 0.70)  # 70% of real data for training
-            real_val_size = available_real - real_train_size  # Remaining 30% for validation
-            
-            # Calculate dummy data needed for test set (15% of total)
-            test_size = int(total_samples * 0.15)
-            dummy_needed = test_size
-            
-            print(f"Real data allocation: {real_train_size} train, {real_val_size} val")
-            print(f"Generating {dummy_needed} logical dummy samples for test set")
-            
-            # Split real data
-            real_train = real_df.iloc[:real_train_size].copy()
-            real_val = real_df.iloc[real_train_size:].copy()
-            
-            # Generate dummy test data  
-            dummy_test = self.generate_dummy_data_with_confidence(dummy_needed, random_state)
-            
-            # Mark data splits
-            real_train['split'] = 'train'
-            real_val['split'] = 'validation'
-            dummy_test['split'] = 'test'
-            
-            # Mark data sources
-            real_train['data_source'] = 'real'
-            real_val['data_source'] = 'real'
-            dummy_test['data_source'] = 'dummy'
-            
-            # Combine all data
-            final_df = pd.concat([real_train, real_val, dummy_test], ignore_index=True)
-            
-            final_composition = len(final_df)
-            real_percent = (real_train_size + real_val_size) / final_composition * 100
-            dummy_percent = dummy_needed / final_composition * 100
-            
-            print(f"Final composition:")
-            print(f"  Real: {real_train_size + real_val_size} samples ({real_percent:.1f}%)")
-            print(f"  Dummy: {dummy_needed} samples ({dummy_percent:.1f}%)")
+            train_data = train_real.copy()
+            print("Using unbalanced training data (no equal distribution)")
+        
+        print(f"Final training set: {len(train_data)} samples")
+        print(f"Final training goal distribution: {train_data['fitness_goal'].value_counts().to_dict()}")
+        
+        # Mark splits
+        train_data['split'] = 'train'
+        val_data['split'] = 'validation'  
+        test_data['split'] = 'test'
+        
+        # Combine all data
+        final_df = pd.concat([train_data, val_data, test_data], ignore_index=True)
         
         print(f"\nFinal dataset composition:")
-        print(f"Total samples: {len(final_df)}")
         print(f"Split distribution: {final_df['split'].value_counts().to_dict()}")
         print(f"Data source distribution: {final_df['data_source'].value_counts().to_dict()}")
         print(f"Goal distribution: {final_df['fitness_goal'].value_counts().to_dict()}")
         print(f"BMI distribution: {final_df['bmi_category'].value_counts().to_dict()}")
         print(f"Activity distribution: {final_df['activity_level'].value_counts().to_dict()}")
+        
+        # Verify equal goal distribution if requested
+        if equal_goal_distribution:
+            goal_counts = final_df['fitness_goal'].value_counts()
+            goal_percentages = (goal_counts / len(final_df) * 100).round(1)
+            print(f"Goal percentages: {goal_percentages.to_dict()}")
+        
+        # Activity data usage information
+        if 'has_activity_data' in final_df.columns:
+            real_activity_data = final_df[final_df['has_activity_data'] == True]
+            print(f"Real activity data usage: {len(real_activity_data)} samples ({len(real_activity_data)/len(final_df)*100:.1f}%)")
+            if len(real_activity_data) > 0:
+                print(f"Activity data summary (real data):")
+                print(f"  Moderate hours: mean={real_activity_data['Mod_act'].mean():.2f}, median={real_activity_data['Mod_act'].median():.2f}")
+                print(f"  Vigorous hours: mean={real_activity_data['Vig_act'].mean():.2f}, median={real_activity_data['Vig_act'].median():.2f}")
+        
         print(f"Age range: {final_df['age'].min()}-{final_df['age'].max()}")
         print(f"Gender distribution: {final_df['gender'].value_counts().to_dict()}")
         
@@ -667,12 +811,61 @@ class XGFitnessAIModel:
         df_enhanced['goal_encoded'] = le_goal.fit_transform(df_enhanced['fitness_goal'])
         df_enhanced['bmi_category_encoded'] = le_bmi.fit_transform(df_enhanced['bmi_category'])
         
-        # Key interaction features (most predictive)
+        # Activity-based features using direct Mod_act and Vig_act inputs
+        if 'Mod_act' in df_enhanced.columns and 'Vig_act' in df_enhanced.columns:
+            # Fill missing activity data with 0
+            df_enhanced['Mod_act'] = df_enhanced['Mod_act'].fillna(0)
+            df_enhanced['Vig_act'] = df_enhanced['Vig_act'].fillna(0)
+            
+            # Total activity features (in hours)
+            df_enhanced['total_activity_hours'] = df_enhanced['Mod_act'] + df_enhanced['Vig_act']
+            df_enhanced['activity_intensity_ratio'] = np.where(
+                df_enhanced['total_activity_hours'] > 0,
+                df_enhanced['Vig_act'] / df_enhanced['total_activity_hours'],
+                0
+            )
+            
+            # Activity per body weight (activity efficiency)
+            df_enhanced['mod_act_per_kg'] = df_enhanced['Mod_act'] / df_enhanced['weight_kg']
+            df_enhanced['vig_act_per_kg'] = df_enhanced['Vig_act'] / df_enhanced['weight_kg']
+            
+            # WHO guideline compliance flags (convert to minutes for guidelines)
+            mod_act_minutes = df_enhanced['Mod_act'] * 60
+            vig_act_minutes = df_enhanced['Vig_act'] * 60
+            
+            df_enhanced['meets_moderate_guidelines'] = (mod_act_minutes >= 150).astype(int)
+            df_enhanced['meets_vigorous_guidelines'] = (vig_act_minutes >= 75).astype(int)
+            df_enhanced['exceeds_activity_guidelines'] = (
+                (mod_act_minutes >= 300) | (vig_act_minutes >= 150)
+            ).astype(int)
+        else:
+            # Fallback for data without activity columns
+            df_enhanced['total_activity_hours'] = 0
+            df_enhanced['activity_intensity_ratio'] = 0
+            df_enhanced['mod_act_per_kg'] = 0
+            df_enhanced['vig_act_per_kg'] = 0
+            df_enhanced['meets_moderate_guidelines'] = 0
+            df_enhanced['meets_vigorous_guidelines'] = 0
+            df_enhanced['exceeds_activity_guidelines'] = 0
+        
+        # Enhanced interaction features using real activity data
         df_enhanced['bmi_goal_interaction'] = df_enhanced['bmi'] * df_enhanced['goal_encoded']
         df_enhanced['age_activity_interaction'] = df_enhanced['age'] * df_enhanced['activity_encoded']
         df_enhanced['bmi_activity_interaction'] = df_enhanced['bmi'] * df_enhanced['activity_encoded']
         df_enhanced['age_goal_interaction'] = df_enhanced['age'] * df_enhanced['goal_encoded']
         df_enhanced['gender_goal_interaction'] = df_enhanced['gender_encoded'] * df_enhanced['goal_encoded']
+        
+        # Activity-based interactions using direct Mod_act and Vig_act inputs
+        if 'Mod_act' in df_enhanced.columns and 'Vig_act' in df_enhanced.columns:
+            df_enhanced['bmi_mod_act_interaction'] = df_enhanced['bmi'] * df_enhanced['Mod_act']
+            df_enhanced['bmi_vig_act_interaction'] = df_enhanced['bmi'] * df_enhanced['Vig_act']
+            df_enhanced['age_mod_act_interaction'] = df_enhanced['age'] * df_enhanced['Mod_act']
+            df_enhanced['age_vig_act_interaction'] = df_enhanced['age'] * df_enhanced['Vig_act']
+        else:
+            df_enhanced['bmi_mod_act_interaction'] = 0
+            df_enhanced['bmi_vig_act_interaction'] = 0
+            df_enhanced['age_mod_act_interaction'] = 0
+            df_enhanced['age_vig_act_interaction'] = 0
         
         # Essential metabolic ratios
         df_enhanced['bmr_per_kg'] = df_enhanced['bmr'] / df_enhanced['weight_kg']
@@ -683,10 +876,18 @@ class XGFitnessAIModel:
         df_enhanced['bmi_deviation'] = abs(df_enhanced['bmi'] - 22.5)  # Deviation from ideal BMI
         df_enhanced['weight_height_ratio'] = df_enhanced['weight_kg'] / df_enhanced['height_cm']
         
-        # Key boolean flags
+        # Enhanced boolean flags using real activity data
         df_enhanced['high_metabolism'] = (df_enhanced['bmr_per_kg'] > df_enhanced['bmr_per_kg'].median()).astype(int)
         df_enhanced['very_active'] = (df_enhanced['activity_encoded'] >= 2).astype(int)
         df_enhanced['young_adult'] = (df_enhanced['age'] < 30).astype(int)
+        
+        # Activity-based boolean flags using direct activity inputs
+        if 'total_activity_hours' in df_enhanced.columns:
+            df_enhanced['highly_active_real'] = (df_enhanced['total_activity_hours'] >= 7).astype(int)  # 7+ hours/week
+            df_enhanced['sedentary_real'] = (df_enhanced['total_activity_hours'] < 1.25).astype(int)  # <1.25 hours/week
+        else:
+            df_enhanced['highly_active_real'] = 0
+            df_enhanced['sedentary_real'] = 0
         
         return df_enhanced
     
@@ -705,17 +906,35 @@ class XGFitnessAIModel:
         return X, y_workout, y_nutrition, df_enhanced
     
     def train_models(self, df_training, random_state=42):
-        """Train XGBoost models with enhanced techniques for 90%+ accuracy"""
-        print("Starting enhanced model training with data augmentation...")
+        """Train XGBoost models with enhanced techniques for good generalization"""
+        print("Starting model training with anti-overfitting measures...")
         
-        # Augment training data for better performance (optimized augmentation)
-        df_augmented = self._augment_training_data(df_training, augmentation_factor=0.5)
+        # 🔍 ADD COMPREHENSIVE DEBUGGING BEFORE TRAINING
+        print("\n🔍 RUNNING COMPREHENSIVE DEBUGGING ANALYSIS...")
+        self.debug_template_assignment_logic()
+        self.debug_template_assignments(df_training)
+        self.debug_training_splits(df_training)
+        
+        # 📋 TRANSPARENT LIMITATIONS REPORTING
+        print("\n📋 MODEL LIMITATIONS & DATA CHARACTERISTICS:")
+        print("="*80)
+        activity_dist = df_training['activity_level'].value_counts(normalize=True) * 100
+        print(f"✅ THESIS FINDING: Model optimized for high-activity individuals")
+        print(f"   High Activity: {activity_dist.get('High Activity', 0):.1f}% of training data")
+        print(f"   Moderate Activity: {activity_dist.get('Moderate Activity', 0):.1f}% of training data")
+        print(f"   Low Activity: {activity_dist.get('Low Activity', 0):.1f}% of training data")
+        print(f"⚠️  LIMITATION: Reduced confidence for low-activity recommendations")
+        print(f"💡 RECOMMENDATION: Professional consultation for low-activity individuals")
+        print("="*80)
+        
+        # NO additional augmentation - use data as provided to prevent overfitting
+        print("Using training data as-is to prevent overfitting...")
         
         # Prepare data
-        X, y_workout, y_nutrition, df_enhanced = self.prepare_training_data(df_augmented)
+        X, y_workout, y_nutrition, df_enhanced = self.prepare_training_data(df_training)
         
         # Split data based on the 'split' column if available, otherwise use standard split
-        if 'split' in df_augmented.columns:
+        if 'split' in df_training.columns:
             train_mask = df_enhanced['split'] == 'train'
             val_mask = df_enhanced['split'] == 'validation' 
             test_mask = df_enhanced['split'] == 'test'
@@ -760,6 +979,7 @@ class XGFitnessAIModel:
         X_val_scaled = self.scaler.transform(X_val)
         X_test_scaled = self.scaler.transform(X_test)
         
+        # Add noise to training features to prevent overfitting (especially for workout model)
         # Fix class encoding issue - ensure continuous class indices
         print(f"Workout template IDs in dataset: {sorted(y_workout.unique())}")
         print(f"Nutrition template IDs in dataset: {sorted(y_nutrition.unique())}")
@@ -834,27 +1054,59 @@ class XGFitnessAIModel:
                         # Add existing nutrition class for this sample
                         y_n_train_encoded = np.append(y_n_train_encoded, y_n_train_encoded[0])
                     
-            print(f"Added synthetic samples. New training size: {len(X_train_scaled)}")
-            print(f"Final workout classes: {sorted(np.unique(y_w_train_encoded))}")
-            print(f"Final nutrition classes: {sorted(np.unique(y_n_train_encoded))}")
+        # Calculate class weights to handle severe imbalance
+        from sklearn.utils.class_weight import compute_class_weight
+        
+        # Compute class weights for workout model
+        workout_classes = np.unique(y_w_train_encoded)
+        workout_class_weights = compute_class_weight(
+            'balanced', 
+            classes=workout_classes, 
+            y=y_w_train_encoded
+        )
+        workout_weight_dict = dict(zip(workout_classes, workout_class_weights))
+        
+        # Compute class weights for nutrition model  
+        nutrition_classes = np.unique(y_n_train_encoded)
+        nutrition_class_weights = compute_class_weight(
+            'balanced',
+            classes=nutrition_classes,
+            y=y_n_train_encoded
+        )
+        nutrition_weight_dict = dict(zip(nutrition_classes, nutrition_class_weights))
+        
+        print(f"Applied class weights to handle imbalanced data")
+        
+        # REMOVE AGGRESSIVE NOISE INJECTION - it's causing overfitting
+        print("🎯 Using clean training data to prevent overfitting...")
+        
+        # Use original training data without aggressive augmentation
+        X_train_workout_combined = X_train_scaled.copy()
+        y_w_train_workout_combined = y_w_train_encoded.copy()
+        
+        # Use original training data for nutrition model  
+        X_train_nutrition = X_train_scaled.copy()
+        y_n_train_nutrition = y_n_train_encoded.copy()
+        
+        print(f"Training with clean data: {len(X_train_scaled)} samples")
         
         # Optimized hyperparameter distributions for faster training with good performance
-        # Balanced parameters for workout model - faster but still effective
+        # Balanced anti-overfitting approach: Conservative but not extreme parameters
         workout_param_distributions = {
-            'max_depth': [6, 7, 8, 9],  # Reduced max depth for speed
-            'learning_rate': [0.1, 0.15, 0.2],  # Fewer learning rate options
-            'n_estimators': [300, 500, 800],  # Reduced max estimators
-            'min_child_weight': [1, 2, 3],  # Kept optimal range
-            'subsample': [0.8, 0.9, 1.0],  # Kept sampling options
-            'colsample_bytree': [0.8, 0.9, 1.0],  # Kept feature sampling
-            'reg_alpha': [0.0, 0.1],  # Simplified regularization
-            'reg_lambda': [0.0, 0.5],  # Simplified regularization
-            'gamma': [0, 0.1]  # Simplified gamma
+            'max_depth': [3, 4, 5],  # Moderate depth
+            'learning_rate': [0.05, 0.1, 0.15],  # Moderate learning rates
+            'n_estimators': [100, 150, 200],  # Moderate number of trees
+            'min_child_weight': [5, 10, 15],  # Moderate minimum samples
+            'subsample': [0.7, 0.8, 0.9],  # Moderate subsampling
+            'colsample_bytree': [0.7, 0.8, 0.9],  # Moderate feature subsampling
+            'reg_alpha': [0.5, 1.0, 2.0],  # Moderate L1 regularization
+            'reg_lambda': [1.0, 2.0, 5.0],  # Moderate L2 regularization
+            'gamma': [0.1, 0.5, 1.0]  # Moderate minimum loss reduction
         }
         
-        # More conservative parameters for nutrition model to reduce overfitting
+        # Conservative parameters for nutrition model to reduce overfitting
         nutrition_param_distributions = {
-            'max_depth': [2, 3],  # Reduced depth to prevent overfitting
+            'max_depth': [2, 3, 4],  # Very reduced depth to prevent overfitting
             'learning_rate': [0.01, 0.03, 0.05],  # Lower learning rates
             'n_estimators': [50, 100, 150],  # Fewer estimators
             'min_child_weight': [5, 10, 15],  # Higher minimum child weight
@@ -876,105 +1128,67 @@ class XGFitnessAIModel:
             'gpu_id': 0 if xgb.get_config().get('use_gpu', False) else None  # Use GPU if available
         }
         
-        # Train enhanced workout model with ensemble approach for 90%+ accuracy
-        print("Training enhanced workout model with ensemble approach...")
+        # Train workout model using XGBoost with hyperparameter tuning
+        print("Training workout XGBoost model with hyperparameter tuning...")
         
-        # Create optimized base parameters for ensemble (faster training)
-        ensemble_base_params = {
-            'random_state': random_state,
-            'eval_metric': 'mlogloss',
-            'objective': 'multi:softprob',
-            'verbose': False,
-            'tree_method': 'hist',
-            'n_jobs': -1  # Use all cores for faster training
-        }
+        # Add class weights to base parameters for workout model
+        workout_base_params = base_params.copy()
+        workout_base_params.update({
+            'class_weight': workout_weight_dict,
+            'max_delta_step': 3  # Additional regularization for imbalanced classes
+        })
         
-        # Create optimized models for faster ensemble
-        from sklearn.ensemble import GradientBoostingClassifier
+        workout_xgb = xgb.XGBClassifier(**workout_base_params)
         
-        workout_xgb = xgb.XGBClassifier(**ensemble_base_params)
-        workout_rf = RandomForestClassifier(n_estimators=200, random_state=random_state, n_jobs=-1)  # Reduced trees
-        workout_lr = LogisticRegression(random_state=random_state, max_iter=1000)  # Reduced iterations
-        workout_gb = GradientBoostingClassifier(n_estimators=50, random_state=random_state)  # Reduced trees
-        
-        # Tune primary XGBoost model with maximum search
         workout_search = RandomizedSearchCV(
             workout_xgb,
             param_distributions=workout_param_distributions,
-            n_iter=50,  # Reduced iterations for faster training
-            cv=5,  # More cross-validation folds
-            scoring='f1_weighted',  # Focus on F1 score for better balance
+            n_iter=20,  # Reduced iterations to prevent overfitting
+            cv=10,  # More aggressive cross-validation
+            scoring='f1_weighted',
             random_state=random_state,
             n_jobs=-1,
             verbose=1
         )
         
-        # Fit XGBoost with hyperparameter tuning
-        workout_search.fit(X_train_scaled, y_w_train_encoded)
-        
-        # Create ensemble with best XGBoost model
-        best_xgb = workout_search.best_estimator_
-        
-        # Fit other models (faster training)
-        workout_rf.fit(X_train_scaled, y_w_train_encoded)
-        workout_lr.fit(X_train_scaled, y_w_train_encoded)
-        workout_gb.fit(X_train_scaled, y_w_train_encoded)
-        
-        # Simplified ensemble - fewer models for speed
-        base_models = [
-            ('xgb', best_xgb),
-            ('rf', workout_rf),
-            ('lr', workout_lr),
-            ('gb', workout_gb)
-        ]
-        
-        # Faster meta-learner
-        meta_learner = xgb.XGBClassifier(
-            n_estimators=50,  # Reduced for speed
-            max_depth=3,
-            learning_rate=0.15,  # Higher LR for faster convergence
-            subsample=0.8,
-            colsample_bytree=0.8,
-            random_state=random_state
+        # Fit workout model with early stopping validation and extreme noisy training data
+        workout_search.fit(
+            X_train_workout_combined, y_w_train_workout_combined,
+            eval_set=[(X_val_scaled, y_w_val_encoded)],
+            verbose=False
         )
         
-        # Create faster voting ensemble (much faster than stacking)
-        workout_ensemble = VotingClassifier(
-            estimators=base_models,
-            voting='soft',  # Use probabilities for voting
-            weights=[3, 2, 1, 2],  # Give most weight to XGBoost (4 weights for 4 models)
-            n_jobs=-1
-        )
-        
-        # Fit ensemble
-        workout_ensemble.fit(X_train_scaled, y_w_train_encoded)
-        
-        # Use ensemble as the final workout model
-        self.workout_model = workout_ensemble
+        self.workout_model = workout_search.best_estimator_
         workout_val_score = self.workout_model.score(X_val_scaled, y_w_val_encoded)
         
         print(f"Best workout XGBoost parameters: {workout_search.best_params_}")
-        print(f"Workout ensemble validation score: {workout_val_score:.4f}")
+        print(f"Workout model validation score: {workout_val_score:.4f}")
         
-        # Train nutrition recommendation model (following puremodel.py approach)
-        print("Training nutrition recommendation model with hyperparameter tuning...")
+        # Train nutrition model using XGBoost with hyperparameter tuning
+        print("Training nutrition XGBoost model with hyperparameter tuning...")
         
-        nutrition_xgb = xgb.XGBClassifier(**base_params)
+        # Add class weights to base parameters for nutrition model
+        nutrition_base_params = base_params.copy()
+        nutrition_base_params.update({
+            'class_weight': nutrition_weight_dict
+        })
+        
+        nutrition_xgb = xgb.XGBClassifier(**nutrition_base_params)
         
         nutrition_search = RandomizedSearchCV(
             nutrition_xgb,
             param_distributions=nutrition_param_distributions,
-            n_iter=10,  # Reduced iterations for faster training
-            cv=3,  # Reduced CV folds
+            n_iter=20,  # Fewer iterations for nutrition (simpler problem)
+            cv=3,
             scoring='accuracy',
             random_state=random_state,
             n_jobs=-1,
-            verbose=0
+            verbose=1
         )
         
-        # Fit with early stopping validation (puremodel.py approach)
+        # Fit nutrition model with early stopping validation and moderate noisy training data
         nutrition_search.fit(
-            X_train_scaled, y_n_train_encoded,
+            X_train_nutrition, y_n_train_nutrition,
             eval_set=[(X_val_scaled, y_n_val_encoded)],
             verbose=False
         )
@@ -982,8 +1196,8 @@ class XGFitnessAIModel:
         self.nutrition_model = nutrition_search.best_estimator_
         nutrition_val_score = self.nutrition_model.score(X_val_scaled, y_n_val_encoded)
         
-        print(f"Best nutrition model parameters: {nutrition_search.best_params_}")
-        print(f"Best nutrition model CV score: {nutrition_search.best_score_:.4f}")
+        print(f"Best nutrition XGBoost parameters: {nutrition_search.best_params_}")
+        print(f"Nutrition model validation score: {nutrition_val_score:.4f}")
         
         # Evaluate on test set with comprehensive metrics
         print("Evaluating models on test set...")
@@ -1004,28 +1218,33 @@ class XGFitnessAIModel:
         print("\nCalculating comprehensive metrics for workout model...")
         workout_metrics = self._calculate_comprehensive_metrics(
             y_w_test_encoded, y_w_pred, y_w_pred_proba, 
-            model_name="Workout Model", encoder=self.workout_encoder
+            model_name="Workout Model", encoder=self.workout_label_encoder
         )
         
         print("\nCalculating comprehensive metrics for nutrition model...")
         nutrition_metrics = self._calculate_comprehensive_metrics(
             y_n_test_encoded, y_n_pred, y_n_pred_proba, 
-            model_name="Nutrition Model", encoder=self.nutrition_encoder
+            model_name="Nutrition Model", encoder=self.nutrition_label_encoder
         )
         
-        # Feature importance analysis (simplified)
+        # Feature importance analysis for XGBoost models
         print("\n=== Feature Importance Analysis ===")
         
-        # Use simple approach for feature importance
+        # Get feature importance for workout model (XGBoost)
         try:
-            if hasattr(self.workout_model, 'feature_importances_'):
-                workout_importance = self.workout_model.feature_importances_
-            else:
-                workout_importance = np.ones(len(self.feature_columns)) / len(self.feature_columns)
+            workout_importance = self.workout_model.feature_importances_
         except:
             workout_importance = np.ones(len(self.feature_columns)) / len(self.feature_columns)
             
-        nutrition_importance = self.nutrition_model.feature_importances_
+        # Get feature importance for nutrition model (XGBoost)
+        try:
+            nutrition_importance = self.nutrition_model.feature_importances_
+        except:
+            nutrition_importance = np.ones(len(self.feature_columns)) / len(self.feature_columns)
+        try:
+            nutrition_importance = self.nutrition_model.feature_importances_
+        except:
+            nutrition_importance = np.ones(len(self.feature_columns)) / len(self.feature_columns)
         
         feature_names = self.feature_columns
         
@@ -1042,12 +1261,8 @@ class XGFitnessAIModel:
             print(f"  {i+1}. {feature}: {importance:.4f}")
         
         # Add feature importance to training info
-        self.training_info['workout_feature_importance'] = dict(workout_feat_importance)
-        self.training_info['nutrition_feature_importance'] = dict(nutrition_feat_importance)
-        
-        print("Model training completed!")
-        print(f"Workout model - Test Accuracy: {workout_accuracy:.4f}, F1: {workout_f1:.4f}")
-        print(f"Nutrition model - Test Accuracy: {nutrition_accuracy:.4f}, F1: {nutrition_f1:.4f}")
+        workout_feature_importance = dict(workout_feat_importance)
+        nutrition_feature_importance = dict(nutrition_feat_importance)
         
         # Store comprehensive training information
         self.training_info = {
@@ -1061,12 +1276,14 @@ class XGFitnessAIModel:
             'workout_f1': workout_f1,
             'nutrition_accuracy': nutrition_accuracy,
             'nutrition_f1': nutrition_f1,
+            'workout_feature_importance': workout_feature_importance,
+            'nutrition_feature_importance': nutrition_feature_importance,
             'trained_at': datetime.now().isoformat()
         }
         
         self.is_trained = True
         
-        print(f"\nModel training completed!")
+        print("\nModel training completed!")
         print(f"Workout model - Test Accuracy: {workout_accuracy:.4f}, F1: {workout_f1:.4f}")
         print(f"Nutrition model - Test Accuracy: {nutrition_accuracy:.4f}, F1: {nutrition_f1:.4f}")
         
@@ -1166,306 +1383,408 @@ class XGFitnessAIModel:
         
         return metrics
     
-    def _calculate_enhanced_confidence(self, proba, user_data, model_type, predicted_class):
+    def calculate_prediction_confidence(self, user_profile, workout_prediction, nutrition_prediction):
         """
-        Calculate enhanced confidence scores based on prediction probabilities and user characteristics
+        Calculate confidence scores based on training data representation and model reliability
         
-        Args:
-            proba: Prediction probabilities from the model
-            user_data: User profile data
-            model_type: 'workout' or 'nutrition'
-            predicted_class: The predicted class (encoded)
-            
-        Returns:
-            float: Confidence score between 0 and 1
+        Returns enhanced confidence with transparent limitations reporting
         """
-        # Get the probability for the predicted class
-        predicted_prob = proba[0][predicted_class]
+        # Get template assignment for user profile
+        fitness_goal = user_profile.get('fitness_goal')
+        activity_level = user_profile.get('activity_level') 
+        bmi_category = user_profile.get('bmi_category')
         
-        # Base confidence from model probability
-        base_confidence = predicted_prob
+        # Initialize base confidence
+        base_confidence = 0.85
+        confidence_factors = []
+        limitations = []
         
-        # Calculate probability spread (how confident the model is vs alternatives)
-        sorted_probs = np.sort(proba[0])[::-1]  # Sort in descending order
-        if len(sorted_probs) > 1:
-            prob_spread = sorted_probs[0] - sorted_probs[1]  # Difference between top 2
-        else:
-            prob_spread = 0.0
+        # 1. Activity Level Representation Analysis
+        activity_confidence = self._get_activity_confidence(activity_level)
+        if activity_level == 'High Activity':
+            confidence_factors.append(("High activity representation", 0.95))
+        elif activity_level == 'Moderate Activity':
+            confidence_factors.append(("Moderate activity representation", 0.75))
+            limitations.append("Moderate activity users represent only 22% of training data")
+        else:  # Low Activity
+            confidence_factors.append(("Low activity representation", 0.60))
+            limitations.append("Low activity users represent only 10% of training data - reduced confidence")
+            limitations.append("Professional consultation recommended for low-activity individuals")
         
-        # User profile confidence factors
-        age = user_data.get('age', 25)
-        activity_level = user_data.get('activity_level', 'moderate')
-        fitness_goal = user_data.get('fitness_goal', 'general_fitness')
+        # 2. Template Frequency Analysis
+        workout_template_confidence = self._get_template_confidence(workout_prediction, 'workout')
+        nutrition_template_confidence = self._get_template_confidence(nutrition_prediction, 'nutrition')
         
-        # Age-based confidence adjustment
-        if age < 18 or age > 65:
-            age_factor = 0.8  # Lower confidence for extreme ages
-        elif 25 <= age <= 45:
-            age_factor = 1.0  # Peak confidence for typical fitness age range
-        else:
-            age_factor = 0.9  # Moderate confidence for other ages
+        confidence_factors.append(("Workout template frequency", workout_template_confidence))
+        confidence_factors.append(("Nutrition template frequency", nutrition_template_confidence))
         
-        # Activity level confidence
-        activity_factors = {
-            'sedentary': 0.85,
-            'light': 0.9,
-            'moderate': 1.0,
-            'active': 0.95,
-            'very_active': 0.9
-        }
-        activity_factor = activity_factors.get(activity_level, 0.9)
+        # 3. Combination Rarity Check
+        combination_confidence = self._get_combination_confidence(fitness_goal, activity_level, bmi_category)
+        confidence_factors.append(("Profile combination frequency", combination_confidence))
         
-        # Goal-specific confidence adjustments
-        goal_factors = {
-            'weight_loss': 0.95,
-            'muscle_gain': 0.9,
-            'general_fitness': 1.0,
-            'endurance': 0.9,
-            'strength': 0.9
-        }
-        goal_factor = goal_factors.get(fitness_goal, 0.9)
+        # Calculate overall confidence
+        weights = [0.25, 0.35, 0.40]  # Activity, template frequency, combination rarity
+        overall_confidence = sum(w * factor[1] for w, factor in zip(weights, confidence_factors))
         
-        # Model type specific adjustments
-        if model_type == 'workout':
-            # Workout recommendations are more variable
-            model_factor = 0.9
-        else:  # nutrition
-            # Nutrition recommendations are more standardized
-            model_factor = 1.0
+        # Cap confidence and add transparency
+        final_confidence = min(overall_confidence, 0.95)
         
-        # Calculate final confidence score
-        confidence = (
-            base_confidence * 0.5 +  # Base model confidence
-            prob_spread * 0.3 +      # Probability spread
-            age_factor * 0.1 +       # Age factor
-            activity_factor * 0.05 + # Activity factor
-            goal_factor * 0.03 +     # Goal factor
-            model_factor * 0.02      # Model type factor
+        # Generate confidence explanation
+        explanation = self._generate_confidence_explanation(
+            final_confidence, confidence_factors, limitations, user_profile
         )
-        
-        # Ensure confidence is between 0 and 1
-        confidence = max(0.0, min(1.0, confidence))
-        
-        return confidence
-    
-    def predict_with_confidence(self, user_data):
-        """
-        Make predictions with confidence scores for honest validation
-        """
-        if not self.is_trained:
-            raise ValueError("Model must be trained before making predictions")
-        
-        # Validate input
-        try:
-            validated_profile = validate_user_profile(user_data)
-        except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'confidence_score': 0.0
-            }
-        
-        # Calculate derived metrics
-        bmi = user_data['weight'] / ((user_data['height'] / 100) ** 2)
-        bmi_category = categorize_bmi(bmi)
-        bmr = calculate_bmr(user_data['weight'], user_data['height'], 
-                           user_data['age'], user_data['gender'])
-        tdee = calculate_tdee(bmr, user_data['activity_level'])
-        
-        # Create feature vector
-        user_df = pd.DataFrame([{
-            'age': user_data['age'],
-            'gender': user_data['gender'],
-            'height_cm': user_data['height'],
-            'weight_kg': user_data['weight'],
-            'bmi': bmi,
-            'bmi_category': bmi_category,
-            'bmr': bmr,
-            'tdee': tdee,
-            'activity_level': user_data['activity_level'],
-            'fitness_goal': user_data['fitness_goal'],
-            'workout_template_id': 1,  # Placeholder
-            'nutrition_template_id': 1  # Placeholder
-        }])
-        
-        # Create enhanced features
-        user_enhanced = self.create_enhanced_features(user_df)
-        X_user = user_enhanced[self.feature_columns].fillna(0)
-        X_user_scaled = self.scaler.transform(X_user)
-        
-        # Make predictions with probabilities
-        workout_proba = self.workout_model.predict_proba(X_user_scaled)
-        nutrition_proba = self.nutrition_model.predict_proba(X_user_scaled)
-        
-        workout_pred_encoded = self.workout_model.predict(X_user_scaled)[0]
-        nutrition_pred_encoded = self.nutrition_model.predict(X_user_scaled)[0]
-        
-        # Convert back to template IDs using LabelEncoder
-        # Use the label encoders if available, otherwise fallback to old mapping
-        if hasattr(self, 'workout_label_encoder'):
-            workout_template_id = self.workout_label_encoder.inverse_transform([workout_pred_encoded])[0]
-        elif hasattr(self, 'inverse_workout_map') and self.inverse_workout_map:
-            workout_template_id = self.inverse_workout_map[workout_pred_encoded]
-        else:
-            # Fallback: use encoded value + 1 (assuming template IDs start from 1)
-            workout_template_id = workout_pred_encoded + 1
-            
-        if hasattr(self, 'nutrition_label_encoder'):
-            nutrition_template_id = self.nutrition_label_encoder.inverse_transform([nutrition_pred_encoded])[0]
-        elif hasattr(self, 'inverse_nutrition_map') and self.inverse_nutrition_map:
-            nutrition_template_id = self.inverse_nutrition_map[nutrition_pred_encoded]
-        else:
-            # Fallback: use encoded value + 1 (assuming template IDs start from 1)
-            nutrition_template_id = nutrition_pred_encoded + 1
-        
-        # Enhanced confidence scoring system
-        workout_confidence = self._calculate_enhanced_confidence(
-            workout_proba, user_data, 'workout', workout_pred_encoded
-        )
-        nutrition_confidence = self._calculate_enhanced_confidence(
-            nutrition_proba, user_data, 'nutrition', nutrition_pred_encoded
-        )
-        
-        # Weighted overall confidence (nutrition is generally more reliable)
-        overall_confidence = (workout_confidence * 0.6 + nutrition_confidence * 0.4)
-        
-        # Get template details using template manager
-        workout_template = self.template_manager.get_workout_template(workout_template_id)
-        nutrition_template = self.template_manager.get_nutrition_template(nutrition_template_id)
-        
-        if not workout_template or not nutrition_template:
-            return {
-                'success': False,
-                'error': 'Template not found',
-                'confidence_score': 0.0
-            }
-        
-        # Calculate personalized nutrition values
-        target_calories = int(tdee * nutrition_template['caloric_intake'])
-        target_protein = int(user_data['weight'] * nutrition_template['protein_per_kg'])
-        target_carbs = int(user_data['weight'] * nutrition_template['carbs_per_kg'])
-        target_fat = int(user_data['weight'] * nutrition_template['fat_per_kg'])
-        
-        # Determine confidence level for user display (adjusted thresholds)
-        if overall_confidence >= 0.75:
-            confidence_level = "Tinggi"
-            confidence_message = "Sangat yakin dengan rekomendasi ini"
-        elif overall_confidence >= 0.55:
-            confidence_level = "Sedang"
-            confidence_message = "Cukup yakin dengan rekomendasi ini"
-        else:
-            confidence_level = "Rendah"
-            confidence_message = "Kepercayaan rendah - pertimbangkan konsultasi dengan profesional fitness"
         
         return {
-            'success': True,
-            'user_metrics': {
-                'bmi': round(bmi, 2),
-                'bmi_category': bmi_category,
-                'bmr': round(bmr, 1),
-                'tdee': round(tdee, 1)
-            },
-            'workout_recommendation': {
-                'template_id': workout_template_id,
-                'goal': workout_template.get('goal', 'Unknown'),
-                'activity_level': workout_template.get('activity_level', 'Unknown'),
-                'workout_type': workout_template.get('workout_type', 'Full Body'),
-                'days_per_week': workout_template.get('days_per_week', 3),
-                'workout_schedule': workout_template.get('workout_schedule', 'WXWXWXX'),
-                'sets_per_exercise': workout_template.get('sets_per_exercise', 3),
-                'exercises_per_session': workout_template.get('exercises_per_session', 6),
-                'cardio_minutes_per_day': workout_template.get('cardio_minutes_per_day', 30),
-                'cardio_sessions_per_day': workout_template.get('cardio_sessions_per_day', 1)
-            },
-            'nutrition_recommendation': {
-                'template_id': nutrition_template_id,
-                'goal': nutrition_template.get('goal', 'Unknown'),
-                'bmi_category': nutrition_template.get('bmi_category', 'Normal'),
-                'caloric_multiplier': nutrition_template['caloric_intake'],
-                'target_calories': target_calories,
-                'target_protein': target_protein,
-                'target_carbs': target_carbs,
-                'target_fat': target_fat,
-                'protein_per_kg': nutrition_template['protein_per_kg'],
-                'carbs_per_kg': nutrition_template['carbs_per_kg'],
-                'fat_per_kg': nutrition_template['fat_per_kg']
-            },
-            'confidence_scores': {
-                'workout_confidence': round(workout_confidence, 3),
-                'nutrition_confidence': round(nutrition_confidence, 3),
-                'overall_confidence': round(overall_confidence, 3),
-                'confidence_level': confidence_level,
-                'confidence_message': confidence_message,
-                'confidence_explanation': self.get_confidence_explanation(user_data, {
-                    'workout_confidence': workout_confidence,
-                    'nutrition_confidence': nutrition_confidence,
-                    'overall_confidence': overall_confidence
-                })
-            },
-            'model_info': {
-                'last_trained': self.training_info.get('training_date', 'Unknown'),
-                'training_samples': self.training_info.get('training_samples', 0),
-                'model_type': 'Enhanced XGBoost Stacking Ensemble'
-            }
+            'confidence_score': round(final_confidence, 3),
+            'confidence_level': self._get_confidence_level(final_confidence),
+            'factors': confidence_factors,
+            'limitations': limitations,
+            'explanation': explanation,
+            'model_limitations': self._get_model_limitations()
         }
     
-    def save_model(self, filepath='fittech_ai_model.pkl'):
-        """Save trained model to file"""
-        if not self.is_trained:
-            raise ValueError("Cannot save untrained model")
-        
-        model_data = {
-            'workout_model': self.workout_model,
-            'nutrition_model': self.nutrition_model,
-            'scaler': self.scaler,
-            'workout_encoder': self.workout_encoder,
-            'nutrition_encoder': self.nutrition_encoder,
-            'feature_columns': self.feature_columns,
-            'template_manager': self.template_manager,
-            'training_info': self.training_info,
-            'workout_id_map': getattr(self, 'workout_id_map', {}),
-            'nutrition_id_map': getattr(self, 'nutrition_id_map', {}),
-            'inverse_workout_map': getattr(self, 'inverse_workout_map', {}),
-            'inverse_nutrition_map': getattr(self, 'inverse_nutrition_map', {})
+    def _get_activity_confidence(self, activity_level):
+        """Get confidence score based on activity level representation in training data"""
+        activity_representation = {
+            'High Activity': 0.678,    # 67.8% of training data
+            'Moderate Activity': 0.222, # 22.2% of training data  
+            'Low Activity': 0.100      # 10.0% of training data
         }
         
-        with open(filepath, 'wb') as f:
-            pickle.dump(model_data, f)
+        representation = activity_representation.get(activity_level, 0.5)
         
-        print(f"Model saved to {filepath}")
+        # Convert representation to confidence score
+        if representation >= 0.6:
+            return 0.95
+        elif representation >= 0.2:
+            return 0.75
+        else:
+            return 0.60
     
-    def load_model(self, filepath='fittech_ai_model.pkl'):
-        """Load trained model from file"""
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f"Model file not found: {filepath}")
+    def _get_template_confidence(self, template_id, template_type):
+        """Get confidence score based on template frequency in training data"""
+        # These thresholds are based on the debugging analysis
+        low_sample_templates = {
+            'workout': [1, 4, 7],  # Templates with <300 samples
+            'nutrition': [4, 6]    # Templates with <200 samples
+        }
         
-        with open(filepath, 'rb') as f:
-            model_data = pickle.load(f)
-        
-        self.workout_model = model_data['workout_model']
-        self.nutrition_model = model_data['nutrition_model']
-        self.scaler = model_data['scaler']
-        self.workout_encoder = model_data['workout_encoder']
-        self.nutrition_encoder = model_data['nutrition_encoder']
-        self.feature_columns = model_data['feature_columns']
-        self.template_manager = model_data.get('template_manager', get_template_manager())
-        self.workout_templates = self.template_manager.workout_templates
-        self.nutrition_templates = self.template_manager.nutrition_templates
-        self.training_info = model_data['training_info']
-        
-        # Load ID mappings (with fallback for older models)
-        self.workout_id_map = model_data.get('workout_id_map', {})
-        self.nutrition_id_map = model_data.get('nutrition_id_map', {})
-        self.inverse_workout_map = model_data.get('inverse_workout_map', {})
-        self.inverse_nutrition_map = model_data.get('inverse_nutrition_map', {})
-        
-        self.is_trained = True
-        print(f"Model loaded from {filepath}")
-        print(f"Last trained: {self.training_info.get('training_date', 'Unknown')}")
+        if template_id in low_sample_templates.get(template_type, []):
+            return 0.65  # Reduced confidence for low-sample templates
+        else:
+            return 0.90  # High confidence for well-represented templates
     
-    def _add_template_assignment_noise(self, workout_id, nutrition_id, fitness_goal, activity_level, bmi_category, noise_prob=0.15):
+    def _get_combination_confidence(self, fitness_goal, activity_level, bmi_category):
+        """Get confidence score based on goal+activity and goal+BMI combination frequency"""
+        # Low-frequency combinations identified from analysis
+        rare_workout_combos = [
+            ('Fat Loss', 'Low Activity'),
+            ('Muscle Gain', 'Low Activity'), 
+            ('Maintenance', 'Low Activity')
+        ]
+        
+        rare_nutrition_combos = [
+            ('Muscle Gain', 'Underweight'),
+            ('Maintenance', 'Underweight')
+        ]
+        
+        workout_combo = (fitness_goal, activity_level)
+        nutrition_combo = (fitness_goal, bmi_category)
+        
+        confidence = 0.90  # Default high confidence
+        
+        if workout_combo in rare_workout_combos:
+            confidence -= 0.20
+        
+        if nutrition_combo in rare_nutrition_combos:
+            confidence -= 0.15
+        
+        return max(confidence, 0.50)  # Minimum 50% confidence
+    
+    def _get_confidence_level(self, confidence_score):
+        """Convert numerical confidence to descriptive level"""
+        if confidence_score >= 0.85:
+            return "High"
+        elif confidence_score >= 0.70:
+            return "Moderate"
+        elif confidence_score >= 0.55:
+            return "Low"
+        else:
+            return "Very Low"
+    
+    def _generate_confidence_explanation(self, confidence, factors, limitations, user_profile):
+        """Generate human-readable confidence explanation"""
+        activity = user_profile.get('activity_level')
+        goal = user_profile.get('fitness_goal')
+        
+        if confidence >= 0.85:
+            base_msg = f"Tinggi kepercayaan untuk profil {goal} dengan aktivitas {activity}."
+        elif confidence >= 0.70:
+            base_msg = f"Kepercayaan moderat untuk profil {goal} dengan aktivitas {activity}."
+        else:
+            base_msg = f"Kepercayaan rendah untuk profil {goal} dengan aktivitas {activity}."
+        
+        if limitations:
+            limitation_msg = " " + " ".join(limitations)
+            return base_msg + limitation_msg
+        
+        return base_msg
+    
+    def _get_model_limitations(self):
+        """Return transparent model limitations"""
+        return {
+            'data_distribution': {
+                'high_activity': '67.8% of training data - optimal performance',
+                'moderate_activity': '22.2% of training data - good performance',
+                'low_activity': '10.0% of training data - reduced confidence'
+            },
+            'recommendations': {
+                'high_confidence': 'Suitable for direct implementation',
+                'moderate_confidence': 'Consider additional factors',
+                'low_confidence': 'Professional consultation recommended'
+            },
+            'thesis_finding': 'Model optimized for high-activity individuals reflecting real population patterns'
+        }
+
+    def debug_template_assignment_logic(self, test_samples=20):
         """
-        Add controlled noise to template assignments to reduce overfitting in nutrition model
+        Test template assignment logic with sample inputs to verify correctness
+        """
+        print("\n🔍 TESTING TEMPLATE ASSIGNMENT LOGIC")
+        print("="*80)
+        
+        # Test all possible combinations
+        goals = ['Fat Loss', 'Muscle Gain', 'Maintenance']
+        activities = ['Low Activity', 'Moderate Activity', 'High Activity']
+        bmis = ['Underweight', 'Normal', 'Overweight', 'Obese']
+        
+        print("\nTesting all possible combinations:")
+        print("-" * 60)
+        
+        for goal in goals:
+            for activity in activities:
+                for bmi in bmis:
+                    workout_id, nutrition_id = self.get_template_assignments(goal, activity, bmi)
+                    
+                    if workout_id is not None and nutrition_id is not None:
+                        print(f"  {goal} + {activity} + {bmi}: Workout {workout_id}, Nutrition {nutrition_id}")
+                    else:
+                        print(f"  {goal} + {activity} + {bmi}: ❌ No template assigned")
+        
+        print("\n" + "="*80)
+
+    def debug_template_assignments(self, df):
+        """
+        Debug template assignment logic with comprehensive analysis
+        """
+        print("\n" + "="*80)
+        print("🔍 TEMPLATE ASSIGNMENT DEBUGGING ANALYSIS")
+        print("="*80)
+        
+        # 1. Template mapping verification
+        print("\n1. WORKOUT TEMPLATE MAPPING (template_id → model_class → combination):")
+        print("-" * 60)
+        for i, template in self.workout_templates.iterrows():
+            template_id = getattr(template, 'template_id')
+            goal = getattr(template, 'goal')
+            activity = getattr(template, 'activity_level')
+            workout_type = getattr(template, 'workout_type', 'Unknown')
+            days = getattr(template, 'days_per_week', 'Unknown')
+            
+            # Get model class (0-8)
+            model_class = template_id - 1  # XGBoost uses 0-based indexing
+            print(f"  Template {template_id} → Class {model_class} → {goal} + {activity} ({workout_type}, {days} days)")
+        
+        print("\n2. NUTRITION TEMPLATE MAPPING (template_id → model_class → combination):")
+        print("-" * 60)
+        for i, template in self.nutrition_templates.iterrows():
+            template_id = getattr(template, 'template_id')
+            goal = getattr(template, 'goal')
+            bmi_cat = getattr(template, 'bmi_category')
+            
+            # Get model class (0-7)
+            model_class = template_id - 1  # XGBoost uses 0-based indexing
+            print(f"  Template {template_id} → Class {model_class} → {goal} + {bmi_cat}")
+        
+        # 2. Actual data combination counts
+        print("\n3. ACTUAL DATA COMBINATION COUNTS:")
+        print("-" * 60)
+        
+        # Workout combinations (Goal + Activity)
+        print("\nWorkout Combinations (Goal + Activity Level):")
+        workout_combos = df.groupby(['fitness_goal', 'activity_level']).size().reset_index(name='count')
+        workout_combos['percentage'] = (workout_combos['count'] / len(df) * 100).round(2)
+        for _, row in workout_combos.iterrows():
+            print(f"  {row['fitness_goal']} + {row['activity_level']}: {row['count']} samples ({row['percentage']}%)")
+        
+        # Nutrition combinations (Goal + BMI)
+        print("\nNutrition Combinations (Goal + BMI Category):")
+        nutrition_combos = df.groupby(['fitness_goal', 'bmi_category']).size().reset_index(name='count')
+        nutrition_combos['percentage'] = (nutrition_combos['count'] / len(df) * 100).round(2)
+        for _, row in nutrition_combos.iterrows():
+            print(f"  {row['fitness_goal']} + {row['bmi_category']}: {row['count']} samples ({row['percentage']}%)")
+        
+        # 3. Template ID distribution analysis
+        print("\n4. TEMPLATE ID DISTRIBUTION IN DATASET:")
+        print("-" * 60)
+        
+        print("\nWorkout Template ID Distribution:")
+        workout_template_dist = df['workout_template_id'].value_counts().sort_index()
+        for template_id, count in workout_template_dist.items():
+            percentage = (count / len(df) * 100)
+            print(f"  Template {template_id}: {count} samples ({percentage:.2f}%)")
+        
+        print("\nNutrition Template ID Distribution:")
+        nutrition_template_dist = df['nutrition_template_id'].value_counts().sort_index()
+        for template_id, count in nutrition_template_dist.items():
+            percentage = (count / len(df) * 100)
+            print(f"  Template {template_id}: {count} samples ({percentage:.2f}%)")
+        
+        # 4. Check for missing combinations
+        print("\n5. MISSING COMBINATIONS ANALYSIS:")
+        print("-" * 60)
+        
+        # Expected workout combinations
+        goals = ['Fat Loss', 'Muscle Gain', 'Maintenance']
+        activities = ['Low Activity', 'Moderate Activity', 'High Activity']
+        bmis = ['Underweight', 'Normal', 'Overweight', 'Obese']
+        
+        print("\nMissing Workout Combinations (Goal + Activity):")
+        found_workout_combos = set()
+        for _, row in workout_combos.iterrows():
+            found_workout_combos.add((row['fitness_goal'], row['activity_level']))
+        
+        for goal in goals:
+            for activity in activities:
+                combo = (goal, activity)
+                if combo not in found_workout_combos:
+                    print(f"  Missing: {goal} + {activity}")
+        
+        print("\nMissing Nutrition Combinations (Goal + BMI):")
+        found_nutrition_combos = set()
+        for _, row in nutrition_combos.iterrows():
+            found_nutrition_combos.add((row['fitness_goal'], row['bmi_category']))
+        
+        # Expected nutrition combinations (only valid ones)
+        valid_nutrition_combos = [
+            ('Fat Loss', 'Normal'), ('Fat Loss', 'Overweight'), ('Fat Loss', 'Obese'),
+            ('Muscle Gain', 'Underweight'), ('Muscle Gain', 'Normal'),
+            ('Maintenance', 'Underweight'), ('Maintenance', 'Normal'), ('Maintenance', 'Overweight')
+        ]
+        
+        for combo in valid_nutrition_combos:
+            if combo not in found_nutrition_combos:
+                print(f"  Missing: {combo[0]} + {combo[1]}")
+        
+        # 5. Sample assignment verification
+        print("\n6. SAMPLE ASSIGNMENT VERIFICATION:")
+        print("-" * 60)
+        
+        # Test a few random samples
+        sample_indices = np.random.choice(len(df), min(5, len(df)), replace=False)
+        for idx in sample_indices:
+            row = df.iloc[idx]
+            goal = row['fitness_goal']
+            activity = row['activity_level']
+            bmi_cat = row['bmi_category']
+            workout_assigned = row['workout_template_id']
+            nutrition_assigned = row['nutrition_template_id']
+            
+            # Get expected assignments
+            expected_workout, expected_nutrition = self.get_template_assignments(goal, activity, bmi_cat)
+            
+            print(f"Sample {idx}:")
+            print(f"  Profile: {goal} + {activity} + {bmi_cat}")
+            print(f"  Assigned: Workout Template {workout_assigned}, Nutrition Template {nutrition_assigned}")
+            
+            # Check if assignment matches logic (allowing for minimal noise)
+            workout_matches = (workout_assigned == expected_workout)
+            nutrition_matches = (nutrition_assigned == expected_nutrition)
+            
+            # For workout, check if it's at least the same goal if not exact match
+            if not workout_matches:
+                assigned_workout_goal = None
+                for template in self.workout_templates.itertuples():
+                    if getattr(template, 'template_id') == workout_assigned:
+                        assigned_workout_goal = getattr(template, 'goal')
+                        break
+                if assigned_workout_goal == goal:
+                    workout_matches = True  # Same goal, acceptable due to noise
+            
+            # For nutrition, check if it's at least the same goal if not exact match
+            if not nutrition_matches:
+                assigned_nutrition_goal = None
+                for template in self.nutrition_templates.itertuples():
+                    if getattr(template, 'template_id') == nutrition_assigned:
+                        assigned_nutrition_goal = getattr(template, 'goal')
+                        break
+                if assigned_nutrition_goal == goal:
+                    nutrition_matches = True  # Same goal, acceptable due to noise
+            
+            if workout_matches and nutrition_matches:
+                print(f"  ✅ Assignment matches expected logic")
+            else:
+                print(f"  ⚠️ Assignment differs from expected (expected: W{expected_workout}, N{expected_nutrition})")
+
+    def debug_training_splits(self, df):
+        """
+        Debug training data splits and class distributions
+        """
+        print("\n" + "="*80)
+        print("📊 TRAINING SET CLASS BALANCE ANALYSIS:")
+        print("="*60)
+        
+        # Filter training data
+        if 'split' in df.columns:
+            train_df = df[df['split'] == 'train']
+        else:
+            train_df = df  # Use all data if no split column
+        
+        print(f"Training set size: {len(train_df)} samples")
+        
+        # Workout template distribution in training set
+        print("\nWorkout Template Distribution in Training:")
+        train_workout_dist = train_df['workout_template_id'].value_counts().sort_index()
+        for template_id, count in train_workout_dist.items():
+            percentage = (count / len(train_df) * 100)
+            status = "✅" if count >= 20 else "⚠️"
+            print(f"  {status} Template {template_id}: {count} samples ({percentage:.1f}%)")
+        
+        # Nutrition template distribution in training set
+        print("\nNutrition Template Distribution in Training:")
+        train_nutrition_dist = train_df['nutrition_template_id'].value_counts().sort_index()
+        for template_id, count in train_nutrition_dist.items():
+            percentage = (count / len(train_df) * 100)
+            status = "✅" if count >= 20 else "⚠️"
+            print(f"  {status} Template {template_id}: {count} samples ({percentage:.1f}%)")
+        
+        # Minimum sample analysis
+        min_workout_samples = train_workout_dist.min()
+        min_nutrition_samples = train_nutrition_dist.min()
+        
+        print(f"\n📈 MINIMUM SAMPLE ANALYSIS:")
+        print(f"  Minimum workout template samples: {min_workout_samples}")
+        print(f"  Minimum nutrition template samples: {min_nutrition_samples}")
+        
+        if min_workout_samples >= 20 and min_nutrition_samples >= 20:
+            print(f"  ✅ All classes have reasonable sample counts (≥20)")
+        else:
+            print(f"  ⚠️ Some classes have very low sample counts (<20)")
+            if min_workout_samples < 20:
+                low_workout_templates = train_workout_dist[train_workout_dist < 20].index.tolist()
+                print(f"     Low-sample workout templates: {low_workout_templates}")
+            if min_nutrition_samples < 20:
+                low_nutrition_templates = train_nutrition_dist[train_nutrition_dist < 20].index.tolist()
+                print(f"     Low-sample nutrition templates: {low_nutrition_templates}")
+
+    def _add_template_assignment_noise(self, workout_id, nutrition_id, fitness_goal, activity_level, bmi_category, noise_prob=0.02):
+        """
+        Add MINIMAL controlled noise to template assignments to prevent overfitting while preserving logic
+        
+        FIXED VERSION: Greatly reduced noise to maintain assignment accuracy
+        - Only 2% chance of randomization to prevent deterministic overfitting
+        - Ensures alternative templates are logically similar (same goal)
+        - Preserves the core assignment logic while adding slight variation
         
         Args:
             workout_id: Original workout template ID
@@ -1473,517 +1792,524 @@ class XGFitnessAIModel:
             fitness_goal: User's fitness goal
             activity_level: User's activity level
             bmi_category: User's BMI category
-            noise_prob: Probability of introducing noise (default 15%)
+            noise_prob: Probability of introducing noise (default 2% - MINIMAL)
             
         Returns:
             Tuple of (possibly modified workout_id, possibly modified nutrition_id)
         """
-        # Only add noise to nutrition templates to address overfitting
+        # MINIMAL workout template noise (2% chance only)
         if np.random.random() < noise_prob:
-            # Get all valid nutrition templates for similar goals/BMI
-            valid_alternatives = []
+            # Get all valid workout templates for the SAME goal only
+            same_goal_alternatives = []
             
-            # Find similar nutrition templates based on goal or BMI category
-            for template in self.nutrition_templates.itertuples():
+            for template in self.workout_templates.itertuples():
                 template_goal = getattr(template, 'goal')
-                template_bmi = getattr(template, 'bmi_category')
                 template_id = getattr(template, 'template_id')
                 
-                # Include current template and similar ones
-                if (template_goal == fitness_goal or 
-                    template_bmi == bmi_category or
-                    template_id == nutrition_id):
-                    valid_alternatives.append(template_id)
+                # Include only templates with exact same goal
+                if template_goal == fitness_goal:
+                    same_goal_alternatives.append(template_id)
             
-            # Remove duplicates and ensure current ID is included
-            valid_alternatives = list(set(valid_alternatives))
+            # Remove current template and randomly choose from alternatives
+            same_goal_alternatives = [t for t in same_goal_alternatives if t != workout_id]
+            if same_goal_alternatives:
+                workout_id = np.random.choice(same_goal_alternatives)
+        
+        # MINIMAL nutrition template noise (2% chance only)
+        if np.random.random() < noise_prob:
+            # Get all valid nutrition templates for the SAME goal only
+            same_goal_nutrition = []
             
-            # If we have alternatives, randomly choose one
-            if len(valid_alternatives) > 1:
-                nutrition_id = np.random.choice(valid_alternatives)
+            for template in self.nutrition_templates.itertuples():
+                template_goal = getattr(template, 'goal')
+                template_id = getattr(template, 'template_id')
+                
+                # Include only templates with exact same goal
+                if template_goal == fitness_goal:
+                    same_goal_nutrition.append(template_id)
+            
+            # Remove current template and randomly choose from alternatives
+            same_goal_nutrition = [t for t in same_goal_nutrition if t != nutrition_id]
+            if same_goal_nutrition:
+                nutrition_id = np.random.choice(same_goal_nutrition)
         
         return workout_id, nutrition_id
-    
-    def _augment_training_data(self, df, augmentation_factor=0.3):
+
+    def _generate_goal_specific_data(self, target_goal, n_samples, random_state=42):
         """
-        Enhanced data augmentation to improve model performance with more diverse samples
-        
-        Args:
-            df: Training dataframe
-            augmentation_factor: Fraction of additional samples to generate
-            
-        Returns:
-            Augmented dataframe
+        Generate synthetic data specifically for a target fitness goal
+        PRESERVES AUTHENTIC ACTIVITY DISTRIBUTIONS - No artificial balancing
         """
-        print(f"Augmenting training data with factor {augmentation_factor}...")
+        np.random.seed(random_state)
         
-        original_size = len(df)
-        augmented_samples = []
+        data = []
         
-        # Create noise variations for continuous features
-        continuous_features = ['age', 'height_cm', 'weight_kg', 'bmi', 'bmr', 'tdee']
-        categorical_features = ['gender', 'fitness_goal', 'activity_level', 'bmi_category']
-        
-        num_augmented = int(original_size * augmentation_factor)
-        
-        for i in range(num_augmented):
-            # Randomly select a base sample
-            base_sample = df.sample(n=1).iloc[0].copy()
-            
-            # Use simpler augmentation strategy for speed
-            # Strategy: Medium noise (±5%) for all features
-            noise_factor = 0.05
-            
-            # Add noise to continuous features
-            for feature in continuous_features:
-                if feature in base_sample:
-                    noise = np.random.uniform(-noise_factor, noise_factor)
-                    base_sample[feature] = base_sample[feature] * (1 + noise)
+        for _ in range(n_samples):
+            # Generate demographics based on goal-specific patterns
+            if target_goal == 'Muscle Gain':
+                # Muscle gain: typically younger males or underweight individuals
+                age = np.random.randint(18, 35)
+                gender = np.random.choice(['Male', 'Female'], p=[0.7, 0.3])
+                
+                if gender == 'Male':
+                    height_cm = np.random.normal(175, 8)
+                    # Tend to be leaner for muscle gain
+                    base_bmi = np.random.normal(21, 2)
+                else:
+                    height_cm = np.random.normal(162, 7)
+                    base_bmi = np.random.normal(20, 2)
                     
-                    # Apply realistic constraints
-                    if feature == 'age':
-                        base_sample[feature] = max(18, min(65, base_sample[feature]))
-                    elif feature == 'height_cm':
-                        base_sample[feature] = max(120, min(220, base_sample[feature]))
-                    elif feature == 'weight_kg':
-                        base_sample[feature] = max(30, min(200, base_sample[feature]))
-            
-            # Recalculate dependent features
-            if 'height_cm' in base_sample and 'weight_kg' in base_sample:
-                height_m = base_sample['height_cm'] / 100
-                base_sample['bmi'] = base_sample['weight_kg'] / (height_m ** 2)
-                base_sample['bmi_category'] = categorize_bmi(base_sample['bmi'])
-            
-            if 'weight_kg' in base_sample and 'height_cm' in base_sample and 'age' in base_sample:
-                base_sample['bmr'] = calculate_bmr(
-                    base_sample['weight_kg'], base_sample['height_cm'], 
-                    base_sample['age'], base_sample['gender']
-                )
-                base_sample['tdee'] = calculate_tdee(base_sample['bmr'], base_sample['activity_level'])
-            
-            # Simplified categorical feature modification (5% chance)
-            if np.random.random() < 0.05:
-                # Simple activity level change
-                if base_sample['activity_level'] == 'Low Activity' and np.random.random() < 0.5:
-                    base_sample['activity_level'] = 'Moderate Activity'
-                elif base_sample['activity_level'] == 'High Activity' and np.random.random() < 0.5:
-                    base_sample['activity_level'] = 'Moderate Activity'
+                # PRESERVE AUTHENTIC ACTIVITY DISTRIBUTION - More likely to be high activity
+                activity_level = np.random.choice(['High Activity', 'Moderate Activity', 'Low Activity'], 
+                                                p=[0.68, 0.22, 0.10])  # Match real data distribution
+                
+            elif target_goal == 'Fat Loss':
+                # Fat loss: wider age range, higher BMIs
+                age = np.random.randint(18, 60)
+                gender = np.random.choice(['Male', 'Female'])
+                
+                if gender == 'Male':
+                    height_cm = np.random.normal(175, 8)
+                    base_bmi = np.random.normal(27, 3)  # Overweight range
+                else:
+                    height_cm = np.random.normal(162, 7)
+                    base_bmi = np.random.normal(26, 3)
                     
-                # Recalculate TDEE with new activity level
-                base_sample['tdee'] = calculate_tdee(base_sample['bmr'], base_sample['activity_level'])
+                # PRESERVE AUTHENTIC ACTIVITY DISTRIBUTION
+                activity_level = np.random.choice(['High Activity', 'Moderate Activity', 'Low Activity'], 
+                                                p=[0.68, 0.22, 0.10])  # Match real data distribution
+                
+            else:  # Maintenance
+                # Maintenance: typically normal BMI, varied ages
+                age = np.random.randint(18, 65)
+                gender = np.random.choice(['Male', 'Female'])
+                
+                if gender == 'Male':
+                    height_cm = np.random.normal(175, 8)
+                    base_bmi = np.random.normal(23, 2)  # Normal range
+                else:
+                    height_cm = np.random.normal(162, 7)
+                    base_bmi = np.random.normal(22, 2)
+                    
+                # PRESERVE AUTHENTIC ACTIVITY DISTRIBUTION
+                activity_level = np.random.choice(['High Activity', 'Moderate Activity', 'Low Activity'], 
+                                                p=[0.68, 0.22, 0.10])  # Match real data distribution
             
-            # Update template assignments
-            workout_id, nutrition_id = self.get_template_assignments(
-                base_sample['fitness_goal'], base_sample['activity_level'], base_sample['bmi_category']
+            # Ensure reasonable ranges
+            height_cm = np.clip(height_cm, 150, 200)
+            base_bmi = np.clip(base_bmi, 16, 40)
+            
+            weight_kg = base_bmi * ((height_cm / 100) ** 2)
+            weight_kg = np.clip(weight_kg, 40, 150)
+            
+            # Recalculate BMI and category
+            bmi = weight_kg / ((height_cm / 100) ** 2)
+            bmi_category = categorize_bmi(bmi)
+            
+            # Generate activity data based on activity level
+            if activity_level == 'High Activity':
+                mod_act_hours = np.random.normal(5.8, 0.8)
+                vig_act_hours = np.random.normal(2.8, 0.5)
+                activity_multiplier = 1.81
+            elif activity_level == 'Moderate Activity':
+                mod_act_hours = np.random.normal(3.75, 0.6)
+                vig_act_hours = np.random.normal(1.87, 0.3)
+                activity_multiplier = 1.55
+            else:  # Low Activity
+                mod_act_hours = np.random.normal(1.67, 0.4)
+                vig_act_hours = np.random.normal(0.83, 0.25)
+                activity_multiplier = 1.29
+            
+            mod_act_hours = max(0, mod_act_hours)
+            vig_act_hours = max(0, vig_act_hours)
+            
+            # Calculate physiological metrics
+            bmr = calculate_bmr(weight_kg, height_cm, age, gender)
+            tdee = calculate_tdee(bmr, activity_level)
+            
+            # Use the target goal
+            fitness_goal = target_goal
+            
+            # Find matching templates
+            workout_id, nutrition_id = self.get_template_assignments(fitness_goal, activity_level, bmi_category)
+            
+            if workout_id is None or nutrition_id is None:
+                continue  # Skip if no matching templates
+            
+            # MINIMAL noise to preserve logic but prevent overfitting
+            workout_id, nutrition_id = self._add_template_assignment_noise(
+                workout_id, nutrition_id, fitness_goal, activity_level, bmi_category, noise_prob=0.02  # MINIMAL
             )
             
-            if workout_id and nutrition_id:
-                base_sample['workout_template_id'] = workout_id
-                base_sample['nutrition_template_id'] = nutrition_id
-                base_sample['data_source'] = 'augmented'
-                # Keep the same split as the original sample for training consistency
-                # Only augment training data, not validation or test
-                if base_sample.get('split') == 'train':
-                    augmented_samples.append(base_sample)
+            data.append({
+                'age': age,
+                'gender': gender,
+                'height_cm': round(height_cm, 1),
+                'weight_kg': round(weight_kg, 1),
+                'bmi': round(bmi, 2),
+                'bmi_category': bmi_category,
+                'bmr': round(bmr, 1),
+                'tdee': round(tdee, 1),
+                'activity_level': activity_level,
+                'activity_multiplier': activity_multiplier,
+                'Mod_act': round(mod_act_hours, 2),
+                'Vig_act': round(vig_act_hours, 2),
+                'has_activity_data': True,
+                'fitness_goal': fitness_goal,
+                'workout_template_id': workout_id,
+                'nutrition_template_id': nutrition_id,
+                'data_source': 'synthetic'
+            })
         
-        # Combine original and augmented data
-        augmented_df = pd.concat([df] + [pd.DataFrame([sample]) for sample in augmented_samples], 
-                                ignore_index=True)
+        df = pd.DataFrame(data)
         
-        # Reset index to ensure consistent indexing
-        augmented_df = augmented_df.reset_index(drop=True)
+        # Report on maintained authentic distribution
+        activity_counts = df['activity_level'].value_counts()
+        print(f"Generated {len(df)} synthetic samples for {target_goal} (preserving authentic activity distribution):")
+        for activity, count in activity_counts.items():
+            percentage = (count / len(df) * 100)
+            print(f"  {activity}: {count} samples ({percentage:.1f}%)")
         
-        print(f"Augmented data: {original_size} -> {len(augmented_df)} samples (+{len(augmented_samples)})")
-        return augmented_df
-    
-    def _assess_input_quality(self, user_data):
-        """
-        Assess the quality and completeness of user input data
-        
-        Args:
-            user_data: User profile data
-            
-        Returns:
-            float: Quality score between 0 and 1
-        """
-        quality_score = 0.0
-        total_checks = 0
-        
-        # Age validation
-        age = user_data.get('age', 0)
-        if 18 <= age <= 80:
-            quality_score += 1.0
-        elif 16 <= age <= 85:
-            quality_score += 0.7
-        elif 14 <= age <= 90:
-            quality_score += 0.4
-        total_checks += 1
-        
-        # Height validation
-        height = user_data.get('height', 0)
-        if 150 <= height <= 200:
-            quality_score += 1.0
-        elif 140 <= height <= 210:
-            quality_score += 0.8
-        elif 130 <= height <= 220:
-            quality_score += 0.5
-        total_checks += 1
-        
-        # Weight validation
-        weight = user_data.get('weight', 0)
-        if 40 <= weight <= 150:
-            quality_score += 1.0
-        elif 30 <= weight <= 180:
-            quality_score += 0.8
-        elif 25 <= weight <= 200:
-            quality_score += 0.6
-        total_checks += 1
-        
-        # Gender validation
-        gender = user_data.get('gender', '').lower()
-        if gender in ['male', 'female']:
-            quality_score += 1.0
-        total_checks += 1
-        
-        # Activity level validation
-        activity_level = user_data.get('activity_level', '').lower()
-        valid_activities = ['sedentary', 'light', 'moderate', 'active', 'very_active']
-        if any(activity in activity_level for activity in valid_activities):
-            quality_score += 1.0
-        total_checks += 1
-        
-        # Fitness goal validation
-        fitness_goal = user_data.get('fitness_goal', '').lower()
-        valid_goals = ['weight_loss', 'muscle_gain', 'general_fitness', 'endurance', 'strength', 'maintenance']
-        if any(goal in fitness_goal for goal in valid_goals):
-            quality_score += 1.0
-        total_checks += 1
-        
-        # BMI consistency check
-        if all([age > 0, height > 0, weight > 0]):
-            bmi = weight / ((height / 100) ** 2)
-            if 16 <= bmi <= 40:  # Reasonable BMI range
-                quality_score += 1.0
-            elif 14 <= bmi <= 45:
-                quality_score += 0.7
-            total_checks += 1
-        
-        # Calculate final quality score
-        if total_checks > 0:
-            final_score = quality_score / total_checks
-        else:
-            final_score = 0.0
-        
-        return final_score
-    
-    def _assess_template_certainty(self, user_data, model_type):
-        """
-        Assess how well the user profile matches available templates
-        
-        Args:
-            user_data: User profile data
-            model_type: 'workout' or 'nutrition'
-            
-        Returns:
-            float: Certainty score between 0 and 1
-        """
-        certainty_score = 0.5  # Base score
-        
-        # Calculate BMI and category
-        height = user_data.get('height', 0)
-        weight = user_data.get('weight', 0)
-        age = user_data.get('age', 25)
-        activity_level = user_data.get('activity_level', 'moderate')
-        fitness_goal = user_data.get('fitness_goal', 'general_fitness')
-        
-        if height > 0 and weight > 0:
-            bmi = weight / ((height / 100) ** 2)
-            
-            # BMI category matching
-            if 18.5 <= bmi <= 24.9:
-                bmi_category = 'Normal'
-                certainty_score += 0.2  # Normal BMI is most common
-            elif 25 <= bmi <= 29.9:
-                bmi_category = 'Overweight'
-                certainty_score += 0.15
-            elif bmi >= 30:
-                bmi_category = 'Obese'
-                certainty_score += 0.1
-            elif bmi < 18.5:
-                bmi_category = 'Underweight'
-                certainty_score += 0.1
-            else:
-                bmi_category = 'Unknown'
-                certainty_score -= 0.1
-        
-        # Age group matching
-        if 25 <= age <= 45:
-            certainty_score += 0.15  # Most common fitness age range
-        elif 18 <= age <= 55:
-            certainty_score += 0.1
-        else:
-            certainty_score -= 0.1  # Less common age ranges
-        
-        # Activity level matching
-        activity_scores = {
-            'moderate': 0.1,  # Most common
-            'light': 0.05,
-            'active': 0.05,
-            'sedentary': 0.0,
-            'very_active': 0.0
-        }
-        certainty_score += activity_scores.get(activity_level.lower(), 0.0)
-        
-        # Goal matching
-        goal_scores = {
-            'general_fitness': 0.1,  # Most common
-            'weight_loss': 0.08,
-            'muscle_gain': 0.08,
-            'maintenance': 0.05,
-            'endurance': 0.03,
-            'strength': 0.03
-        }
-        certainty_score += goal_scores.get(fitness_goal.lower(), 0.0)
-        
-        # Model type adjustment
-        if model_type == 'nutrition':
-            # Nutrition templates are more standardized
-            certainty_score += 0.05
-        else:  # workout
-            # Workout templates are more variable
-            certainty_score -= 0.05
-        
-        # Ensure score is between 0 and 1
-        certainty_score = max(0.0, min(1.0, certainty_score))
-        
-        return certainty_score
-    
-    def get_confidence_explanation(self, user_data, confidence_scores):
-        """
-        Generate a user-friendly explanation of why the confidence is at its current level
-        
-        Args:
-            user_data: User input data
-            confidence_scores: The calculated confidence scores
-            
-        Returns:
-            Dictionary with explanation details
-        """
-        explanations = []
-        overall_confidence = confidence_scores['overall_confidence']
-        
-        # Assess input quality
-        quality_score = self._assess_input_quality(user_data)
-        if quality_score >= 0.8:
-            explanations.append("✅ Data profil Anda lengkap dan realistic")
+        return df
 
-        elif quality_score >= 0.6:
-            explanations.append("⚠️ Beberapa data profil mungkin tidak optimal")
-        else:
-            explanations.append("❌ Data profil perlu diperbaiki untuk akurasi lebih baik")
-        
-       
-        
-        # Assess template certainty
-        template_certainty = self._assess_template_certainty(user_data, 'nutrition')
-        if template_certainty >= 0.8:
-            explanations.append("✅ Profil Anda sangat cocok dengan template yang tersedia")
-        elif template_certainty >= 0.6:
-            explanations.append("⚠️ Profil Anda cukup cocok dengan template")
-        else:
-            explanations.append("❌ Profil Anda kurang umum, rekomendasi mungkin kurang akurat")
-        
-        # Model-specific explanations
-        workout_conf = confidence_scores['workout_confidence']
-        nutrition_conf = confidence_scores['nutrition_confidence']
-        
-        if workout_conf > nutrition_conf:
-            explanations.append("💪 Rekomendasi workout lebih akurat daripada nutrisi")
-        elif nutrition_conf > workout_conf:
-            explanations.append("🥗 Rekomendasi nutrisi lebih akurat daripada workout")
-        else:
-            explanations.append("⚖️ Rekomendasi workout dan nutrisi memiliki akurasi yang seimbang")
-        
-        # Overall assessment
-        if overall_confidence >= 0.75:
-            summary = "Rekomendasi ini sangat dapat diandalkan untuk profil Anda"
-        elif overall_confidence >= 0.55:
-            summary = "Rekomendasi ini cukup baik, tapi pertimbangkan penyesuaian sesuai kebutuhan"
-        else:
-            summary = "Rekomendasi ini perlu disesuaikan lebih lanjut atau konsultasi dengan ahli"
-        
-        return {
-            'summary': summary,
-            'explanations': explanations,
-            'improvement_tips': self._get_improvement_tips(user_data, quality_score, template_certainty)
-        }
-    
-    def _get_improvement_tips(self, user_data, quality_score, template_certainty):
+    def save_model(self, filepath):
         """
-        Get tips for improving confidence scores
+        Save the trained model to a pickle file
         
-        Returns:
-            List of improvement tips
-        """
-        tips = []
-        
-        # Data quality tips
-        if quality_score < 0.7:
-            age = user_data.get('age', 0)
-            height = user_data.get('height', 0)
-            weight = user_data.get('weight', 0)
-            
-            if not (18 <= age <= 80):
-                tips.append("🎯 Pastikan usia yang dimasukkan realistic (18-80 tahun)")
-            
-            if not (150 <= height <= 200):
-                tips.append("📏 Periksa kembali tinggi badan Anda (150-200 cm)")
-            
-            if not (40 <= weight <= 150):
-                tips.append("⚖️ Periksa kembali berat badan Anda (40-150 kg)")
-        
-        # Template certainty tips
-        if template_certainty < 0.6:
-            tips.append("🎯 Pertimbangkan untuk menyesuaikan tujuan fitness dengan kondisi BMI Anda")
-            tips.append("🏃‍♂️ Sesuaikan tingkat aktivitas dengan kondisi fisik dan lifestyle Anda")
-        
-        # General tips
-        tips.append("📊 Semakin lengkap dan akurat data yang Anda berikan, semakin baik rekomendasinya")
-        tips.append("🔄 Update profil secara berkala seiring perubahan kondisi fisik Anda")
-        
-        return tips
-
-    def test_confidence_improvements(self):
-        """
-        Test the improved confidence scoring system with various user profiles
+        Args:
+            filepath: Path where to save the model
         """
         if not self.is_trained:
-            print("Model must be trained first!")
-            return
+            raise ValueError("Model must be trained before saving")
         
-        print("=== Testing Enhanced Confidence Scoring System ===\n")
+        # Create the directory if it doesn't exist
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
         
-        # Test cases with different profile types
-        test_cases = [
+        # Prepare model data for saving
+        model_data = {
+            'workout_model': self.workout_model,
+            'nutrition_model': self.nutrition_model,
+            'scaler': self.scaler,
+            'workout_label_encoder': getattr(self, 'workout_label_encoder', None),
+            'nutrition_label_encoder': getattr(self, 'nutrition_label_encoder', None),
+            'feature_columns': self.feature_columns,
+            'workout_templates': self.workout_templates,
+            'nutrition_templates': self.nutrition_templates,
+            'training_info': self.training_info,
+            'is_trained': self.is_trained,
+            'model_version': '2.0',
+            'saved_at': datetime.now().isoformat()
+        }
+        
+        # Save to pickle file
+        with open(filepath, 'wb') as f:
+            pickle.dump(model_data, f)
+        
+        print(f"✅ Model successfully saved to: {filepath}")
+        print(f"   - Workout model: {type(self.workout_model).__name__}")
+        print(f"   - Nutrition model: {type(self.nutrition_model).__name__}")
+        print(f"   - Training info: {len(self.training_info)} metrics")
+    
+    def load_model(self, filepath):
+        """
+        Load a trained model from a pickle file
+        
+        Args:
+            filepath: Path to the saved model file
+        """
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Model file not found: {filepath}")
+        
+        print(f"📥 Loading model from: {filepath}")
+        
+        # Load model data
+        with open(filepath, 'rb') as f:
+            model_data = pickle.load(f)
+        
+        # Restore model components
+        self.workout_model = model_data['workout_model']
+        self.nutrition_model = model_data['nutrition_model']
+        self.scaler = model_data['scaler']
+        self.workout_label_encoder = model_data.get('workout_label_encoder')
+        self.nutrition_label_encoder = model_data.get('nutrition_label_encoder')
+        self.feature_columns = model_data['feature_columns']
+        self.workout_templates = model_data['workout_templates']
+        self.nutrition_templates = model_data['nutrition_templates']
+        self.training_info = model_data['training_info']
+        self.is_trained = model_data['is_trained']
+        
+        model_version = model_data.get('model_version', '1.0')
+        saved_at = model_data.get('saved_at', 'Unknown')
+        
+        print(f"✅ Model successfully loaded!")
+        print(f"   - Model version: {model_version}")
+        print(f"   - Saved at: {saved_at}")
+        print(f"   - Workout model: {type(self.workout_model).__name__}")
+        print(f"   - Nutrition model: {type(self.nutrition_model).__name__}")
+        print(f"   - Training samples: {self.training_info.get('training_samples', 'Unknown')}")
+        print(f"   - Workout accuracy: {self.training_info.get('workout_accuracy', 0):.4f}")
+        print(f"   - Nutrition accuracy: {self.training_info.get('nutrition_accuracy', 0):.4f}")
+    
+    def test_confidence_improvements(self):
+        """
+        Test the enhanced confidence scoring system with various user profiles
+        """
+        print("Testing confidence scoring with different user profiles...")
+        
+        # Test cases representing different confidence scenarios
+        test_profiles = [
             {
-                'name': 'Ideal Fat Loss Case',
-                'data': {
-                    'age': 30,
-                    'gender': 'Male',
-                    'height': 175,
-                    'weight': 85,
-                    'activity_level': 'Moderate Activity',
-                    'fitness_goal': 'Fat Loss'
-                }
-            },
-            {
-                'name': 'Clear Muscle Gain Case',
-                'data': {
+                'name': 'High-Activity User (High Confidence)',
+                'profile': {
+                    'fitness_goal': 'Fat Loss',
+                    'activity_level': 'High Activity',
+                    'bmi_category': 'Overweight',
                     'age': 25,
                     'gender': 'Male',
-                    'height': 180,
-                    'weight': 60,
-                    'activity_level': 'High Activity',
-                    'fitness_goal': 'Muscle Gain'
+                    'weight_kg': 80,
+                    'height_cm': 175
                 }
             },
             {
-                'name': 'Maintenance Case',
-                'data': {
-                    'age': 35,
-                    'gender': 'Female',
-                    'height': 165,
-                    'weight': 60,
+                'name': 'Moderate-Activity User (Medium Confidence)',
+                'profile': {
+                    'fitness_goal': 'Muscle Gain',
                     'activity_level': 'Moderate Activity',
-                    'fitness_goal': 'Maintenance'
+                    'bmi_category': 'Normal',
+                    'age': 30,
+                    'gender': 'Female',
+                    'weight_kg': 65,
+                    'height_cm': 165
                 }
             },
             {
-                'name': 'Edge Case - Unusual Profile',
-                'data': {
-                    'age': 65,
-                    'gender': 'Female',
-                    'height': 155,
-                    'weight': 45,
-                    'activity_level': 'High Activity',
-                    'fitness_goal': 'Muscle Gain'
+                'name': 'Low-Activity User (Low Confidence)',
+                'profile': {
+                    'fitness_goal': 'Maintenance',
+                    'activity_level': 'Low Activity',
+                    'bmi_category': 'Underweight',
+                    'age': 35,
+                    'gender': 'Male',
+                    'weight_kg': 55,
+                    'height_cm': 170
                 }
             }
         ]
         
-        for test_case in test_cases:
-            print(f"🧪 Testing: {test_case['name']}")
-            try:
-                result = self.predict_with_confidence(test_case['data'])
-                if result['success']:
-                    conf_scores = result['confidence_scores']
-                    print(f"  Overall Confidence: {conf_scores['overall_confidence']:.3f} ({conf_scores['confidence_level']})")
-                    print(f"  Workout: {conf_scores['workout_confidence']:.3f} | Nutrition: {conf_scores['nutrition_confidence']:.3f}")
-                    
-                    # Show explanation
-                    explanation = conf_scores.get('confidence_explanation', {})
-                    print(f"  Summary: {explanation.get('summary', 'N/A')}")
-                    print(f"  Tips: {len(explanation.get('improvement_tips', []))} improvement tips available")
-                else:
-                    print(f"  Error: {result['error']}")
-            except Exception as e:
-                print(f"  Error: {str(e)}")
-            print()
+        for test_case in test_profiles:
+            name = test_case['name']
+            profile = test_case['profile']
+            
+            print(f"\n--- {name} ---")
+            print(f"Profile: {profile['fitness_goal']} + {profile['activity_level']} + {profile['bmi_category']}")
+            
+            # Get template assignments
+            workout_id, nutrition_id = self.get_template_assignments(
+                profile['fitness_goal'], 
+                profile['activity_level'], 
+                profile['bmi_category']
+            )
+            
+            if workout_id and nutrition_id:
+                # Calculate confidence
+                confidence_result = self.calculate_prediction_confidence(
+                    profile, workout_id, nutrition_id
+                )
+                
+                print(f"Assigned Templates: Workout {workout_id}, Nutrition {nutrition_id}")
+                print(f"Confidence Score: {confidence_result['confidence_score']} ({confidence_result['confidence_level']})")
+                print(f"Explanation: {confidence_result['explanation']}")
+                
+                if confidence_result['limitations']:
+                    print(f"Limitations: {'; '.join(confidence_result['limitations'])}")
+            else:
+                print("❌ No valid template assignment found")
         
-        print("=== Enhanced Confidence System Benefits ===")
-        print("✅ More realistic confidence scores (higher for good inputs)")
-        print("✅ Multi-factor confidence calculation")
-        print("✅ User-friendly explanations")
-        print("✅ Actionable improvement tips")
-        print("✅ Better user trust and transparency")
-        print()
+        print("\n✅ Confidence scoring system test completed!")
+    
+    def predict_with_confidence(self, user_profile):
+        """
+        Make predictions with enhanced confidence scoring
         
-def train_and_save_model(templates_dir: str = 'data'):
-    """Train and save the XGFitness AI model with real data"""
-    print("Initializing XGFitness AI Model...")
+        Args:
+            user_profile: Dictionary containing user information
+            
+        Returns:
+            Dictionary with predictions, confidence scores, and explanations
+        """
+        if not self.is_trained:
+            raise ValueError("Model must be trained before making predictions")
+        
+        # Extract user data (handle both height_cm/weight_kg and height/weight)
+        age = user_profile.get('age')
+        gender = user_profile.get('gender')
+        height_cm = user_profile.get('height_cm') or user_profile.get('height')
+        weight_kg = user_profile.get('weight_kg') or user_profile.get('weight')
+        fitness_goal = user_profile.get('fitness_goal')
+        activity_level = user_profile.get('activity_level')
+        
+        # Validate required fields
+        if not all([age, gender, height_cm, weight_kg, fitness_goal, activity_level]):
+            missing_fields = []
+            if not age: missing_fields.append('age')
+            if not gender: missing_fields.append('gender')
+            if not height_cm: missing_fields.append('height_cm/height')
+            if not weight_kg: missing_fields.append('weight_kg/weight')
+            if not fitness_goal: missing_fields.append('fitness_goal')
+            if not activity_level: missing_fields.append('activity_level')
+            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+        
+        # Calculate derived metrics
+        bmi = weight_kg / ((height_cm / 100) ** 2)
+        bmi_category = self._categorize_bmi(bmi)
+        bmr = self._calculate_bmr(weight_kg, height_cm, age, gender)
+        tdee = self._calculate_tdee(bmr, activity_level)
+        
+        # Create user data dictionary for feature engineering
+        user_data = {
+            'age': age,
+            'gender': gender,
+            'height_cm': height_cm,
+            'weight_kg': weight_kg,
+            'bmi': bmi,
+            'bmi_category': bmi_category,
+            'bmr': bmr,
+            'tdee': tdee,
+            'activity_level': activity_level,
+            'fitness_goal': fitness_goal,
+            'activity_multiplier': self._get_activity_multiplier(activity_level),
+            'Mod_act': user_profile.get('Mod_act', 0),
+            'Vig_act': user_profile.get('Vig_act', 0),
+            'has_activity_data': True
+        }
+        
+        # Convert to DataFrame for feature engineering
+        import pandas as pd
+        user_df = pd.DataFrame([user_data])
+        
+        # Apply feature engineering
+        user_df_enhanced = self.create_enhanced_features(user_df)
+        
+        # Prepare features for prediction
+        X_user = user_df_enhanced[self.feature_columns].fillna(0)
+        
+        # Scale features
+        X_user_scaled = self.scaler.transform(X_user)
+        
+        # Make predictions
+        workout_pred_encoded = self.workout_model.predict(X_user_scaled)[0]
+        nutrition_pred_encoded = self.nutrition_model.predict(X_user_scaled)[0]
+        
+        # Get prediction probabilities
+        workout_pred_proba = self.workout_model.predict_proba(X_user_scaled)[0]
+        nutrition_pred_proba = self.nutrition_model.predict_proba(X_user_scaled)[0]
+        
+        # Convert encoded predictions back to template IDs
+        workout_template_id = self.workout_label_encoder.inverse_transform([workout_pred_encoded])[0]
+        nutrition_template_id = self.nutrition_label_encoder.inverse_transform([nutrition_pred_encoded])[0]
+        
+        # Get prediction confidence scores
+        workout_confidence = np.max(workout_pred_proba)
+        nutrition_confidence = np.max(nutrition_pred_proba)
+        
+        # Calculate enhanced confidence scoring
+        confidence_result = self.calculate_prediction_confidence(
+            user_profile, workout_template_id, nutrition_template_id
+        )
+        
+        # Get template details
+        workout_template = self._get_template_details(workout_template_id, 'workout')
+        nutrition_template = self._get_template_details(nutrition_template_id, 'nutrition')
+        
+        return {
+            'predictions': {
+                'workout_template_id': int(workout_template_id),
+                'nutrition_template_id': int(nutrition_template_id),
+                'workout_template': workout_template,
+                'nutrition_template': nutrition_template
+            },
+            'model_confidence': {
+                'workout_confidence': float(workout_confidence),
+                'nutrition_confidence': float(nutrition_confidence)
+            },
+            'enhanced_confidence': confidence_result,
+            'user_profile': {
+                'bmi': round(bmi, 2),
+                'bmi_category': bmi_category,
+                'bmr': round(bmr, 1),
+                'tdee': round(tdee, 1)
+            }
+        }
     
-    # Create model instance with templates directory
-    model = XGFitnessAIModel(templates_dir)
+    def _categorize_bmi(self, bmi):
+        """Categorize BMI into standard categories"""
+        if bmi < 18.5:
+            return 'Underweight'
+        elif bmi < 25:
+            return 'Normal'
+        elif bmi < 30:
+            return 'Overweight'
+        else:
+            return 'Obese'
     
-    # Create training dataset with real + dummy data
-    training_data = model.create_training_dataset(
-        real_data_file='../../e267_Data on age, gender, height, weight, activity levels for each household member.txt',
-        total_samples=2000
-    )
+    def _calculate_bmr(self, weight_kg, height_cm, age, gender):
+        """Calculate Basal Metabolic Rate using Mifflin-St Jeor equation"""
+        if gender.lower() == 'male':
+            return 10 * weight_kg + 6.25 * height_cm - 5 * age + 5
+        else:
+            return 10 * weight_kg + 6.25 * height_cm - 5 * age - 161
     
-    # Train the model
-    training_results = model.train_models(training_data)
+    def _calculate_tdee(self, bmr, activity_level):
+        """Calculate Total Daily Energy Expenditure"""
+        activity_multipliers = {
+            'Low Activity': 1.29,
+            'Moderate Activity': 1.55,
+            'High Activity': 1.81
+        }
+        multiplier = activity_multipliers.get(activity_level, 1.55)
+        return bmr * multiplier
     
-    # Save the model
-    model.save_model('models/xgfitness_ai_model.pkl')
+    def _get_activity_multiplier(self, activity_level):
+        """Get activity multiplier for TDEE calculation"""
+        multipliers = {
+            'Low Activity': 1.29,
+            'Moderate Activity': 1.55,
+            'High Activity': 1.81
+        }
+        return multipliers.get(activity_level, 1.55)
     
-    # Save templates using template manager
-    model.template_manager.save_all_templates()
-    
-    print("\nTraining complete! Model and templates saved.")
-    
-    return model, training_results
-
-if __name__ == "__main__":
-    # Train the model
-    model, results = train_and_save_model()
-    
-    # Test with example user
-    test_user = {
-        'age': 25,
-        'gender': 'Male',
-        'height': 175,
-        'weight': 70,
-        'activity_level': 'Moderate Activity',
-        'fitness_goal': 'Muscle Gain'
-    }
-    
-    prediction = model.predict_with_confidence(test_user)
-    print(f"\nExample prediction for test user:")
-    print(f"Confidence Level: {prediction['confidence_scores']['confidence_level']}")
-    print(f"Overall Confidence: {prediction['confidence_scores']['overall_confidence']}")
-    print(f"Workout Template: {prediction['workout_recommendation']['template_id']}")
-    print(f"Nutrition Template: {prediction['nutrition_recommendation']['template_id']}")
-    
-    # Test confidence improvements
-    model.test_confidence_improvements()
+    def _get_template_details(self, template_id, template_type):
+        """Get detailed information about a template"""
+        if template_type == 'workout':
+            templates = self.workout_templates
+        else:
+            templates = self.nutrition_templates
+        
+        # Find the template
+        template_row = templates[templates['template_id'] == template_id]
+        
+        if not template_row.empty:
+            template = template_row.iloc[0]
+            if template_type == 'workout':
+                return {
+                    'template_id': int(template_id),
+                    'goal': template.get('goal', 'Unknown'),
+                    'activity_level': template.get('activity_level', 'Unknown'),
+                    'workout_type': template.get('workout_type', 'Unknown'),
+                    'days_per_week': template.get('days_per_week', 'Unknown'),
+                    'description': template.get('description', 'No description available')
+                }
+            else:  # nutrition
+                return {
+                    'template_id': int(template_id),
+                    'goal': template.get('goal', 'Unknown'),
+                    'bmi_category': template.get('bmi_category', 'Unknown'),
+                    'calories_per_kg': template.get('calories_per_kg', 'Unknown'),
+                    'protein_ratio': template.get('protein_ratio', 'Unknown'),
+                    'description': template.get('description', 'No description available')
+                }
+        else:
+            return {
+                'template_id': int(template_id),
+                'error': f'Template {template_id} not found'
+            }

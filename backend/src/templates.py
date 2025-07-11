@@ -103,21 +103,21 @@ class TemplateManager:
         """Create default nutrition templates matching the new CSV structure"""
         templates = [
             {'template_id': 1, 'goal': 'Fat Loss', 'bmi_category': 'Normal', 
-             'caloric_intake': 0.80, 'protein_per_kg': 2.3, 'carbs_per_kg': 2.75, 'fat_per_kg': 0.85},
+             'caloric_intake_multiplier': 0.80, 'protein_per_kg': 2.3, 'carbs_per_kg': 2.75, 'fat_per_kg': 0.85},
             {'template_id': 2, 'goal': 'Fat Loss', 'bmi_category': 'Overweight', 
-             'caloric_intake': 0.75, 'protein_per_kg': 2.15, 'carbs_per_kg': 2.25, 'fat_per_kg': 0.80},
+             'caloric_intake_multiplier': 0.75, 'protein_per_kg': 2.15, 'carbs_per_kg': 2.25, 'fat_per_kg': 0.80},
             {'template_id': 3, 'goal': 'Fat Loss', 'bmi_category': 'Obese', 
-             'caloric_intake': 0.70, 'protein_per_kg': 2.45, 'carbs_per_kg': 1.75, 'fat_per_kg': 0.80},
+             'caloric_intake_multiplier': 0.70, 'protein_per_kg': 2.45, 'carbs_per_kg': 1.75, 'fat_per_kg': 0.80},
             {'template_id': 4, 'goal': 'Muscle Gain', 'bmi_category': 'Underweight', 
-             'caloric_intake': 1.15, 'protein_per_kg': 2.3, 'carbs_per_kg': 4.75, 'fat_per_kg': 1.0},
+             'caloric_intake_multiplier': 1.15, 'protein_per_kg': 2.3, 'carbs_per_kg': 4.75, 'fat_per_kg': 1.0},
             {'template_id': 5, 'goal': 'Muscle Gain', 'bmi_category': 'Normal', 
-             'caloric_intake': 1.10, 'protein_per_kg': 2.1, 'carbs_per_kg': 4.25, 'fat_per_kg': 0.95},
+             'caloric_intake_multiplier': 1.10, 'protein_per_kg': 2.1, 'carbs_per_kg': 4.25, 'fat_per_kg': 0.95},
             {'template_id': 6, 'goal': 'Maintenance', 'bmi_category': 'Underweight', 
-             'caloric_intake': 1.00, 'protein_per_kg': 1.8, 'carbs_per_kg': 3.25, 'fat_per_kg': 0.90},
+             'caloric_intake_multiplier': 1.00, 'protein_per_kg': 1.8, 'carbs_per_kg': 3.25, 'fat_per_kg': 0.90},
             {'template_id': 7, 'goal': 'Maintenance', 'bmi_category': 'Normal', 
-             'caloric_intake': 0.95, 'protein_per_kg': 1.8, 'carbs_per_kg': 3.25, 'fat_per_kg': 0.85},
+             'caloric_intake_multiplier': 0.95, 'protein_per_kg': 1.8, 'carbs_per_kg': 3.25, 'fat_per_kg': 0.85},
             {'template_id': 8, 'goal': 'Maintenance', 'bmi_category': 'Overweight', 
-             'caloric_intake': 0.90, 'protein_per_kg': 1.8, 'carbs_per_kg': 3.25, 'fat_per_kg': 0.80}
+             'caloric_intake_multiplier': 0.90, 'protein_per_kg': 1.8, 'carbs_per_kg': 3.25, 'fat_per_kg': 0.80}
         ]
         return pd.DataFrame(templates)
     
