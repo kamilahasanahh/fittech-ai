@@ -348,7 +348,12 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                       </div>
                       <div className="summary-item">
                         <span className="label">BMI:</span>
-                        <span className="value">{recommendation.recommendations.user_metrics?.bmi?.toFixed(1) || 'N/A'}</span>
+                        <span className="value">
+                          {recommendation.recommendations.user_metrics?.bmi?.toFixed(1) || 
+                           (recommendation.userData?.weight && recommendation.userData?.height ? 
+                             (recommendation.userData.weight / ((recommendation.userData.height / 100) ** 2)).toFixed(1) : 
+                             'N/A')}
+                        </span>
                       </div>
                     </div>
                     

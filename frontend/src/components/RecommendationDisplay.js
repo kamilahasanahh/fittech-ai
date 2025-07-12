@@ -1,27 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { nutritionService } from '../services/nutritionService';
 import { mealPlanService } from '../services/mealPlanService';
+import { apiService } from '../services/api';
 
 const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecommendation }) => {
   const [nutritionData, setNutritionData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mealPlan, setMealPlan] = useState(null);
   const [mealPlanLoading, setMealPlanLoading] = useState(true);
+  const [backendMealPlan, setBackendMealPlan] = useState(null);
+  const [backendMealPlanLoading, setBackendMealPlanLoading] = useState(true);
 
   // Calculate user's daily macro targets based on API response
   const calculateDailyMacros = () => {
     if (!recommendations || !userData) return null;
 
-    const nutrition = recommendations.nutrition_recommendation || recommendations.nutrition;
+    const nutrition = recommendations?.predictions?.nutrition_template;
     if (!nutrition) return null;
 
-    // Use the actual calculated values from the API response
-    return {
-      calories: Math.round(nutrition.target_calories || nutrition.caloric_intake || 2000),
-      protein: Math.round(nutrition.target_protein || (nutrition.protein_per_kg * parseFloat(userData.weight)) || 100),
-      carbs: Math.round(nutrition.target_carbs || (nutrition.carbs_per_kg * parseFloat(userData.weight)) || 200),
-      fat: Math.round(nutrition.target_fat || (nutrition.fat_per_kg * parseFloat(userData.weight)) || 60)
-    };
+    // Calculate based on TDEE from user_profile and standard ratios
+    const tdee = recommendations?.user_profile?.tdee || 2000;
+    const weight = parseFloat(userData.weight);
+    
+    // Standard macro calculations for different goals
+    let calories, protein, carbs, fat;
+    
+    if (userData.fitness_goal === 'Fat Loss') {
+      calories = Math.round(tdee * 0.8); // 20% deficit
+      protein = Math.round(weight * 2.2); // High protein for fat loss
+      fat = Math.round(weight * 0.8);
+      carbs = Math.round((calories - (protein * 4) - (fat * 9)) / 4);
+    } else if (userData.fitness_goal === 'Muscle Gain') {
+      calories = Math.round(tdee * 1.1); // 10% surplus
+      protein = Math.round(weight * 2.0);
+      fat = Math.round(weight * 1.0);
+      carbs = Math.round((calories - (protein * 4) - (fat * 9)) / 4);
+    } else { // Maintenance
+      calories = Math.round(tdee);
+      protein = Math.round(weight * 1.8);
+      fat = Math.round(weight * 0.9);
+      carbs = Math.round((calories - (protein * 4) - (fat * 9)) / 4);
+    }
+
+    return { calories, protein, carbs, fat };
   };
 
   // Load nutrition data from JSON file and generate meal plan
@@ -36,9 +57,12 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
         // Generate meal plan if we have user data
         if (recommendations && userData) {
           setMealPlanLoading(true);
+          setBackendMealPlanLoading(true);
+          
           const dailyMacros = calculateDailyMacros();
           
           if (dailyMacros) {
+            // Generate meal plan using the local service
             const mealPlanResult = await mealPlanService.generateDailyMealPlan(
               dailyMacros.calories,
               dailyMacros.protein,
@@ -53,13 +77,32 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
               console.warn('Failed to load organized meal plan, using fallback');
               setMealPlan(null);
             }
+            setMealPlanLoading(false);
+
+            // Also fetch meal plan from the backend API for comparison
+            try {
+              console.log('🔄 Fetching meal plan from backend with macros:', dailyMacros);
+              const backendPlan = await apiService.getMealPlan(
+                dailyMacros.calories,
+                dailyMacros.protein,
+                dailyMacros.carbs,
+                dailyMacros.fat,
+                { dietary_restrictions: [] } // Add preferences if needed
+              );
+              console.log('✅ Backend meal plan received:', backendPlan);
+              setBackendMealPlan(backendPlan);
+            } catch (backendError) {
+              console.error('❌ Failed to fetch backend meal plan:', backendError);
+              setBackendMealPlan(null);
+            }
+            setBackendMealPlanLoading(false);
           }
-          setMealPlanLoading(false);
         }
       } catch (error) {
         console.error('Error loading data:', error);
         setLoading(false);
         setMealPlanLoading(false);
+        setBackendMealPlanLoading(false);
       }
     };
 
@@ -81,8 +124,9 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
   }
 
   // Map API response structure to component expected structure
-  const workout = recommendations.workout_recommendation || recommendations.workout;
-  const nutrition = recommendations.nutrition_recommendation || recommendations.nutrition;
+  // Extract workout and nutrition data from the API response
+  const workout = recommendations?.predictions?.workout_template;
+  const nutrition = recommendations?.predictions?.nutrition_template;
 
   // Calculate food portions based on template requirements
   const calculateFoodPortions = (targetMacros) => {
@@ -198,77 +242,118 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
           </div>
           <div className="profile-item">
             <span className="label">Tujuan:</span>
-            <span className="value">{userData?.fitness_goal}</span>
+            <span className="value">
+              {userData?.fitness_goal === 'Fat Loss' ? 'Membakar Lemak' :
+               userData?.fitness_goal === 'Muscle Gain' ? 'Menambah Massa Otot' :
+               userData?.fitness_goal === 'Maintenance' ? 'Mempertahankan Berat' : 
+               userData?.fitness_goal}
+            </span>
           </div>
           <div className="profile-item">
             <span className="label">Tingkat Aktivitas:</span>
-            <span className="value">{userData?.activity_level}</span>
+            <span className="value">
+              {userData?.activity_level === 'Low Activity' ? 'Aktivitas Rendah' :
+               userData?.activity_level === 'Moderate Activity' ? 'Aktivitas Sedang' :
+               userData?.activity_level === 'High Activity' ? 'Aktivitas Tinggi' :
+               userData?.activity_level}
+            </span>
           </div>
         </div>
       </div>
 
       {/* User Metrics from API */}
-      {recommendations.user_metrics && (
+      {recommendations?.user_profile && (
         <div className="metrics-summary">
           <h3>📊 Analisis Tubuh Anda</h3>
           <div className="metrics-grid">
             <div className="metric-item">
               <span className="label">BMI:</span>
-              <span className="value">{recommendations.user_metrics.bmi?.toFixed(1)}</span>
+              <span className="value">{recommendations.user_profile.bmi?.toFixed(1)}</span>
             </div>
             <div className="metric-item">
               <span className="label">Kategori BMI:</span>
-              <span className="value">{recommendations.user_metrics.bmi_category}</span>
+              <span className="value">
+                {recommendations.user_profile.bmi_category === 'Underweight' ? 'Kurus' :
+                 recommendations.user_profile.bmi_category === 'Normal' ? 'Normal' :
+                 recommendations.user_profile.bmi_category === 'Overweight' ? 'Kelebihan Berat' :
+                 recommendations.user_profile.bmi_category === 'Obese' ? 'Obesitas' :
+                 recommendations.user_profile.bmi_category}
+              </span>
             </div>
             <div className="metric-item">
               <span className="label">BMR:</span>
-              <span className="value">{Math.round(recommendations.user_metrics.bmr)} kkal</span>
+              <span className="value">{Math.round(recommendations.user_profile.bmr)} kkal</span>
             </div>
             <div className="metric-item">
               <span className="label">TDEE:</span>
-              <span className="value">{Math.round(recommendations.user_metrics.tdee)} kkal</span>
+              <span className="value">{Math.round(recommendations.user_profile.tdee)} kkal</span>
             </div>
           </div>
         </div>
       )}
 
       {/* Confidence Scores */}
-      {recommendations.confidence_scores && (
+      {recommendations.model_confidence && (
         <div className="confidence-summary">
           <h3>🎯 Tingkat Kepercayaan AI</h3>
           <div className="confidence-grid">
             <div className="confidence-item">
               <span className="label">Kepercayaan Keseluruhan:</span>
-              <span className="value">{Math.round(recommendations.confidence_scores.overall_confidence * 100)}%</span>
+              <span className="value">{Math.round(((recommendations.model_confidence.nutrition_confidence + recommendations.model_confidence.workout_confidence) / 2) * 100)}%</span>
             </div>
             <div className="confidence-item">
               <span className="label">Kepercayaan Nutrisi:</span>
-              <span className="value">{Math.round(recommendations.confidence_scores.nutrition_confidence * 100)}%</span>
+              <span className="value">{Math.round(recommendations.model_confidence.nutrition_confidence * 100)}%</span>
             </div>
             <div className="confidence-item">
               <span className="label">Kepercayaan Workout:</span>
-              <span className="value">{Math.round(recommendations.confidence_scores.workout_confidence * 100)}%</span>
+              <span className="value">{Math.round(recommendations.model_confidence.workout_confidence * 100)}%</span>
             </div>
             <div className="confidence-item">
               <span className="label">Level:</span>
-              <span className="value">{recommendations.confidence_scores.confidence_level}</span>
+              <span className="value">
+                {recommendations.enhanced_confidence?.confidence_level === 'Low' ? 'Rendah' :
+                 recommendations.enhanced_confidence?.confidence_level === 'Medium' ? 'Sedang' :
+                 recommendations.enhanced_confidence?.confidence_level === 'High' ? 'Tinggi' :
+                 recommendations.enhanced_confidence?.confidence_level || 'Sedang'}
+              </span>
             </div>
           </div>
-          <p className="confidence-message">{recommendations.confidence_scores.confidence_message}</p>
+          <p className="confidence-message">
+            {(() => {
+              const explanation = recommendations.enhanced_confidence?.explanation;
+              if (explanation === 'Based on high activity and fat loss goal') return 'Berdasarkan aktivitas tinggi dan tujuan membakar lemak';
+              if (explanation === 'Based on moderate activity and muscle gain goal') return 'Berdasarkan aktivitas sedang dan tujuan menambah massa otot';
+              if (explanation === 'Based on low activity and maintenance goal') return 'Berdasarkan aktivitas rendah dan tujuan mempertahankan berat';
+              if (explanation === 'Based on moderate activity and maintenance goal') return 'Berdasarkan aktivitas sedang dan tujuan mempertahankan berat';
+              if (explanation === 'Based on high activity and muscle gain goal') return 'Berdasarkan aktivitas tinggi dan tujuan menambah massa otot';
+              if (explanation === 'Based on low activity and fat loss goal') return 'Berdasarkan aktivitas rendah dan tujuan membakar lemak';
+              return explanation || 'Rekomendasi dibuat berdasarkan data yang Anda berikan.';
+            })()}
+          </p>
         </div>
       )}
 
       {/* Workout Recommendations */}
       {workout && (
         <div className="workout-section">
-          <h3>🏋️ Program Latihan Harian</h3>
+          <div className="section-header">
+            <h3>🏋️ Program Latihan Harian</h3>
+            <span className="template-id">ID Template: {workout.template_id}</span>
+          </div>
           <div className="workout-details">
             <div className="workout-card">
               <h4>📅 Jadwal Mingguan</h4>
               <div className="workout-grid">
                 <div className="workout-item">
                   <span className="label">Jenis Olahraga:</span>
-                  <span className="value">{workout.workout_type || 'Strength Training'}</span>
+                  <span className="value">
+                    {workout.workout_type === 'Full Body' ? 'Seluruh Tubuh' :
+                     workout.workout_type === 'Upper/Lower Split' ? 'Split Atas/Bawah' :
+                     workout.workout_type === 'Push/Pull/Legs' ? 'Dorong/Tarik/Kaki' :
+                     workout.workout_type === 'Strength Training' ? 'Latihan Kekuatan' :
+                     workout.workout_type || 'Latihan Kekuatan'}
+                  </span>
                 </div>
                 <div className="workout-item">
                   <span className="label">Hari per Minggu:</span>
@@ -357,7 +442,10 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
       {/* Nutrition Recommendations */}
       {nutrition && dailyMacros && (
         <div className="nutrition-section">
-          <h3>🍎 Program Nutrisi Harian</h3>
+          <div className="section-header">
+            <h3>🍎 Program Nutrisi Harian</h3>
+            <span className="template-id">ID Template: {nutrition.template_id}</span>
+          </div>
           
           <div className="nutrition-targets">
             <h4>🎯 Target Harian Berdasarkan Template</h4>
@@ -435,6 +523,104 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
             </div>
           )}
           
+          {/* Backend AI-Generated Meal Plan */}
+          {!backendMealPlanLoading && backendMealPlan && (
+            <div className="ai-meal-plan">
+              <h4>🤖 AI-Generated Meal Plan</h4>
+              <p className="ai-meal-subtitle">
+                Rencana makan yang dihasilkan oleh AI berdasarkan template nutrisi dan kebutuhan kalori Anda
+              </p>
+              
+              {/* Daily Summary */}
+              {backendMealPlan.daily_summary && (
+                <div className="daily-summary">
+                  <h5>📊 Ringkasan Harian</h5>
+                  <div className="summary-macros">
+                    <div className="summary-item">
+                      <span className="label">Total Kalori:</span>
+                      <span className="value">{Math.round(backendMealPlan.daily_summary.total_calories)} kkal</span>
+                    </div>
+                    <div className="summary-item">
+                      <span className="label">Protein:</span>
+                      <span className="value">{Math.round(backendMealPlan.daily_summary.total_protein)}g</span>
+                    </div>
+                    <div className="summary-item">
+                      <span className="label">Karbohidrat:</span>
+                      <span className="value">{Math.round(backendMealPlan.daily_summary.total_carbs)}g</span>
+                    </div>
+                    <div className="summary-item">
+                      <span className="label">Lemak:</span>
+                      <span className="value">{Math.round(backendMealPlan.daily_summary.total_fat)}g</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Detailed Meals */}
+              {backendMealPlan.meals && Object.entries(backendMealPlan.meals).map(([mealType, mealData]) => (
+                <div key={mealType} className="ai-meal-section">
+                  <h5 className="ai-meal-title">
+                    {mealType === 'breakfast' && '🌅 Sarapan'}
+                    {mealType === 'morning_snack' && '🍎 Snack Pagi'}
+                    {mealType === 'lunch' && '🌞 Makan Siang'}
+                    {mealType === 'afternoon_snack' && '🥜 Snack Sore'}
+                    {mealType === 'dinner' && '🌙 Makan Malam'}
+                    {mealType === 'evening_snack' && '🍪 Snack Malam'}
+                  </h5>
+                  
+                  <div className="ai-meal-info">
+                    <div className="ai-meal-macros">
+                      <span className="ai-macro">🔥 {Math.round(mealData.calories)} kkal</span>
+                      <span className="ai-macro">🥩 {Math.round(mealData.protein)}g</span>
+                      <span className="ai-macro">🍞 {Math.round(mealData.carbs)}g</span>
+                      <span className="ai-macro">🥑 {Math.round(mealData.fat)}g</span>
+                    </div>
+                  </div>
+
+                  <div className="ai-food-list">
+                    {mealData.foods && mealData.foods.map((food, foodIndex) => (
+                      <div key={foodIndex} className="ai-food-item">
+                        <div className="ai-food-header">
+                          <span className="ai-food-name">{food.name}</span>
+                          <span className="ai-food-portion">{food.portion}g</span>
+                        </div>
+                        <div className="ai-food-details">
+                          <span className="detail">🔥 {Math.round(food.calories)} kkal</span>
+                          <span className="detail">🥩 {Math.round(food.protein)}g</span>
+                          <span className="detail">🍞 {Math.round(food.carbs)}g</span>
+                          <span className="detail">🥑 {Math.round(food.fat)}g</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {/* Shopping List */}
+              {backendMealPlan.shopping_list && backendMealPlan.shopping_list.length > 0 && (
+                <div className="shopping-list">
+                  <h5>🛒 Daftar Belanja</h5>
+                  <div className="shopping-items">
+                    {backendMealPlan.shopping_list.map((item, index) => (
+                      <div key={index} className="shopping-item">
+                        <span className="item-name">{item.name}</span>
+                        <span className="item-amount">{item.total_amount}g</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Loading state for backend meal plan */}
+          {backendMealPlanLoading && (
+            <div className="ai-meal-plan-loading">
+              <h4>🤖 Memuat AI Meal Plan...</h4>
+              <p>Sedang menghasilkan rencana makan yang dipersonalisasi dengan AI...</p>
+            </div>
+          )}
+          
           {/* Loading state for meal plan */}
           {mealPlanLoading && (
             <div className="meal-plan-loading">
@@ -444,23 +630,6 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
           )}
         </div>
       )}
-
-      {/* Template Information */}
-      <div className="template-info">
-        <h4>📊 Informasi Template</h4>
-        <div className="template-details">
-          <p><strong>Template berdasarkan:</strong></p>
-          <ul>
-            <li>Tujuan: {userData?.fitness_goal}</li>
-            <li>Level aktivitas: {userData?.activity_level}</li>
-            <li>BMI kategori: {recommendations.user_metrics?.bmi_category || userData?.bmi_category || 'Normal'}</li>
-            <li>Template Nutrisi ID: {nutrition?.template_id}</li>
-            <li>Template Workout ID: {workout?.template_id}</li>
-            <li>Kalkulasi nutrisi per kg berat badan</li>
-          </ul>
-        </div>
-      </div>
-
 
       {/* Action Buttons */}
       <div className="recommendation-actions">

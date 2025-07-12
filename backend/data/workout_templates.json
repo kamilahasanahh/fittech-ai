@@ -1,0 +1,110 @@
+[
+  {
+    "template_id": 1,
+    "goal": "Fat Loss",
+    "activity_level": "Low Activity",
+    "workout_type": "Full Body",
+    "days_per_week": 2,
+    "workout_schedule": "WXXWXXX",
+    "sets_per_exercise": 3,
+    "exercises_per_session": 6,
+    "cardio_minutes_per_day": 35,
+    "cardio_sessions_per_day": 1
+  },
+  {
+    "template_id": 2,
+    "goal": "Fat Loss",
+    "activity_level": "Moderate Activity",
+    "workout_type": "Full Body",
+    "days_per_week": 3,
+    "workout_schedule": "WXWXWXX",
+    "sets_per_exercise": 3,
+    "exercises_per_session": 8,
+    "cardio_minutes_per_day": 45,
+    "cardio_sessions_per_day": 1
+  },
+  {
+    "template_id": 3,
+    "goal": "Fat Loss",
+    "activity_level": "High Activity",
+    "workout_type": "Upper/Lower Split",
+    "days_per_week": 4,
+    "workout_schedule": "ABXABXX",
+    "sets_per_exercise": 3,
+    "exercises_per_session": 10,
+    "cardio_minutes_per_day": 55,
+    "cardio_sessions_per_day": 1
+  },
+  {
+    "template_id": 4,
+    "goal": "Muscle Gain",
+    "activity_level": "Low Activity",
+    "workout_type": "Full Body",
+    "days_per_week": 2,
+    "workout_schedule": "WXXWXXX",
+    "sets_per_exercise": 4,
+    "exercises_per_session": 6,
+    "cardio_minutes_per_day": 18,
+    "cardio_sessions_per_day": 0
+  },
+  {
+    "template_id": 5,
+    "goal": "Muscle Gain",
+    "activity_level": "Moderate Activity",
+    "workout_type": "Upper/Lower Split",
+    "days_per_week": 4,
+    "workout_schedule": "ABXABXX",
+    "sets_per_exercise": 4,
+    "exercises_per_session": 8,
+    "cardio_minutes_per_day": 25,
+    "cardio_sessions_per_day": 1
+  },
+  {
+    "template_id": 6,
+    "goal": "Muscle Gain",
+    "activity_level": "High Activity",
+    "workout_type": "Push/Pull/Legs",
+    "days_per_week": 3,
+    "workout_schedule": "ABCX",
+    "sets_per_exercise": 4,
+    "exercises_per_session": 10,
+    "cardio_minutes_per_day": 30,
+    "cardio_sessions_per_day": 1
+  },
+  {
+    "template_id": 7,
+    "goal": "Maintenance",
+    "activity_level": "Low Activity",
+    "workout_type": "Full Body",
+    "days_per_week": 2,
+    "workout_schedule": "WXXWXXX",
+    "sets_per_exercise": 3,
+    "exercises_per_session": 4,
+    "cardio_minutes_per_day": 30,
+    "cardio_sessions_per_day": 0
+  },
+  {
+    "template_id": 8,
+    "goal": "Maintenance",
+    "activity_level": "Moderate Activity",
+    "workout_type": "Upper/Lower Split",
+    "days_per_week": 4,
+    "workout_schedule": "ABXABXX",
+    "sets_per_exercise": 3,
+    "exercises_per_session": 6,
+    "cardio_minutes_per_day": 40,
+    "cardio_sessions_per_day": 1
+  },
+  {
+    "template_id": 9,
+    "goal": "Maintenance",
+    "activity_level": "High Activity",
+    "workout_type": "Push/Pull/Legs",
+    "days_per_week": 3,
+    "workout_schedule": "ABCX",
+    "sets_per_exercise": 3,
+    "exercises_per_session": 8,
+    "cardio_minutes_per_day": 50,
+    "cardio_sessions_per_day": 1
+  }
+]

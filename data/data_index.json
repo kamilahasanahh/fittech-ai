@@ -37,13 +37,13 @@
   "api_endpoints": {
     "nutrition": {
       "food_database": "/data/nutrition/food_database.json",
-      "templates": "/data/templates/nutrition_templates.json"
+      "templates": "/data/nutrition_templates.json"
     },
     "meals": {
       "meal_plans": "/data/meals/meal_plans.json"
     },
     "workouts": {
-      "templates": "/data/templates/workout_templates.json"
+      "templates": "/data/workout_templates.json"
     }
   },
   "frontend_dependencies": {

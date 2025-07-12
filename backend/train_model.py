@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-XGFitness AI Model Training Script
-Trains the enhanced XGFitness model with improved confidence scoring
+XGFitness AI Model       # Train all models using the unified training method
+    print("\n🚀 Training ALL Models (XGBoost + Random Forest)...")
+    comprehensive_info = model.train_all_models(training_data) Train all models using the unified training method
+    print("\n🚀 Training ALL Models (XGBoost + Random Forest)...")
+    comprehensive_info = model.train_all_models(training_data)ining Script - RESTORED AUTHENTICITY VERSION
+Trains DUAL XGBoost models (main AI) + DUAL Random Forest models (comparison)
+Implements EXACT user requirements for thesis authenticity
 """
 
 import os
@@ -15,10 +20,17 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from thesis_model import XGFitnessAIModel
 
 def main():
-    """Train the XGFitness AI model with enhanced confidence scoring"""
-    print("=" * 60)
-    print("🏋️ XGFitness AI Model Training")
-    print("=" * 60)
+    """Train XGBoost + Random Forest models with STRICT AUTHENTICITY"""
+    print("=" * 80)
+    print("🏋️ FITTECH AI MODEL TRAINING - DUAL MODEL SYSTEM")
+    print("=" * 80)
+    print("STREAMLINED TRAINING PIPELINE:")
+    print("1. 🚀 PRODUCTION Model: XGBoost-only (web application)")
+    print("2. 📊 RESEARCH Model: XGBoost + Random Forest (thesis analysis)")  
+    print("3. ✅ Reproducible results with fixed random seeds")
+    print("4. 📈 Comprehensive visualizations for thesis")
+    print("5. 🎯 Exact data splitting: 70% train / 15% val / 15% test")
+    print("=" * 80)
     print(f"Training started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     
@@ -28,155 +40,156 @@ def main():
     print("✅ Model initialized successfully")
     print()
     
-    # Create training dataset
-    print("🔍 Creating training dataset...")
-    training_data = model.create_training_dataset(
-        real_data_file='e267_Data on age, gender, height, weight, activity levels for each household member.txt',
-        total_samples=2000,
-        random_state=42
-    )
-    print(f"✅ Training dataset created: {len(training_data)} samples")
+    # Create training dataset with EXACT AUTHENTICITY METHODOLOGY
+    print("🔍 Loading real data with EXACT AUTHENTICITY METHODOLOGY...")
+    training_data = model.load_real_data_with_exact_splits()
+    print(f"✅ Training dataset loaded: {len(training_data)} samples")
+    
+    # Save training data for visualizations
+    print("💾 Saving training data for visualizations...")
+    training_data_path = 'training_data.csv'
+    training_data.to_csv(training_data_path, index=False)
+    print(f"✅ Training data saved to: {training_data_path}")
     print()
     
-    # Train models
-    print("🚀 Starting model training...")
+    # Train ALL models with verification
+    print("🚀 Starting COMPREHENSIVE model training...")
     start_time = time.time()
     
-    training_info = model.train_models(training_data, random_state=42)
+    # Train all models using the unified training method
+    print("\n� Training ALL Models (XGBoost + Random Forest)...")
+    comprehensive_info = model.train_all_models(training_data, random_state=42)
     
     training_time = time.time() - start_time
-    print(f"✅ Model training completed in {training_time:.2f} seconds")
+    print(f"✅ COMPREHENSIVE training completed in {training_time:.2f} seconds")
     print()
     
-    # Test enhanced confidence scoring system
-    print("🎯 Testing Enhanced Confidence Scoring System...")
-    try:
-        model.test_confidence_improvements()
-    except Exception as e:
-        print(f"⚠️ Enhanced confidence testing failed: {e}")
-        print("Continuing with basic confidence testing...")
+    # Extract training info
+    xgboost_info = comprehensive_info['xgb_training_info']
+    random_forest_info = comprehensive_info['rf_training_info']
+    
+    
+    # Display comprehensive training results
+    print("📊 COMPREHENSIVE TRAINING RESULTS:")
+    print("=" * 80)
+    print(f"Dataset Information:")
+    print(f"  Total samples: {xgboost_info['total_samples']}")
+    print(f"  Training samples: {xgboost_info['training_samples']}")
+    print(f"  Validation samples: {xgboost_info['validation_samples']}")
+    print(f"  Test samples: {xgboost_info['test_samples']}")
     print()
     
-    # Display training results
-    print("📊 Training Results Summary:")
+    print(f"XGBOOST MODEL PERFORMANCE (Main AI for Web App):")
+    print(f"  Workout Model:")
+    print(f"    - Accuracy: {xgboost_info['workout_accuracy']:.4f}")
+    print(f"    - F1 Score: {xgboost_info['workout_f1']:.4f}")
+    print(f"    - Precision: {xgboost_info.get('workout_precision', 'N/A'):.4f}")
+    print(f"    - Recall: {xgboost_info.get('workout_recall', 'N/A'):.4f}")
+    print(f"  Nutrition Model:")
+    print(f"    - Accuracy: {xgboost_info['nutrition_accuracy']:.4f}")
+    print(f"    - F1 Score: {xgboost_info['nutrition_f1']:.4f}")
+    print(f"    - Precision: {xgboost_info.get('nutrition_precision', 'N/A'):.4f}")
+    print(f"    - Recall: {xgboost_info.get('nutrition_recall', 'N/A'):.4f}")
+    print()
+    
+    print(f"RANDOM FOREST MODEL PERFORMANCE (Academic Comparison):")
+    print(f"  Workout Model:")
+    print(f"    - Accuracy: {random_forest_info['rf_workout_accuracy']:.4f}")
+    print(f"    - F1 Score: {random_forest_info['rf_workout_f1']:.4f}")
+    print(f"    - Precision: {random_forest_info.get('rf_workout_precision', 'N/A'):.4f}")
+    print(f"    - Recall: {random_forest_info.get('rf_workout_recall', 'N/A'):.4f}")
+    print(f"  Nutrition Model:")
+    print(f"    - Accuracy: {random_forest_info['rf_nutrition_accuracy']:.4f}")
+    print(f"    - F1 Score: {random_forest_info['rf_nutrition_f1']:.4f}")
+    print(f"    - Precision: {random_forest_info.get('rf_nutrition_precision', 'N/A'):.4f}")
+    print(f"    - Recall: {random_forest_info.get('rf_nutrition_recall', 'N/A'):.4f}")
+    print()
+    
+    # Model comparison summary
+    print("🔍 MODEL COMPARISON SUMMARY:")
     print("-" * 40)
-    print(f"Total samples: {training_info['total_samples']}")
-    print(f"Training samples: {training_info['training_samples']}")
-    print(f"Validation samples: {training_info['validation_samples']}")
-    print(f"Test samples: {training_info['test_samples']}")
-    print()
-    print(f"Workout Model Performance:")
-    print(f"  - Accuracy: {training_info['workout_accuracy']:.4f}")
-    print(f"  - F1 Score: {training_info['workout_f1']:.4f}")
-    print()
-    print(f"Nutrition Model Performance:")
-    print(f"  - Accuracy: {training_info['nutrition_accuracy']:.4f}")
-    print(f"  - F1 Score: {training_info['nutrition_f1']:.4f}")
+    xgb_workout_acc = xgboost_info['workout_accuracy']
+    rf_workout_acc = random_forest_info['rf_workout_accuracy']
+    xgb_nutrition_acc = xgboost_info['nutrition_accuracy']
+    rf_nutrition_acc = random_forest_info['rf_nutrition_accuracy']
+    
+    workout_winner = "XGBoost" if xgb_workout_acc > rf_workout_acc else "Random Forest"
+    nutrition_winner = "XGBoost" if xgb_nutrition_acc > rf_nutrition_acc else "Random Forest"
+    
+    print(f"Workout Model Winner: {workout_winner} ({max(xgb_workout_acc, rf_workout_acc):.4f})")
+    print(f"Nutrition Model Winner: {nutrition_winner} ({max(xgb_nutrition_acc, rf_nutrition_acc):.4f})")
     print()
     
-    # Save the trained model
-    print("💾 Saving trained model...")
-    model_path = 'models/xgfitness_ai_model.pkl'
+    # Save models using the streamlined TWO-MODEL approach
+    print("💾 Saving models using DUAL-MODEL strategy...")
+    print()
     
     # Create models directory if it doesn't exist
     os.makedirs('models', exist_ok=True)
     
-    model.save_model(model_path)
-    print(f"✅ Model saved to: {model_path}")
+    # 1. PRODUCTION MODEL: XGBoost-only (for web application)
+    print("🚀 Saving PRODUCTION model (XGBoost-only for web app)...")
+    production_path = 'models/xgfitness_ai_model.pkl'
+    model.save_model(production_path, include_research_models=False)  # XGBoost only
+    
+    # Get file size
+    prod_size = os.path.getsize(production_path) / (1024 * 1024)  # Size in MB
+    print(f"✅ PRODUCTION model saved: {production_path}")
+    print(f"   - File size: {prod_size:.2f} MB")
+    print(f"   - Contains: XGBoost models only (optimized for web app)")
+    print(f"   - XGBoost Workout Accuracy: {xgboost_info['workout_accuracy']:.1%}")
+    print(f"   - XGBoost Nutrition Accuracy: {xgboost_info['nutrition_accuracy']:.1%}")
     print()
     
-    # Test the enhanced confidence scoring system
-    print("🧪 Testing Enhanced Confidence Scoring System...")
-    model.test_confidence_improvements()
+    # 2. RESEARCH MODEL: Both algorithms (for thesis analysis)
+    print("📊 Saving RESEARCH model (XGBoost + Random Forest for thesis)...")
+    research_path = 'models/research_model_comparison.pkl'
+    model.save_model(research_path, include_research_models=True)  # Both algorithms
+    
+    # Get file size
+    research_size = os.path.getsize(research_path) / (1024 * 1024)  # Size in MB
+    print(f"✅ RESEARCH model saved: {research_path}")
+    print(f"   - File size: {research_size:.2f} MB") 
+    print(f"   - Contains: XGBoost + Random Forest models (complete analysis)")
+    print(f"   - Random Forest Workout Accuracy: {random_forest_info['rf_workout_accuracy']:.1%}")
+    print(f"   - Random Forest Nutrition Accuracy: {random_forest_info['rf_nutrition_accuracy']:.1%}")
     print()
     
-    # Test with real prediction examples
-    print("🎯 Testing Real Predictions with Enhanced Confidence...")
-    test_examples = [
-        {
-            'name': 'Typical Indonesian Male',
-            'data': {
-                'age': 28,
-                'gender': 'Male',
-                'height': 170,
-                'weight': 75,
-                'activity_level': 'Moderate Activity',
-                'fitness_goal': 'Fat Loss'
-            }
-        },
-        {
-            'name': 'Young Indonesian Female',
-            'data': {
-                'age': 24,
-                'gender': 'Female',
-                'height': 160,
-                'weight': 55,
-                'activity_level': 'Low Activity',
-                'fitness_goal': 'Maintenance'
-            }
-        }
-    ]
+    print("🎯 DUAL-MODEL SUMMARY:")
+    print(f"   📱 Production model: {prod_size:.1f}MB (web-ready)")
+    print(f"   📊 Research model: {research_size:.1f}MB (thesis-ready)")
+    print(f"   🔄 Reproducible results with random_state=42")
+    print()
     
-    for example in test_examples:
-        print(f"\n🧑‍🤝‍🧑 Testing: {example['name']}")
-        try:
-            result = model.predict_with_confidence(example['data'])
-            if result['success']:
-                conf = result['confidence_scores']
-                print(f"  📊 Confidence Scores:")
-                print(f"    Overall: {conf['overall_confidence']:.3f} ({conf['confidence_level']})")
-                print(f"    Workout: {conf['workout_confidence']:.3f}")
-                print(f"    Nutrition: {conf['nutrition_confidence']:.3f}")
-                print(f"  💬 Message: {conf['confidence_message']}")
-                
-                # Show actual recommendations
-                workout = result.get('workout_recommendation', {})
-                nutrition = result.get('nutrition_recommendation', {})
-                
-                print(f"  🏋️ Workout Plan:")
-                print(f"    Type: {workout.get('workout_type', 'N/A')}")
-                print(f"    Days/Week: {workout.get('days_per_week', 'N/A')}")
-                print(f"    Schedule: {workout.get('workout_schedule', 'N/A')}")
-                print(f"    Sets per Exercise: {workout.get('sets_per_exercise', 'N/A')}")
-                print(f"    Exercises per Session: {workout.get('exercises_per_session', 'N/A')}")
-                print(f"    Cardio Minutes/Day: {workout.get('cardio_minutes_per_day', 'N/A')}")
-                print(f"    Cardio Sessions/Day: {workout.get('cardio_sessions_per_day', 'N/A')}")
-                
-                print(f"  🥗 Nutrition Plan:")
-                # Calculate actual values based on user data
-                user_weight = example['data']['weight']
-                calories = nutrition.get('target_calories', 0)  # Fixed: use target_calories
-                protein_per_kg = nutrition.get('protein_per_kg', 0)
-                carbs_per_kg = nutrition.get('carbs_per_kg', 0)
-                fat_per_kg = nutrition.get('fat_per_kg', 0)
-                
-                protein_grams = protein_per_kg * user_weight
-                carbs_grams = carbs_per_kg * user_weight
-                fat_grams = fat_per_kg * user_weight
-                
-                print(f"    Caloric Intake: {calories:.0f} kcal")
-                print(f"    Protein: {protein_grams:.0f}g ({protein_per_kg:.1f}g/kg)")
-                print(f"    Carbohydrates: {carbs_grams:.0f}g ({carbs_per_kg:.1f}g/kg)")
-                print(f"    Fats: {fat_grams:.0f}g ({fat_per_kg:.1f}g/kg)")
-            else:
-                print(f"  ❌ Error: {result['error']}")
-        except Exception as e:
-            print(f"  ❌ Exception: {str(e)}")
+    # Generate comprehensive visualizations
+    print("🎨 Generating comprehensive visualizations...")
+    print("⚠️ Visualization generation skipped during training")
+    print("   Run visualizations separately: python run_visualizations.py")
+    print("   (This ensures training data is available for visualizations)")
+    print()
     
-    print("\n" + "=" * 60)
-    print("🎉 Training Complete!")
-    print("=" * 60)
+    print()
+    
+    print("\n" + "=" * 80)
+    print("🎉 COMPREHENSIVE TRAINING COMPLETE!")
+    print("=" * 80)
     print(f"Training finished at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Total training time: {training_time:.2f} seconds")
     print()
-    print("🚀 Your model is now ready with enhanced confidence scoring!")
-    print("   - More realistic confidence scores")
-    print("   - Multi-factor confidence calculation")
-    print("   - User-friendly explanations in Indonesian")
-    print("   - Actionable improvement tips")
+    print("🚀 Your DUAL model system is now ready:")
+    print("   ✅ DUAL XGBoost models (main AI for web app)")
+    print("   ✅ DUAL Random Forest models (academic comparison)")
+    print("   ✅ Authentic data splitting methodology")
+    print("   ✅ Preserved population characteristics")
+    print("   ✅ Enhanced confidence scoring")
     print()
-    print("📱 You can now restart your Flask app to use the new model:")
-    print("   python app.py")
+    print("📊 NEXT STEPS:")
+    print("   1. Generate comprehensive visualizations:")
+    print("      python run_visualizations.py")
+    print("   2. Run the complete pipeline:")
+    print("      .\\train_and_visualize.bat")
+    print("   3. Restart your Flask app to use the new models:")
+    print("      python app.py")
     print()
 
 if __name__ == "__main__":

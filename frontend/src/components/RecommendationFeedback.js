@@ -11,6 +11,12 @@ const RecommendationFeedback = ({ currentRecommendation, userProfile, onRecommen
   console.log('Extracted Recommendations:', recommendations);
   console.log('Workout Recommendation:', recommendations?.workout_recommendation);
   console.log('Nutrition Recommendation:', recommendations?.nutrition_recommendation);
+  
+  // Additional debugging for template data
+  console.log('Template IDs in recommendation:', {
+    workout_template_id: recommendations?.workout_recommendation?.template_id || recommendations?.workout_template_id,
+    nutrition_template_id: recommendations?.nutrition_recommendation?.template_id || recommendations?.nutrition_template_id
+  });
   const [feedback, setFeedback] = useState({
     workoutDifficulty: 'just_right',
     workoutEnjoyment: 'enjoyed',
@@ -269,19 +275,23 @@ const RecommendationFeedback = ({ currentRecommendation, userProfile, onRecommen
                               <h7>🏋️ Latihan</h7>
                               <div className="plan-item">
                                 <span>Jenis:</span>
-                                <span>{recommendations.workout_recommendation.workout_type || 'N/A'}</span>
+                                <span>{recommendations.workout_recommendation.workout_type || 'Tidak ditentukan'}</span>
                               </div>
                               <div className="plan-item">
                                 <span>Hari/Minggu:</span>
-                                <span>{recommendations.workout_recommendation.days_per_week || 'N/A'}</span>
+                                <span>{recommendations.workout_recommendation.days_per_week || 'Tidak ditentukan'} hari</span>
                               </div>
                               <div className="plan-item">
                                 <span>Kardio:</span>
-                                <span>{recommendations.workout_recommendation.cardio_minutes_per_day || 'N/A'} menit</span>
+                                <span>{recommendations.workout_recommendation.cardio_minutes_per_day || 'Tidak ditentukan'} menit</span>
                               </div>
                               <div className="plan-item">
                                 <span>Set:</span>
-                                <span>{recommendations.workout_recommendation.sets_per_exercise || 'N/A'}</span>
+                                <span>{recommendations.workout_recommendation.sets_per_exercise || 'Tidak ditentukan'} set</span>
+                              </div>
+                              <div className="plan-item">
+                                <span>Template ID:</span>
+                                <span className="template-id-small">{recommendations.workout_recommendation.template_id || recommendations.workout_template_id || 'Tidak tersedia'}</span>
                               </div>
                             </div>
                           ) : (
@@ -295,19 +305,23 @@ const RecommendationFeedback = ({ currentRecommendation, userProfile, onRecommen
                               <h7>🥗 Nutrisi</h7>
                               <div className="plan-item">
                                 <span>Kalori:</span>
-                                <span>{recommendations.nutrition_recommendation.target_calories || 'N/A'} kkal</span>
+                                <span>{Math.round(recommendations.nutrition_recommendation.target_calories) || 'Tidak ditentukan'} kkal</span>
                               </div>
                               <div className="plan-item">
                                 <span>Protein:</span>
-                                <span>{recommendations.nutrition_recommendation.target_protein || 'N/A'}g</span>
+                                <span>{Math.round(recommendations.nutrition_recommendation.target_protein) || 'Tidak ditentukan'}g</span>
                               </div>
                               <div className="plan-item">
                                 <span>Karbohidrat:</span>
-                                <span>{recommendations.nutrition_recommendation.target_carbs || 'N/A'}g</span>
+                                <span>{Math.round(recommendations.nutrition_recommendation.target_carbs) || 'Tidak ditentukan'}g</span>
                               </div>
                               <div className="plan-item">
                                 <span>Lemak:</span>
-                                <span>{recommendations.nutrition_recommendation.target_fat || 'N/A'}g</span>
+                                <span>{Math.round(recommendations.nutrition_recommendation.target_fat) || 'Tidak ditentukan'}g</span>
+                              </div>
+                              <div className="plan-item">
+                                <span>Template ID:</span>
+                                <span className="template-id-small">{recommendations.nutrition_recommendation.template_id || recommendations.nutrition_template_id || 'Tidak tersedia'}</span>
                               </div>
                             </div>
                           ) : (
@@ -330,25 +344,31 @@ const RecommendationFeedback = ({ currentRecommendation, userProfile, onRecommen
                               <div className="plan-item">
                                 <span>Jenis:</span>
                                 <span className={recommendations.workout_recommendation?.workout_type !== suggestions.newRecommendation.workout_recommendation.workout_type ? 'highlight-change' : ''}>
-                                  {suggestions.newRecommendation.workout_recommendation.workout_type || 'N/A'}
+                                  {suggestions.newRecommendation.workout_recommendation.workout_type || 'Tidak ditentukan'}
                                 </span>
                               </div>
                               <div className="plan-item">
                                 <span>Hari/Minggu:</span>
                                 <span className={recommendations.workout_recommendation?.days_per_week !== suggestions.newRecommendation.workout_recommendation.days_per_week ? 'highlight-change' : ''}>
-                                  {suggestions.newRecommendation.workout_recommendation.days_per_week || 'N/A'}
+                                  {suggestions.newRecommendation.workout_recommendation.days_per_week || 'Tidak ditentukan'} hari
                                 </span>
                               </div>
                               <div className="plan-item">
                                 <span>Kardio:</span>
                                 <span className={recommendations.workout_recommendation?.cardio_minutes_per_day !== suggestions.newRecommendation.workout_recommendation.cardio_minutes_per_day ? 'highlight-change' : ''}>
-                                  {suggestions.newRecommendation.workout_recommendation.cardio_minutes_per_day || 'N/A'} menit
+                                  {suggestions.newRecommendation.workout_recommendation.cardio_minutes_per_day || 'Tidak ditentukan'} menit
                                 </span>
                               </div>
                               <div className="plan-item">
                                 <span>Set:</span>
                                 <span className={recommendations.workout_recommendation?.sets_per_exercise !== suggestions.newRecommendation.workout_recommendation.sets_per_exercise ? 'highlight-change' : ''}>
-                                  {suggestions.newRecommendation.workout_recommendation.sets_per_exercise || 'N/A'}
+                                  {suggestions.newRecommendation.workout_recommendation.sets_per_exercise || 'Tidak ditentukan'} set
+                                </span>
+                              </div>
+                              <div className="plan-item">
+                                <span>Template ID:</span>
+                                <span className={`template-id-small ${recommendations.workout_recommendation?.template_id !== suggestions.newRecommendation.workout_recommendation.template_id ? 'highlight-change' : ''}`}>
+                                  {suggestions.newRecommendation.workout_recommendation.template_id || suggestions.newRecommendation.workout_template_id || 'Tidak tersedia'}
                                 </span>
                               </div>
                             </div>
@@ -363,26 +383,32 @@ const RecommendationFeedback = ({ currentRecommendation, userProfile, onRecommen
                               <h7>🥗 Nutrisi</h7>
                               <div className="plan-item">
                                 <span>Kalori:</span>
-                                <span className={recommendations.nutrition_recommendation?.target_calories !== suggestions.newRecommendation.nutrition_recommendation.target_calories ? 'highlight-change' : ''}>
-                                  {suggestions.newRecommendation.nutrition_recommendation.target_calories || 'N/A'} kkal
+                                <span className={Math.round(recommendations.nutrition_recommendation?.target_calories) !== Math.round(suggestions.newRecommendation.nutrition_recommendation.target_calories) ? 'highlight-change' : ''}>
+                                  {Math.round(suggestions.newRecommendation.nutrition_recommendation.target_calories) || 'Tidak ditentukan'} kkal
                                 </span>
                               </div>
                               <div className="plan-item">
                                 <span>Protein:</span>
-                                <span className={recommendations.nutrition_recommendation?.target_protein !== suggestions.newRecommendation.nutrition_recommendation.target_protein ? 'highlight-change' : ''}>
-                                  {suggestions.newRecommendation.nutrition_recommendation.target_protein || 'N/A'}g
+                                <span className={Math.round(recommendations.nutrition_recommendation?.target_protein) !== Math.round(suggestions.newRecommendation.nutrition_recommendation.target_protein) ? 'highlight-change' : ''}>
+                                  {Math.round(suggestions.newRecommendation.nutrition_recommendation.target_protein) || 'Tidak ditentukan'}g
                                 </span>
                               </div>
                               <div className="plan-item">
                                 <span>Karbohidrat:</span>
-                                <span className={recommendations.nutrition_recommendation?.target_carbs !== suggestions.newRecommendation.nutrition_recommendation.target_carbs ? 'highlight-change' : ''}>
-                                  {suggestions.newRecommendation.nutrition_recommendation.target_carbs || 'N/A'}g
+                                <span className={Math.round(recommendations.nutrition_recommendation?.target_carbs) !== Math.round(suggestions.newRecommendation.nutrition_recommendation.target_carbs) ? 'highlight-change' : ''}>
+                                  {Math.round(suggestions.newRecommendation.nutrition_recommendation.target_carbs) || 'Tidak ditentukan'}g
                                 </span>
                               </div>
                               <div className="plan-item">
                                 <span>Lemak:</span>
-                                <span className={recommendations.nutrition_recommendation?.target_fat !== suggestions.newRecommendation.nutrition_recommendation.target_fat ? 'highlight-change' : ''}>
-                                  {suggestions.newRecommendation.nutrition_recommendation.target_fat || 'N/A'}g
+                                <span className={Math.round(recommendations.nutrition_recommendation?.target_fat) !== Math.round(suggestions.newRecommendation.nutrition_recommendation.target_fat) ? 'highlight-change' : ''}>
+                                  {Math.round(suggestions.newRecommendation.nutrition_recommendation.target_fat) || 'Tidak ditentukan'}g
+                                </span>
+                              </div>
+                              <div className="plan-item">
+                                <span>Template ID:</span>
+                                <span className={`template-id-small ${recommendations.nutrition_recommendation?.template_id !== suggestions.newRecommendation.nutrition_recommendation.template_id ? 'highlight-change' : ''}`}>
+                                  {suggestions.newRecommendation.nutrition_recommendation.template_id || suggestions.newRecommendation.nutrition_template_id || 'Tidak tersedia'}
                                 </span>
                               </div>
                             </div>

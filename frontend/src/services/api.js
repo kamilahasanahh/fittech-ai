@@ -51,23 +51,40 @@ class ApiService {
   // Get recommendations
   async getRecommendations(userData) {
     try {
+      console.log('🔄 API: Starting getRecommendations with data:', userData);
+      console.log('🔄 API: Base URL:', API_BASE_URL);
+      
       // Validate user data
       this.validateUserData(userData);
+      console.log('✅ API: User data validation passed');
       
+      console.log('🔄 API: Making POST request to /predict...');
       const response = await this.api.post('/predict', userData);
+      console.log('✅ API: Response received:', response.status, response.data);
       
-      if (response.data.success) {
+      // Check if response has the expected structure (predictions, model_confidence, etc.)
+      if (response.data && response.data.predictions) {
+        console.log('✅ API: Valid predictions response, returning data');
         return response.data;
+      } else if (response.data && response.data.error) {
+        console.error('❌ API: Backend returned error:', response.data.error);
+        throw new Error(response.data.error);
       } else {
-        throw new Error(response.data.error || 'Failed to get recommendations');
+        console.error('❌ API: Unexpected response structure:', response.data);
+        throw new Error('Invalid response format from server');
       }
     } catch (error) {
+      console.error('❌ API: Error in getRecommendations:', error);
       if (error.response) {
+        console.error('❌ API: Error response data:', error.response.data);
+        console.error('❌ API: Error response status:', error.response.status);
         const errorMessage = error.response.data?.error || 'Server error occurred';
         throw new Error(`Recommendation failed: ${errorMessage}`);
       } else if (error.request) {
+        console.error('❌ API: No response received:', error.request);
         throw new Error('Backend server is not responding. Please make sure the Flask server is running on port 5000.');
       } else {
+        console.error('❌ API: Request setup error:', error.message);
         throw new Error(`Request failed: ${error.message}`);
       }
     }
@@ -110,6 +127,62 @@ class ApiService {
       return response.data;
     } catch (error) {
       throw new Error(`Model retraining failed: ${error.message}`);
+    }
+  }
+
+  // Get meal plan
+  async getMealPlan(targetCalories, targetProtein, targetCarbs, targetFat, preferences = {}) {
+    try {
+      const response = await this.api.post('/meal-plan', {
+        target_calories: targetCalories,
+        target_protein: targetProtein,
+        target_carbs: targetCarbs,
+        target_fat: targetFat,
+        preferences: preferences
+      });
+      
+      if (response.data.success) {
+        return response.data.meal_plan;
+      } else {
+        throw new Error(response.data.error || 'Failed to generate meal plan');
+      }
+    } catch (error) {
+      if (error.response) {
+        const errorMessage = error.response.data?.error || 'Server error occurred';
+        throw new Error(`Meal plan generation failed: ${errorMessage}`);
+      } else if (error.request) {
+        throw new Error('Backend server is not responding. Please make sure the Flask server is running on port 5000.');
+      } else {
+        throw new Error(`Request failed: ${error.message}`);
+      }
+    }
+  }
+
+  // Get weekly meal plan
+  async getWeeklyMealPlan(targetCalories, targetProtein, targetCarbs, targetFat, preferences = {}) {
+    try {
+      const response = await this.api.post('/weekly-meal-plan', {
+        target_calories: targetCalories,
+        target_protein: targetProtein,
+        target_carbs: targetCarbs,
+        target_fat: targetFat,
+        preferences: preferences
+      });
+      
+      if (response.data.success) {
+        return response.data.weekly_plan;
+      } else {
+        throw new Error(response.data.error || 'Failed to generate weekly meal plan');
+      }
+    } catch (error) {
+      if (error.response) {
+        const errorMessage = error.response.data?.error || 'Server error occurred';
+        throw new Error(`Weekly meal plan generation failed: ${errorMessage}`);
+      } else if (error.request) {
+        throw new Error('Backend server is not responding. Please make sure the Flask server is running on port 5000.');
+      } else {
+        throw new Error(`Request failed: ${error.message}`);
+      }
     }
   }
 
