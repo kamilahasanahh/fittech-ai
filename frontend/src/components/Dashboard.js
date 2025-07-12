@@ -110,6 +110,17 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
     'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)'
   );
 
+  // If user is null, show loading or redirect
+  if (!user) {
+    return (
+      <Box p={8}>
+        <Skeleton height="40px" mb={4} />
+        <Skeleton height="120px" mb={4} />
+        <Skeleton height="80px" mb={4} />
+      </Box>
+    );
+  }
+
   if (loading) {
     return (
       <Box p={8}>
@@ -129,7 +140,7 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
             Dashboard XGFitness
           </Heading>
           <Text color="gray.600" fontSize={{ base: "sm", md: "md" }}>
-            Selamat datang kembali, {user.displayName || 'Pengguna'}!
+            Selamat datang kembali, {user?.displayName || user?.email || 'Pengguna'}!
           </Text>
         </Box>
 
@@ -169,12 +180,17 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
               <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4} w="full">
                 <Box>
                   <Text fontSize="sm" color="gray.500">Dibuat:</Text>
-                  <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>{formatDate(dashboardData.currentRecommendation.createdAt.toDate())}</Text>
+                  <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>
+                    {dashboardData.currentRecommendation.createdAt?.toDate ? 
+                      formatDate(dashboardData.currentRecommendation.createdAt.toDate()) :
+                      formatDate(dashboardData.currentRecommendation.createdAt)
+                    }
+                  </Text>
                 </Box>
                 <Box>
                   <Text fontSize="sm" color="gray.500">Target:</Text>
                   <Badge colorScheme="purple" fontSize={{ base: "xs", md: "md" }} px={2} py={1} borderRadius="md">
-                    {dashboardData.currentRecommendation.userData.fitness_goal}
+                    {dashboardData.currentRecommendation.userData?.fitness_goal || 'Tidak ditentukan'}
                   </Badge>
                 </Box>
               </SimpleGrid>
@@ -261,19 +277,19 @@ const Dashboard = ({ user, userData, recommendations, onNavigate }) => {
               <Box borderWidth={1} borderRadius="md" p={4}>
                 <Heading size="sm" mb={2}>🏋️ Program Latihan</Heading>
                 <VStack align="start" spacing={1}>
-                  <Text>Jenis: {recommendations.workout_recommendation?.workout_type}</Text>
-                  <Text>Frekuensi: {recommendations.workout_recommendation?.days_per_week} hari/minggu</Text>
-                  <Text>Durasi Cardio: {recommendations.workout_recommendation?.cardio_minutes_per_day} menit/hari</Text>
-                  <Text>Set per Latihan: {recommendations.workout_recommendation?.sets_per_exercise}</Text>
+                  <Text>Jenis: {recommendations.workout_recommendation?.workout_type || 'Tidak ditentukan'}</Text>
+                  <Text>Frekuensi: {recommendations.workout_recommendation?.days_per_week || 'Tidak ditentukan'} hari/minggu</Text>
+                  <Text>Durasi Cardio: {recommendations.workout_recommendation?.cardio_minutes_per_day || 'Tidak ditentukan'} menit/hari</Text>
+                  <Text>Set per Latihan: {recommendations.workout_recommendation?.sets_per_exercise || 'Tidak ditentukan'}</Text>
                 </VStack>
               </Box>
               <Box borderWidth={1} borderRadius="md" p={4}>
                 <Heading size="sm" mb={2}>🍎 Program Nutrisi</Heading>
                 <VStack align="start" spacing={1}>
-                  <Text>Kalori Harian: {Math.round(recommendations.nutrition_recommendation?.target_calories)} kkal</Text>
-                  <Text>Protein: {Math.round(recommendations.nutrition_recommendation?.target_protein)} gram</Text>
-                  <Text>Karbohidrat: {Math.round(recommendations.nutrition_recommendation?.target_carbs)} gram</Text>
-                  <Text>Lemak: {Math.round(recommendations.nutrition_recommendation?.target_fat)} gram</Text>
+                  <Text>Kalori Harian: {Math.round(recommendations.nutrition_recommendation?.target_calories) || 'Tidak ditentukan'} kkal</Text>
+                  <Text>Protein: {Math.round(recommendations.nutrition_recommendation?.target_protein) || 'Tidak ditentukan'} gram</Text>
+                  <Text>Karbohidrat: {Math.round(recommendations.nutrition_recommendation?.target_carbs) || 'Tidak ditentukan'} gram</Text>
+                  <Text>Lemak: {Math.round(recommendations.nutrition_recommendation?.target_fat) || 'Tidak ditentukan'} gram</Text>
                 </VStack>
               </Box>
             </SimpleGrid>

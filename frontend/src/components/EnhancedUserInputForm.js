@@ -354,9 +354,19 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
   const toast = useToast();
 
   return (
-    <Box maxW={{ base: "full", md: "lg" }} mx="auto" mt={{ base: 4, md: 8 }} p={{ base: 4, md: 8 }} bg="white" borderRadius="xl" boxShadow="lg">
+    <Box 
+      maxW={{ base: "full", sm: "md", md: "lg", lg: "xl" }} 
+      mx="auto" 
+      mt={{ base: 2, sm: 4, md: 6, lg: 8 }} 
+      mb={{ base: 4, sm: 6, md: 8 }}
+      px={{ base: 3, sm: 4, md: 6, lg: 8 }} 
+      py={{ base: 4, sm: 6, md: 8 }}
+      bg="white" 
+      borderRadius={{ base: "lg", md: "xl" }} 
+      boxShadow={{ base: "sm", md: "lg" }}
+    >
       {/* Progress Bar */}
-      <Box mb={{ base: 6, md: 8 }}>
+      <Box mb={{ base: 4, sm: 6, md: 8 }}>
         <Box 
           overflowX="auto" 
           css={{
@@ -365,12 +375,12 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
             'scrollbarWidth': 'none'
           }}
         >
-          <HStack justify="space-between" mb={2} minW="max-content" spacing={{ base: 1, md: 2 }}>
+          <HStack justify="space-between" mb={2} minW="max-content" spacing={{ base: 1, sm: 2, md: 3 }}>
             {steps.map((step) => (
-              <VStack key={step.number} spacing={0} flex={1} minW={{ base: "60px", md: "80px" }}>
+              <VStack key={step.number} spacing={0} flex={1} minW={{ base: "50px", sm: "60px", md: "80px" }}>
                 <Box
-                  w={{ base: 6, md: 8 }}
-                  h={{ base: 6, md: 8 }}
+                  w={{ base: 5, sm: 6, md: 8 }}
+                  h={{ base: 5, sm: 6, md: 8 }}
                   borderRadius="full"
                   bg={step.number === currentStep ? 'brand.500' : step.number < currentStep ? 'green.400' : 'gray.200'}
                   color={step.number === currentStep || step.number < currentStep ? 'white' : 'gray.500'}
@@ -378,7 +388,7 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                   alignItems="center"
                   justifyContent="center"
                   fontWeight="bold"
-                  fontSize={{ base: "sm", md: "md" }}
+                  fontSize={{ base: "xs", sm: "sm", md: "md" }}
                   mb={1}
                   border={step.number === currentStep ? '2px solid' : '1px solid'}
                   borderColor={step.number === currentStep ? 'brand.600' : 'gray.300'}
@@ -386,7 +396,12 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                 >
                   {step.number}
                 </Box>
-                <Text fontSize={{ base: "2xs", md: "xs" }} color={step.number === currentStep ? 'brand.600' : 'gray.500'} textAlign="center">
+                <Text 
+                  fontSize={{ base: "xs", sm: "sm" }} 
+                  color={step.number === currentStep ? 'brand.600' : 'gray.500'} 
+                  textAlign="center"
+                  display={{ base: "none", sm: "block" }}
+                >
                   {step.label}
                 </Text>
               </VStack>
@@ -401,8 +416,8 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
         <Alert status="error" mb={4} borderRadius="md">
           <AlertIcon />
           <Box flex={1}>
-            <AlertTitle>Terjadi Kesalahan</AlertTitle>
-            <AlertDescription>{submissionError}</AlertDescription>
+            <AlertTitle fontSize={{ base: "sm", md: "md" }}>Terjadi Kesalahan</AlertTitle>
+            <AlertDescription fontSize={{ base: "xs", md: "sm" }}>{submissionError}</AlertDescription>
           </Box>
         </Alert>
       )}
@@ -410,18 +425,18 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
       {/* Info Banner for stored data */}
       {storedDataLoaded && (
         <Alert status="info" mb={4} borderRadius="md" bg="blue.50" color="blue.800" borderColor="blue.300">
-          <HStack justify="space-between" w="full">
+          <VStack align="start" w="full" spacing={2}>
             <HStack>
-              <Text fontSize="xl">💾</Text>
+              <Text fontSize={{ base: "lg", md: "xl" }}>💾</Text>
               <Box>
-                <Text fontWeight="bold">Data Tersimpan Ditemukan!</Text>
-                <Text fontSize="sm">
+                <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }}>Data Tersimpan Ditemukan!</Text>
+                <Text fontSize={{ base: "xs", md: "sm" }}>
                   Usia, tinggi badan, dan jenis kelamin Anda telah dimuat dari penyimpanan lokal. Anda hanya perlu memasukkan berat badan saat ini.
                 </Text>
               </Box>
             </HStack>
             <Button
-              size="xs"
+              size={{ base: "xs", sm: "sm" }}
               variant="outline"
               colorScheme="blue"
               onClick={() => {
@@ -439,17 +454,17 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
             >
               Mulai Baru
             </Button>
-          </HStack>
+          </VStack>
         </Alert>
       )}
 
       <form onSubmit={handleSubmit}>
         {/* Step 1: Basic Info */}
         {currentStep === 1 && (
-          <VStack spacing={6} align="stretch">
-            <Heading size="md">Informasi Dasar Anda</Heading>
+          <VStack spacing={{ base: 4, sm: 5, md: 6 }} align="stretch">
+            <Heading size={{ base: "sm", sm: "md", md: "lg" }}>Informasi Dasar Anda</Heading>
             <FormControl isInvalid={!!validationErrors.age}>
-              <FormLabel>Usia (tahun)</FormLabel>
+              <FormLabel fontSize={{ base: "sm", md: "md" }}>Usia (tahun)</FormLabel>
               <Input
                 type="number"
                 name="age"
@@ -461,27 +476,28 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                 min={18}
                 max={65}
                 disabled={parentLoading}
+                size={{ base: "md", md: "lg" }}
               />
-              {validationErrors.age && <Text color="red.500" fontSize="sm">{validationErrors.age}</Text>}
-              <Text color="gray.500" fontSize="xs">Usia harus antara 18-65 tahun</Text>
+              {validationErrors.age && <Text color="red.500" fontSize={{ base: "xs", md: "sm" }}>{validationErrors.age}</Text>}
+              <Text color="gray.500" fontSize={{ base: "xs", md: "sm" }}>Usia harus antara 18-65 tahun</Text>
             </FormControl>
             <FormControl isInvalid={!!validationErrors.gender}>
-              <FormLabel>Jenis Kelamin</FormLabel>
+              <FormLabel fontSize={{ base: "sm", md: "md" }}>Jenis Kelamin</FormLabel>
               <RadioGroup
                 name="gender"
                 value={formData.gender}
                 onChange={(val) => handleInputChange({ target: { name: 'gender', value: val } })}
                 isDisabled={parentLoading}
               >
-                <HStack spacing={6}>
-                  <Radio value="male">👨 Pria</Radio>
-                  <Radio value="female">👩 Wanita</Radio>
+                <HStack spacing={{ base: 4, sm: 6, md: 8 }}>
+                  <Radio value="male" size={{ base: "sm", md: "md" }}>👨 Pria</Radio>
+                  <Radio value="female" size={{ base: "sm", md: "md" }}>👩 Wanita</Radio>
                 </HStack>
               </RadioGroup>
-              {validationErrors.gender && <Text color="red.500" fontSize="sm">{validationErrors.gender}</Text>}
+              {validationErrors.gender && <Text color="red.500" fontSize={{ base: "xs", md: "sm" }}>{validationErrors.gender}</Text>}
             </FormControl>
             <FormControl isInvalid={!!validationErrors.height}>
-              <FormLabel>Tinggi Badan (cm)</FormLabel>
+              <FormLabel fontSize={{ base: "sm", md: "md" }}>Tinggi Badan (cm)</FormLabel>
               <Input
                 type="number"
                 name="height"
@@ -491,11 +507,12 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                 min={120}
                 max={250}
                 disabled={parentLoading}
+                size={{ base: "md", md: "lg" }}
               />
-              {validationErrors.height && <Text color="red.500" fontSize="sm">{validationErrors.height}</Text>}
+              {validationErrors.height && <Text color="red.500" fontSize={{ base: "xs", md: "sm" }}>{validationErrors.height}</Text>}
             </FormControl>
             <FormControl isInvalid={!!validationErrors.weight}>
-              <FormLabel>Berat Badan (kg)</FormLabel>
+              <FormLabel fontSize={{ base: "sm", md: "md" }}>Berat Badan (kg)</FormLabel>
               <Input
                 type="number"
                 name="weight"
@@ -506,26 +523,30 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                 max={300}
                 step={0.1}
                 disabled={parentLoading}
+                size={{ base: "md", md: "lg" }}
               />
-              {validationErrors.weight && <Text color="red.500" fontSize="sm">{validationErrors.weight}</Text>}
+              {validationErrors.weight && <Text color="red.500" fontSize={{ base: "xs", md: "sm" }}>{validationErrors.weight}</Text>}
               {storedDataLoaded && (
-                <Text color="green.600" fontSize="xs" fontWeight="medium">
+                <Text color="green.600" fontSize={{ base: "xs", md: "sm" }} fontWeight="medium">
                   ⚡ Hanya berat badan yang perlu diperbarui - data lainnya sudah tersimpan!
                 </Text>
               )}
             </FormControl>
             {bmi && bmiCategory && (
-              <Box bg="gray.50" borderRadius="md" p={4} mt={2}>
-                <Text fontWeight="bold" mb={1}>📊 Indeks Massa Tubuh (BMI)</Text>
+              <Box bg="gray.50" borderRadius="md" p={{ base: 3, md: 4 }} mt={2}>
+                <Text fontWeight="bold" mb={1} fontSize={{ base: "sm", md: "md" }}>📊 Indeks Massa Tubuh (BMI)</Text>
                 <HStack>
-                  <Text fontSize="2xl" fontWeight="bold">{bmi.toFixed(1)}</Text>
-                  <Badge colorScheme={bmiCategory.restriction === 'underweight' ? 'blue' : bmiCategory.restriction === 'normal' ? 'green' : bmiCategory.restriction === 'overweight' ? 'orange' : 'red'} fontSize="md">
+                  <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold">{bmi.toFixed(1)}</Text>
+                  <Badge 
+                    colorScheme={bmiCategory.restriction === 'underweight' ? 'blue' : bmiCategory.restriction === 'normal' ? 'green' : bmiCategory.restriction === 'overweight' ? 'orange' : 'red'} 
+                    fontSize={{ base: "sm", md: "md" }}
+                  >
                     {bmiCategory.text}
                   </Badge>
                 </HStack>
                 {bmiCategory.restriction !== 'normal' && (
                   <Box mt={2} bg="blue.50" borderRadius="md" p={2}>
-                    <Text fontSize="sm">
+                    <Text fontSize={{ base: "xs", md: "sm" }}>
                       💡 <b>Catatan:</b> Berdasarkan BMI Anda, beberapa tujuan fitness mungkin tidak tersedia pada langkah selanjutnya untuk hasil yang optimal.
                     </Text>
                   </Box>
@@ -537,20 +558,24 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
 
         {/* Step 2: Fitness Goal */}
         {currentStep === 2 && (
-          <VStack spacing={6} align="stretch">
-            <Heading size={{ base: "sm", md: "md" }}>Apa Tujuan Fitness Anda?</Heading>
+          <VStack spacing={{ base: 4, sm: 5, md: 6 }} align="stretch">
+            <Heading size={{ base: "sm", sm: "md", md: "lg" }}>Apa Tujuan Fitness Anda?</Heading>
             {bmiCategory && bmiCategory.restriction !== 'normal' && (
               <Alert status="info" mb={2} borderRadius="md" bg="blue.50" color="blue.800" borderColor="blue.300">
                 <AlertIcon />
                 <Box>
-                  <Text fontSize={{ base: "xs", md: "sm" }}>
+                  <Text fontSize={{ base: "xs", sm: "sm", md: "md" }}>
                     <b>📋 Rekomendasi berdasarkan BMI Anda ({bmiCategory.text}):</b><br />
                     Pilihan yang diarsir tidak direkomendasikan untuk kategori BMI Anda saat ini.
                   </Text>
                 </Box>
               </Alert>
             )}
-            <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={{ base: 3, md: 4 }}>
+            <SimpleGrid 
+              columns={{ base: 1, sm: 2, lg: 3 }} 
+              spacing={{ base: 3, sm: 4, md: 5 }}
+              w="full"
+            >
               {Object.entries(FITNESS_GOALS).map(([key, goal]) => {
                 const isAllowed = isFitnessGoalAllowed(key);
                 return (
@@ -559,7 +584,7 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                     borderWidth={2}
                     borderColor={formData.fitness_goal === key ? 'brand.500' : 'gray.200'}
                     borderRadius="lg"
-                    p={4}
+                    p={{ base: 3, sm: 4, md: 5 }}
                     bg={formData.fitness_goal === key ? 'brand.50' : 'white'}
                     opacity={isAllowed ? 1 : 0.5}
                     cursor={isAllowed ? 'pointer' : 'not-allowed'}
@@ -569,6 +594,7 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                       }
                     }}
                     transition="all 0.2s"
+                    minH={{ base: "120px", sm: "140px", md: "160px" }}
                   >
                     <Radio
                       name="fitness_goal"
@@ -578,12 +604,13 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                       isDisabled={!isAllowed}
                       colorScheme="brand"
                       mb={2}
+                      size={{ base: "sm", md: "md" }}
                     >
-                      <Text fontWeight="bold" fontSize="lg">{goal.icon} {goal.label}</Text>
+                      <Text fontWeight="bold" fontSize={{ base: "md", sm: "lg", md: "xl" }}>{goal.icon} {goal.label}</Text>
                     </Radio>
-                    <Text fontSize="sm" color="gray.600">{goal.description}</Text>
+                    <Text fontSize={{ base: "xs", sm: "sm", md: "md" }} color="gray.600">{goal.description}</Text>
                     {!isAllowed && (
-                      <Text color="gray.400" fontSize="xs" fontStyle="italic" mt={2}>
+                      <Text color="gray.400" fontSize={{ base: "xs", md: "sm" }} fontStyle="italic" mt={2}>
                         Tidak direkomendasikan untuk BMI Anda
                       </Text>
                     )}
@@ -591,26 +618,31 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                 );
               })}
             </SimpleGrid>
-            {validationErrors.fitness_goal && <Text color="red.500" fontSize="sm">{validationErrors.fitness_goal}</Text>}
+            {validationErrors.fitness_goal && <Text color="red.500" fontSize={{ base: "xs", md: "sm" }}>{validationErrors.fitness_goal}</Text>}
           </VStack>
         )}
 
         {/* Step 3: Activity Level */}
         {currentStep === 3 && (
-          <VStack spacing={6} align="stretch">
-            <Heading size={{ base: "sm", md: "md" }}>Seberapa Aktif Anda Saat Ini?</Heading>
-            <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={{ base: 3, md: 4 }}>
+          <VStack spacing={{ base: 4, sm: 5, md: 6 }} align="stretch">
+            <Heading size={{ base: "sm", sm: "md", md: "lg" }}>Seberapa Aktif Anda Saat Ini?</Heading>
+            <SimpleGrid 
+              columns={{ base: 1, sm: 2, lg: 3 }} 
+              spacing={{ base: 3, sm: 4, md: 5 }}
+              w="full"
+            >
               {Object.entries(ACTIVITY_LEVELS).map(([key, level]) => (
                 <Box
                   key={key}
                   borderWidth={2}
                   borderColor={formData.activity_level === key ? 'brand.500' : 'gray.200'}
                   borderRadius="lg"
-                  p={4}
+                  p={{ base: 3, sm: 4, md: 5 }}
                   bg={formData.activity_level === key ? 'brand.50' : 'white'}
                   cursor="pointer"
                   onClick={() => handleInputChange({ target: { name: 'activity_level', value: key } })}
                   transition="all 0.2s"
+                  minH={{ base: "140px", sm: "160px", md: "180px" }}
                 >
                   <Radio
                     name="activity_level"
@@ -619,43 +651,44 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                     onChange={handleInputChange}
                     colorScheme="brand"
                     mb={2}
+                    size={{ base: "sm", md: "md" }}
                   >
-                    <Text fontWeight="bold" fontSize="lg">{level.icon} {level.label}</Text>
+                    <Text fontWeight="bold" fontSize={{ base: "md", sm: "lg", md: "xl" }}>{level.icon} {level.label}</Text>
                   </Radio>
-                  <Text fontSize="sm" color="gray.600">{level.description}</Text>
-                  <Text fontSize="xs" color="blue.500" mt={1}>Faktor: {level.multiplier}</Text>
+                  <Text fontSize={{ base: "xs", sm: "sm", md: "md" }} color="gray.600">{level.description}</Text>
+                  <Text fontSize={{ base: "xs", md: "sm" }} color="blue.500" mt={1}>Faktor: {level.multiplier}</Text>
                 </Box>
               ))}
             </SimpleGrid>
-            <Box bg="gray.50" borderRadius="md" p={3} mt={2} textAlign="center">
-              <Text fontSize="sm" color="gray.600">
+            <Box bg="gray.50" borderRadius="md" p={{ base: 2, sm: 3, md: 4 }} mt={2} textAlign="center">
+              <Text fontSize={{ base: "xs", sm: "sm", md: "md" }} color="gray.600">
                 💡 <b>Informasi:</b> Aktivitas fisik = semua gerakan tubuh (olahraga + pekerjaan + aktivitas harian) yang membuat Anda bergerak aktif dan berkeringat
               </Text>
             </Box>
-            {validationErrors.activity_level && <Text color="red.500" fontSize="sm">{validationErrors.activity_level}</Text>}
+            {validationErrors.activity_level && <Text color="red.500" fontSize={{ base: "xs", md: "sm" }}>{validationErrors.activity_level}</Text>}
           </VStack>
         )}
 
         {/* Step 4: Confirmation */}
         {currentStep === 4 && (
-          <VStack spacing={6} align="stretch">
-            <Heading size="md">Konfirmasi Data Anda</Heading>
-            <Box bg="gray.50" borderRadius="md" p={4}>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          <VStack spacing={{ base: 4, sm: 5, md: 6 }} align="stretch">
+            <Heading size={{ base: "sm", sm: "md", md: "lg" }}>Konfirmasi Data Anda</Heading>
+            <Box bg="gray.50" borderRadius="md" p={{ base: 3, sm: 4, md: 5 }}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 4 }}>
                 <VStack align="start" spacing={1}>
-                  <Text><b>Usia:</b> {formData.age} tahun</Text>
-                  <Text><b>Jenis Kelamin:</b> {formData.gender === 'male' ? 'Pria' : 'Wanita'}</Text>
-                  <Text><b>Tinggi Badan:</b> {formData.height} cm</Text>
-                  <Text><b>Berat Badan:</b> {formData.weight} kg</Text>
-                  <Text><b>BMI:</b> {bmi ? bmi.toFixed(1) : '-'} ({bmiCategory ? bmiCategory.text : '-'})</Text>
+                  <Text fontSize={{ base: "sm", md: "md" }}><b>Usia:</b> {formData.age} tahun</Text>
+                  <Text fontSize={{ base: "sm", md: "md" }}><b>Jenis Kelamin:</b> {formData.gender === 'male' ? 'Pria' : 'Wanita'}</Text>
+                  <Text fontSize={{ base: "sm", md: "md" }}><b>Tinggi Badan:</b> {formData.height} cm</Text>
+                  <Text fontSize={{ base: "sm", md: "md" }}><b>Berat Badan:</b> {formData.weight} kg</Text>
+                  <Text fontSize={{ base: "sm", md: "md" }}><b>BMI:</b> {bmi ? bmi.toFixed(1) : '-'} ({bmiCategory ? bmiCategory.text : '-'})</Text>
                 </VStack>
                 <VStack align="start" spacing={1}>
-                  <Text><b>Tujuan:</b> {FITNESS_GOALS[formData.fitness_goal]?.label}</Text>
-                  <Text><b>Level Aktivitas:</b> {ACTIVITY_LEVELS[formData.activity_level]?.label}</Text>
+                  <Text fontSize={{ base: "sm", md: "md" }}><b>Tujuan:</b> {FITNESS_GOALS[formData.fitness_goal]?.label}</Text>
+                  <Text fontSize={{ base: "sm", md: "md" }}><b>Level Aktivitas:</b> {ACTIVITY_LEVELS[formData.activity_level]?.label}</Text>
                 </VStack>
               </SimpleGrid>
-              <Divider my={3} />
-              <Text fontSize="sm" color="gray.600">
+              <Divider my={{ base: 2, md: 3 }} />
+              <Text fontSize={{ base: "xs", sm: "sm", md: "md" }} color="gray.600">
                 📝 <b>Catatan:</b> Data ini akan digunakan untuk membuat rekomendasi fitness yang personal untuk Anda. Pastikan semua informasi sudah benar.
               </Text>
             </Box>
@@ -663,15 +696,16 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
         )}
 
         {/* Navigation Buttons */}
-        <VStack mt={8} spacing={4}>
-          <HStack w="full" justify="space-between">
+        <VStack mt={{ base: 6, sm: 8, md: 10 }} spacing={{ base: 3, md: 4 }}>
+          <HStack w="full" justify="space-between" spacing={{ base: 2, md: 4 }}>
             {currentStep > 1 && (
               <Button
                 onClick={handlePrevious}
                 variant="outline"
                 colorScheme="brand"
                 isDisabled={parentLoading}
-                size={{ base: "sm", md: "md" }}
+                size={{ base: "sm", sm: "md", md: "lg" }}
+                flex={{ base: 1, sm: "none" }}
               >
                 ← Sebelumnya
               </Button>
@@ -682,7 +716,8 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                 onClick={handleNext}
                 colorScheme="brand"
                 isDisabled={parentLoading}
-                size={{ base: "sm", md: "md" }}
+                size={{ base: "sm", sm: "md", md: "lg" }}
+                flex={{ base: 1, sm: "none" }}
               >
                 Selanjutnya →
               </Button>
@@ -693,9 +728,9 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                 isLoading={parentLoading}
                 loadingText="Memproses..."
                 fontWeight="bold"
-                px={{ base: 6, md: 8 }}
-                size={{ base: "sm", md: "md" }}
-                w={{ base: "full", md: "auto" }}
+                px={{ base: 4, sm: 6, md: 8 }}
+                size={{ base: "sm", sm: "md", md: "lg" }}
+                w={{ base: "full", sm: "auto" }}
               >
                 🎯 Buat Rekomendasi
               </Button>
