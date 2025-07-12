@@ -1,4 +1,40 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Stack,
+  VStack,
+  HStack,
+  Heading,
+  Text,
+  Button,
+  SimpleGrid,
+  Badge,
+  Progress,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  useColorModeValue,
+  Divider,
+  Card,
+  CardBody,
+  CardHeader,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  StatArrow,
+  List,
+  ListItem,
+  ListIcon,
+  Icon,
+  Flex,
+  Spacer,
+  Skeleton,
+  SkeletonText,
+  SkeletonCircle
+} from '@chakra-ui/react';
+import { CheckCircleIcon, InfoIcon, WarningIcon } from '@chakra-ui/icons';
 import { nutritionService } from '../services/nutritionService';
 import { mealPlanService } from '../services/mealPlanService';
 import { apiService } from '../services/api';
@@ -10,6 +46,11 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
   const [mealPlanLoading, setMealPlanLoading] = useState(true);
   const [backendMealPlan, setBackendMealPlan] = useState(null);
   const [backendMealPlanLoading, setBackendMealPlanLoading] = useState(true);
+
+  const gradientBg = useColorModeValue(
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)'
+  );
 
   // Calculate user's daily macro targets based on API response
   const calculateDailyMacros = () => {
@@ -111,15 +152,15 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
 
   if (!recommendations) {
     return (
-      <div className="recommendation-container">
-        <div className="no-recommendations">
-          <h2>🤔 Belum Ada Rekomendasi</h2>
-          <p>Silakan isi formulir profil terlebih dahulu untuk mendapatkan rekomendasi yang dipersonalisasi.</p>
-          <button onClick={onBack} className="btn-primary">
-            Kembali ke Formulir
-          </button>
-        </div>
-      </div>
+      <Box textAlign="center" py={10}>
+        <Heading size="lg" mb={4}>🤔 Belum Ada Rekomendasi</Heading>
+        <Text color="gray.600" mb={6}>
+          Silakan isi formulir profil terlebih dahulu untuk mendapatkan rekomendasi yang dipersonalisasi.
+        </Text>
+        <Button colorScheme="brand" onClick={onBack}>
+          Kembali ke Formulir
+        </Button>
+      </Box>
     );
   }
 
@@ -213,457 +254,581 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
     ? mealPlan 
     : (dailyMacros ? calculateFoodPortions(dailyMacros) : []);
 
+  // Loading skeleton for the entire component
+  if (loading) {
+    return (
+      <Box maxW={{ base: "full", lg: "6xl" }} mx="auto" p={{ base: 4, md: 8 }}>
+        <VStack spacing={{ base: 6, md: 8 }} align="stretch">
+          {/* Header Skeleton */}
+          <Box textAlign="center" py={{ base: 4, md: 6 }}>
+            <Skeleton height="40px" mb={2} />
+            <Skeleton height="20px" width="60%" mx="auto" />
+          </Box>
+
+          {/* Profile Summary Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton height="24px" width="200px" />
+            </CardHeader>
+            <CardBody>
+              <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={{ base: 3, md: 4 }}>
+                {[...Array(6)].map((_, i) => (
+                  <Box key={i}>
+                    <Skeleton height="16px" width="80px" mb={1} />
+                    <Skeleton height="24px" width="120px" />
+                  </Box>
+                ))}
+              </SimpleGrid>
+            </CardBody>
+          </Card>
+
+          {/* Metrics Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton height="24px" width="250px" />
+            </CardHeader>
+            <CardBody>
+              <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={{ base: 4, md: 6 }}>
+                {[...Array(4)].map((_, i) => (
+                  <Box key={i}>
+                    <Skeleton height="16px" width="100px" mb={1} />
+                    <Skeleton height="24px" width="80px" />
+                  </Box>
+                ))}
+              </SimpleGrid>
+            </CardBody>
+          </Card>
+
+          {/* Workout Section Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton height="24px" width="300px" />
+            </CardHeader>
+            <CardBody>
+              <VStack spacing={4}>
+                <Skeleton height="100px" width="full" />
+                <Skeleton height="80px" width="full" />
+              </VStack>
+            </CardBody>
+          </Card>
+
+          {/* Nutrition Section Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton height="24px" width="280px" />
+            </CardHeader>
+            <CardBody>
+              <VStack spacing={4}>
+                <Skeleton height="120px" width="full" />
+                <Skeleton height="200px" width="full" />
+              </VStack>
+            </CardBody>
+          </Card>
+        </VStack>
+      </Box>
+    );
+  }
+
   return (
-    <div className="recommendation-container">
-      <div className="recommendation-header">
-        <h2>🎯 Rekomendasi XGFitness Anda</h2>
-        <p>Rekomendasi yang dipersonalisasi berdasarkan profil dan tujuan Anda</p>
-      </div>
+    <Box maxW={{ base: "full", lg: "6xl" }} mx="auto" p={{ base: 4, md: 8 }}>
+      <VStack spacing={{ base: 6, md: 8 }} align="stretch">
+        {/* Header */}
+        <Box textAlign="center" py={{ base: 4, md: 6 }}>
+          <Heading size={{ base: "lg", md: "xl" }} bgGradient={gradientBg} bgClip="text" mb={2}>
+            🎯 Rekomendasi XGFitness Anda
+          </Heading>
+          <Text color="gray.600" fontSize={{ base: "md", md: "lg" }}>
+            Rekomendasi yang dipersonalisasi berdasarkan profil dan tujuan Anda
+          </Text>
+        </Box>
 
-      {/* User Profile Summary */}
-      <div className="profile-summary">
-        <h3>👤 Profil Anda</h3>
-        <div className="profile-grid">
-          <div className="profile-item">
-            <span className="label">Usia:</span>
-            <span className="value">{userData?.age} tahun</span>
-          </div>
-          <div className="profile-item">
-            <span className="label">Jenis Kelamin:</span>
-            <span className="value">{userData?.gender === 'Male' ? 'Pria' : 'Wanita'}</span>
-          </div>
-          <div className="profile-item">
-            <span className="label">Tinggi:</span>
-            <span className="value">{userData?.height} cm</span>
-          </div>
-          <div className="profile-item">
-            <span className="label">Berat:</span>
-            <span className="value">{userData?.weight} kg</span>
-          </div>
-          <div className="profile-item">
-            <span className="label">Tujuan:</span>
-            <span className="value">
-              {userData?.fitness_goal === 'Fat Loss' ? 'Membakar Lemak' :
-               userData?.fitness_goal === 'Muscle Gain' ? 'Menambah Massa Otot' :
-               userData?.fitness_goal === 'Maintenance' ? 'Mempertahankan Berat' : 
-               userData?.fitness_goal}
-            </span>
-          </div>
-          <div className="profile-item">
-            <span className="label">Tingkat Aktivitas:</span>
-            <span className="value">
-              {userData?.activity_level === 'Low Activity' ? 'Aktivitas Rendah' :
-               userData?.activity_level === 'Moderate Activity' ? 'Aktivitas Sedang' :
-               userData?.activity_level === 'High Activity' ? 'Aktivitas Tinggi' :
-               userData?.activity_level}
-            </span>
-          </div>
-        </div>
-      </div>
+        {/* User Profile Summary */}
+        <Card>
+          <CardHeader>
+            <Heading size={{ base: "sm", md: "md" }}>👤 Profil Anda</Heading>
+          </CardHeader>
+          <CardBody>
+            <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={{ base: 3, md: 4 }}>
+              <Stat>
+                <StatLabel>Usia</StatLabel>
+                <StatNumber>{userData?.age} tahun</StatNumber>
+              </Stat>
+              <Stat>
+                <StatLabel>Jenis Kelamin</StatLabel>
+                <StatNumber>{userData?.gender === 'Male' ? 'Pria' : 'Wanita'}</StatNumber>
+              </Stat>
+              <Stat>
+                <StatLabel>Tinggi</StatLabel>
+                <StatNumber>{userData?.height} cm</StatNumber>
+              </Stat>
+              <Stat>
+                <StatLabel>Berat</StatLabel>
+                <StatNumber>{userData?.weight} kg</StatNumber>
+              </Stat>
+              <Stat>
+                <StatLabel>Tujuan</StatLabel>
+                <StatNumber>
+                  {userData?.fitness_goal === 'Fat Loss' ? 'Membakar Lemak' :
+                   userData?.fitness_goal === 'Muscle Gain' ? 'Menambah Massa Otot' :
+                   userData?.fitness_goal === 'Maintenance' ? 'Mempertahankan Berat' : 
+                   userData?.fitness_goal}
+                </StatNumber>
+              </Stat>
+              <Stat>
+                <StatLabel>Tingkat Aktivitas</StatLabel>
+                <StatNumber>
+                  {userData?.activity_level === 'Low Activity' ? 'Aktivitas Rendah' :
+                   userData?.activity_level === 'Moderate Activity' ? 'Aktivitas Sedang' :
+                   userData?.activity_level === 'High Activity' ? 'Aktivitas Tinggi' :
+                   userData?.activity_level}
+                </StatNumber>
+              </Stat>
+            </SimpleGrid>
+          </CardBody>
+        </Card>
 
-      {/* User Metrics from API */}
-      {recommendations?.user_profile && (
-        <div className="metrics-summary">
-          <h3>📊 Analisis Tubuh Anda</h3>
-          <div className="metrics-grid">
-            <div className="metric-item">
-              <span className="label">BMI:</span>
-              <span className="value">{recommendations.user_profile.bmi?.toFixed(1)}</span>
-            </div>
-            <div className="metric-item">
-              <span className="label">Kategori BMI:</span>
-              <span className="value">
-                {recommendations.user_profile.bmi_category === 'Underweight' ? 'Kurus' :
-                 recommendations.user_profile.bmi_category === 'Normal' ? 'Normal' :
-                 recommendations.user_profile.bmi_category === 'Overweight' ? 'Kelebihan Berat' :
-                 recommendations.user_profile.bmi_category === 'Obese' ? 'Obesitas' :
-                 recommendations.user_profile.bmi_category}
-              </span>
-            </div>
-            <div className="metric-item">
-              <span className="label">BMR:</span>
-              <span className="value">{Math.round(recommendations.user_profile.bmr)} kkal</span>
-            </div>
-            <div className="metric-item">
-              <span className="label">TDEE:</span>
-              <span className="value">{Math.round(recommendations.user_profile.tdee)} kkal</span>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* User Metrics from API */}
+        {recommendations?.user_profile && (
+          <Card>
+            <CardHeader>
+              <Heading size={{ base: "sm", md: "md" }}>📊 Analisis Tubuh Anda</Heading>
+            </CardHeader>
+            <CardBody>
+              <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={{ base: 4, md: 6 }}>
+                <Stat>
+                  <StatLabel>BMI</StatLabel>
+                  <StatNumber>{recommendations.user_profile.bmi?.toFixed(1)}</StatNumber>
+                  <StatHelpText>
+                    <Badge colorScheme={recommendations.user_profile.bmi_category === 'Normal' ? 'green' : 'orange'}>
+                      {recommendations.user_profile.bmi_category === 'Underweight' ? 'Kurus' :
+                       recommendations.user_profile.bmi_category === 'Normal' ? 'Normal' :
+                       recommendations.user_profile.bmi_category === 'Overweight' ? 'Kelebihan Berat' :
+                       recommendations.user_profile.bmi_category === 'Obese' ? 'Obesitas' :
+                       recommendations.user_profile.bmi_category}
+                    </Badge>
+                  </StatHelpText>
+                </Stat>
+                <Stat>
+                  <StatLabel>BMR</StatLabel>
+                  <StatNumber>{Math.round(recommendations.user_profile.bmr)} kkal</StatNumber>
+                  <StatHelpText>Kalori Basal</StatHelpText>
+                </Stat>
+                <Stat>
+                  <StatLabel>TDEE</StatLabel>
+                  <StatNumber>{Math.round(recommendations.user_profile.tdee)} kkal</StatNumber>
+                  <StatHelpText>Total Pengeluaran Energi</StatHelpText>
+                </Stat>
+                <Stat>
+                  <StatLabel>Kategori BMI</StatLabel>
+                  <StatNumber>
+                    {recommendations.user_profile.bmi_category === 'Underweight' ? 'Kurus' :
+                     recommendations.user_profile.bmi_category === 'Normal' ? 'Normal' :
+                     recommendations.user_profile.bmi_category === 'Overweight' ? 'Kelebihan Berat' :
+                     recommendations.user_profile.bmi_category === 'Obese' ? 'Obesitas' :
+                     recommendations.user_profile.bmi_category}
+                  </StatNumber>
+                </Stat>
+              </SimpleGrid>
+            </CardBody>
+          </Card>
+        )}
 
-      {/* Confidence Scores */}
-      {recommendations.model_confidence && (
-        <div className="confidence-summary">
-          <h3>🎯 Tingkat Kepercayaan AI</h3>
-          <div className="confidence-grid">
-            <div className="confidence-item">
-              <span className="label">Kepercayaan Keseluruhan:</span>
-              <span className="value">{Math.round(((recommendations.model_confidence.nutrition_confidence + recommendations.model_confidence.workout_confidence) / 2) * 100)}%</span>
-            </div>
-            <div className="confidence-item">
-              <span className="label">Kepercayaan Nutrisi:</span>
-              <span className="value">{Math.round(recommendations.model_confidence.nutrition_confidence * 100)}%</span>
-            </div>
-            <div className="confidence-item">
-              <span className="label">Kepercayaan Workout:</span>
-              <span className="value">{Math.round(recommendations.model_confidence.workout_confidence * 100)}%</span>
-            </div>
-            <div className="confidence-item">
-              <span className="label">Level:</span>
-              <span className="value">
-                {recommendations.enhanced_confidence?.confidence_level === 'Low' ? 'Rendah' :
-                 recommendations.enhanced_confidence?.confidence_level === 'Medium' ? 'Sedang' :
-                 recommendations.enhanced_confidence?.confidence_level === 'High' ? 'Tinggi' :
-                 recommendations.enhanced_confidence?.confidence_level || 'Sedang'}
-              </span>
-            </div>
-          </div>
-          <p className="confidence-message">
-            {(() => {
-              const explanation = recommendations.enhanced_confidence?.explanation;
-              if (explanation === 'Based on high activity and fat loss goal') return 'Berdasarkan aktivitas tinggi dan tujuan membakar lemak';
-              if (explanation === 'Based on moderate activity and muscle gain goal') return 'Berdasarkan aktivitas sedang dan tujuan menambah massa otot';
-              if (explanation === 'Based on low activity and maintenance goal') return 'Berdasarkan aktivitas rendah dan tujuan mempertahankan berat';
-              if (explanation === 'Based on moderate activity and maintenance goal') return 'Berdasarkan aktivitas sedang dan tujuan mempertahankan berat';
-              if (explanation === 'Based on high activity and muscle gain goal') return 'Berdasarkan aktivitas tinggi dan tujuan menambah massa otot';
-              if (explanation === 'Based on low activity and fat loss goal') return 'Berdasarkan aktivitas rendah dan tujuan membakar lemak';
-              return explanation || 'Rekomendasi dibuat berdasarkan data yang Anda berikan.';
-            })()}
-          </p>
-        </div>
-      )}
+        {/* Confidence Scores */}
+        {recommendations.model_confidence && (
+          <Card>
+            <CardHeader>
+              <Heading size={{ base: "sm", md: "md" }}>🎯 Tingkat Kepercayaan AI</Heading>
+            </CardHeader>
+            <CardBody>
+              <VStack spacing={{ base: 4, md: 6 }} align="stretch">
+                <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={{ base: 4, md: 6 }}>
+                  <Stat>
+                    <StatLabel>Kepercayaan Keseluruhan</StatLabel>
+                    <StatNumber color="green.500">
+                      {Math.round(((recommendations.model_confidence.nutrition_confidence + recommendations.model_confidence.workout_confidence) / 2) * 100)}%
+                    </StatNumber>
+                    <StatHelpText>
+                      <Badge colorScheme="green">Tinggi</Badge>
+                    </StatHelpText>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Kepercayaan Nutrisi</StatLabel>
+                    <StatNumber color="blue.500">
+                      {Math.round(recommendations.model_confidence.nutrition_confidence * 100)}%
+                    </StatNumber>
+                    <StatHelpText>
+                      <StatArrow type={recommendations.model_confidence.nutrition_confidence > 0.5 ? 'increase' : 'decrease'} />
+                    </StatHelpText>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Kepercayaan Workout</StatLabel>
+                    <StatNumber color="purple.500">
+                      {Math.round(recommendations.model_confidence.workout_confidence * 100)}%
+                    </StatNumber>
+                    <StatHelpText>
+                      <StatArrow type={recommendations.model_confidence.workout_confidence > 0.5 ? 'increase' : 'decrease'} />
+                    </StatHelpText>
+                  </Stat>
+                </SimpleGrid>
 
-      {/* Workout Recommendations */}
-      {workout && (
-        <div className="workout-section">
-          <div className="section-header">
-            <h3>🏋️ Program Latihan Harian</h3>
-            <span className="template-id">ID Template: {workout.template_id}</span>
-          </div>
-          <div className="workout-details">
-            <div className="workout-card">
-              <h4>📅 Jadwal Mingguan</h4>
-              <div className="workout-grid">
-                <div className="workout-item">
-                  <span className="label">Jenis Olahraga:</span>
-                  <span className="value">
-                    {workout.workout_type === 'Full Body' ? 'Seluruh Tubuh' :
-                     workout.workout_type === 'Upper/Lower Split' ? 'Split Atas/Bawah' :
-                     workout.workout_type === 'Push/Pull/Legs' ? 'Dorong/Tarik/Kaki' :
-                     workout.workout_type === 'Strength Training' ? 'Latihan Kekuatan' :
-                     workout.workout_type || 'Latihan Kekuatan'}
-                  </span>
-                </div>
-                <div className="workout-item">
-                  <span className="label">Hari per Minggu:</span>
-                  <span className="value">{workout.days_per_week || 3} hari</span>
-                </div>
-                <div className="workout-item">
-                  <span className="label">Set Harian:</span>
-                  <span className="value">{workout.sets_per_exercise || 3} set</span>
-                </div>
-                <div className="workout-item">
-                  <span className="label">Latihan per Sesi:</span>
-                  <span className="value">{workout.exercises_per_session || 5} latihan</span>
-                </div>
-              </div>
-            </div>
+                <Alert status="info" borderRadius="md">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Level Kepercayaan</AlertTitle>
+                    <AlertDescription>
+                      {(() => {
+                        const explanation = recommendations.enhanced_confidence?.explanation;
+                        if (explanation === 'Based on high activity and fat loss goal') return 'Berdasarkan aktivitas tinggi dan tujuan membakar lemak';
+                        if (explanation === 'Based on moderate activity and muscle gain goal') return 'Berdasarkan aktivitas sedang dan tujuan menambah massa otot';
+                        if (explanation === 'Based on low activity and maintenance goal') return 'Berdasarkan aktivitas rendah dan tujuan mempertahankan berat';
+                        if (explanation === 'Based on moderate activity and maintenance goal') return 'Berdasarkan aktivitas sedang dan tujuan mempertahankan berat';
+                        if (explanation === 'Based on high activity and muscle gain goal') return 'Berdasarkan aktivitas tinggi dan tujuan menambah massa otot';
+                        if (explanation === 'Based on low activity and fat loss goal') return 'Berdasarkan aktivitas rendah dan tujuan membakar lemak';
+                        return explanation || 'Rekomendasi dibuat berdasarkan data yang Anda berikan.';
+                      })()}
+                    </AlertDescription>
+                  </Box>
+                </Alert>
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
 
-            {workout.cardio_minutes_per_day && (
-              <div className="cardio-card">
-                <h4>🏃 Kardio Harian</h4>
-                <div className="cardio-details">
-                  <div className="cardio-item">
-                    <span className="label">Durasi per Hari:</span>
-                    <span className="value">{workout.cardio_minutes_per_day} menit</span>
-                  </div>
-                  <div className="cardio-item">
-                    <span className="label">Sesi per Hari:</span>
-                    <span className="value">{workout.cardio_sessions_per_day || 1} sesi</span>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Workout Recommendations */}
+        {workout && (
+          <Card>
+            <CardHeader>
+              <Heading size={{ base: "sm", md: "md" }}>🏋️ Program Latihan Harian</Heading>
+            </CardHeader>
+            <CardBody>
+              <VStack spacing={{ base: 4, md: 6 }} align="stretch">
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
+                  <Box>
+                    <Heading size={{ base: "xs", md: "sm" }} mb={3}>📅 Jadwal Mingguan</Heading>
+                    <SimpleGrid columns={2} spacing={3}>
+                      <Stat>
+                        <StatLabel>Jenis Olahraga</StatLabel>
+                        <StatNumber>
+                          {workout.workout_type === 'Full Body' ? 'Seluruh Tubuh' :
+                           workout.workout_type === 'Upper/Lower Split' ? 'Split Atas/Bawah' :
+                           workout.workout_type === 'Push/Pull/Legs' ? 'Dorong/Tarik/Kaki' :
+                           workout.workout_type === 'Strength Training' ? 'Latihan Kekuatan' :
+                           workout.workout_type || 'Latihan Kekuatan'}
+                        </StatNumber>
+                      </Stat>
+                      <Stat>
+                        <StatLabel>Hari per Minggu</StatLabel>
+                        <StatNumber>{workout.days_per_week || 3} hari</StatNumber>
+                      </Stat>
+                      <Stat>
+                        <StatLabel>Set Harian</StatLabel>
+                        <StatNumber>{workout.sets_per_exercise || 3} set</StatNumber>
+                      </Stat>
+                      <Stat>
+                        <StatLabel>Latihan per Sesi</StatLabel>
+                        <StatNumber>{workout.exercises_per_session || 5} latihan</StatNumber>
+                      </Stat>
+                    </SimpleGrid>
+                  </Box>
 
-            {workout.workout_schedule && (
-              <div className="schedule-card">
-                <h4>📋 Jadwal yang Disarankan</h4>
-                <p className="schedule-text">{workout.workout_schedule}</p>
-              </div>
-            )}
-
-            {/* Workout Type Explanation */}
-            <div className="workout-explanation-card">
-              <h4>📚 Penjelasan Jenis Latihan</h4>
-              <div className="explanation-content">
-                <div className="workout-type-section">
-                  <h5>🏋️ Full Body Workouts</h5>
-                  <ul>
-                    <li><strong>Struktur:</strong> Melatih semua kelompok otot utama dalam setiap sesi</li>
-                    <li><strong>Cocok untuk:</strong> Pemula, orang dengan waktu terbatas</li>
-                    <li><strong>Kelompok Otot:</strong> Kaki, dada, punggung, bahu, lengan, inti</li>
-                  </ul>
-                </div>
-
-                <div className="workout-type-section">
-                  <h5>🔄 Upper/Lower Split</h5>
-                  <ul>
-                    <li><strong>A (Upper):</strong> Dada, punggung, bahu, lengan</li>
-                    <li><strong>B (Lower):</strong> Kaki, bokong, inti</li>
-                    <li><strong>Cocok untuk:</strong> Atlet menengah dengan ketersediaan waktu sedang</li>
-                  </ul>
-                </div>
-
-                <div className="workout-type-section">
-                  <h5>💪 Push/Pull/Legs Split</h5>
-                  <ul>
-                    <li><strong>A (Push):</strong> Dada, bahu, trisep</li>
-                    <li><strong>B (Pull):</strong> Punggung, bisep</li>
-                    <li><strong>C (Legs):</strong> Paha depan, paha belakang, bokong, betis</li>
-                    <li><strong>Cocok untuk:</strong> Atlet lanjutan dengan ketersediaan waktu tinggi</li>
-                  </ul>
-                </div>
-
-                <div className="schedule-notation">
-                  <h5>📅 Notasi Jadwal</h5>
-                  <ul>
-                    <li><strong>W</strong> = Hari latihan (Workout day)</li>
-                    <li><strong>X</strong> = Hari istirahat (Rest day)</li>
-                    <li><strong>A/B/C</strong> = Sesi latihan berbeda dalam rutinitas split</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Nutrition Recommendations */}
-      {nutrition && dailyMacros && (
-        <div className="nutrition-section">
-          <div className="section-header">
-            <h3>🍎 Program Nutrisi Harian</h3>
-            <span className="template-id">ID Template: {nutrition.template_id}</span>
-          </div>
-          
-          <div className="nutrition-targets">
-            <h4>🎯 Target Harian Berdasarkan Template</h4>
-            <div className="macro-grid">
-              <div className="macro-card calories">
-                <div className="macro-icon">🔥</div>
-                <div className="macro-info">
-                  <span className="macro-label">Asupan Kalori</span>
-                  <span className="macro-value">{dailyMacros.calories} kkal</span>
-                </div>
-              </div>
-              <div className="macro-card protein">
-                <div className="macro-icon">🥩</div>
-                <div className="macro-info">
-                  <span className="macro-label">Asupan Protein</span>
-                  <span className="macro-value">{dailyMacros.protein} gram</span>
-                </div>
-              </div>
-              <div className="macro-card carbs">
-                <div className="macro-icon">🍞</div>
-                <div className="macro-info">
-                  <span className="macro-label">Asupan Karbohidrat</span>
-                  <span className="macro-value">{dailyMacros.carbs} gram</span>
-                </div>
-              </div>
-              <div className="macro-card fat">
-                <div className="macro-icon">🥑</div>
-                <div className="macro-info">
-                  <span className="macro-label">Asupan Lemak</span>
-                  <span className="macro-value">{dailyMacros.fat} gram</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Food Suggestions with Calculated Portions */}
-          {(!loading && !mealPlanLoading) && foodSuggestions.length > 0 && (
-            <div className="food-suggestions">
-              <h4>🍽️ {mealPlan ? 'Rencana Makan Berdasarkan Template' : 'Porsi Makanan Indonesia Berdasarkan Template'}</h4>
-              <p className="suggestions-subtitle">
-                {mealPlan ? 'Kombinasi makanan yang sudah diatur untuk mencapai target nutrisi harian Anda' : 'Porsi yang dihitung untuk mencapai target nutrisi harian Anda'}
-              </p>
-              
-              {foodSuggestions.map((meal, index) => (
-                <div key={index} className="meal-section">
-                  <h5 className="meal-title">{meal.meal}</h5>
-                  {meal.mealName && (
-                    <div className="meal-info">
-                      <p className="meal-name"><strong>{meal.mealName}</strong></p>
-                      {meal.description && <p className="meal-description">{meal.description}</p>}
-                    </div>
+                  {workout.cardio_minutes_per_day && (
+                    <Box>
+                      <Heading size={{ base: "xs", md: "sm" }} mb={3}>🏃 Kardio Harian</Heading>
+                      <SimpleGrid columns={2} spacing={3}>
+                        <Stat>
+                          <StatLabel>Durasi per Hari</StatLabel>
+                          <StatNumber>{workout.cardio_minutes_per_day} menit</StatNumber>
+                        </Stat>
+                        <Stat>
+                          <StatLabel>Sesi per Hari</StatLabel>
+                          <StatNumber>{workout.cardio_sessions_per_day || 1} sesi</StatNumber>
+                        </Stat>
+                      </SimpleGrid>
+                    </Box>
                   )}
-                  <div className="meal-target">
-                    <span>Target: {meal.targetCalories} kkal | {meal.targetProtein}g protein</span>
-                  </div>
-                  
-                  <div className="food-list">
-                    {meal.foods.map((food, foodIndex) => (
-                      <div key={foodIndex} className="food-item-calculated">
-                        <div className="food-header">
-                          <span className="food-name">{food.name}</span>
-                          <span className="food-portion">{food.grams}g</span>
-                        </div>
-                        <div className="food-macros">
-                          <span className="macro">🔥 {food.actualCalories} kkal</span>
-                          <span className="macro">🥩 {food.actualProtein}g protein</span>
-                          <span className="macro">🍞 {food.actualCarbs}g karbo</span>
-                          <span className="macro">🥑 {food.actualFat}g lemak</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Backend AI-Generated Meal Plan */}
-          {!backendMealPlanLoading && backendMealPlan && (
-            <div className="ai-meal-plan">
-              <h4>🤖 AI-Generated Meal Plan</h4>
-              <p className="ai-meal-subtitle">
-                Rencana makan yang dihasilkan oleh AI berdasarkan template nutrisi dan kebutuhan kalori Anda
-              </p>
-              
-              {/* Daily Summary */}
-              {backendMealPlan.daily_summary && (
-                <div className="daily-summary">
-                  <h5>📊 Ringkasan Harian</h5>
-                  <div className="summary-macros">
-                    <div className="summary-item">
-                      <span className="label">Total Kalori:</span>
-                      <span className="value">{Math.round(backendMealPlan.daily_summary.total_calories)} kkal</span>
-                    </div>
-                    <div className="summary-item">
-                      <span className="label">Protein:</span>
-                      <span className="value">{Math.round(backendMealPlan.daily_summary.total_protein)}g</span>
-                    </div>
-                    <div className="summary-item">
-                      <span className="label">Karbohidrat:</span>
-                      <span className="value">{Math.round(backendMealPlan.daily_summary.total_carbs)}g</span>
-                    </div>
-                    <div className="summary-item">
-                      <span className="label">Lemak:</span>
-                      <span className="value">{Math.round(backendMealPlan.daily_summary.total_fat)}g</span>
-                    </div>
-                  </div>
-                </div>
-              )}
+                </SimpleGrid>
 
-              {/* Detailed Meals */}
-              {backendMealPlan.meals && Object.entries(backendMealPlan.meals).map(([mealType, mealData]) => (
-                <div key={mealType} className="ai-meal-section">
-                  <h5 className="ai-meal-title">
-                    {mealType === 'breakfast' && '🌅 Sarapan'}
-                    {mealType === 'morning_snack' && '🍎 Snack Pagi'}
-                    {mealType === 'lunch' && '🌞 Makan Siang'}
-                    {mealType === 'afternoon_snack' && '🥜 Snack Sore'}
-                    {mealType === 'dinner' && '🌙 Makan Malam'}
-                    {mealType === 'evening_snack' && '🍪 Snack Malam'}
-                  </h5>
-                  
-                  <div className="ai-meal-info">
-                    <div className="ai-meal-macros">
-                      <span className="ai-macro">🔥 {Math.round(mealData.calories)} kkal</span>
-                      <span className="ai-macro">🥩 {Math.round(mealData.protein)}g</span>
-                      <span className="ai-macro">🍞 {Math.round(mealData.carbs)}g</span>
-                      <span className="ai-macro">🥑 {Math.round(mealData.fat)}g</span>
-                    </div>
-                  </div>
+                {workout.workout_schedule && (
+                  <Box>
+                    <Heading size={{ base: "xs", md: "sm" }} mb={3}>📋 Jadwal yang Disarankan</Heading>
+                    <Box p={4} bg="gray.50" borderRadius="md">
+                      <Text fontFamily="mono" fontSize={{ base: "md", md: "lg" }}>
+                        {workout.workout_schedule}
+                      </Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600" mt={2}>
+                        W = Hari latihan, X = Hari istirahat
+                      </Text>
+                    </Box>
+                  </Box>
+                )}
 
-                  <div className="ai-food-list">
-                    {mealData.foods && mealData.foods.map((food, foodIndex) => (
-                      <div key={foodIndex} className="ai-food-item">
-                        <div className="ai-food-header">
-                          <span className="ai-food-name">{food.name}</span>
-                          <span className="ai-food-portion">{food.portion}g</span>
-                        </div>
-                        <div className="ai-food-details">
-                          <span className="detail">🔥 {Math.round(food.calories)} kkal</span>
-                          <span className="detail">🥩 {Math.round(food.protein)}g</span>
-                          <span className="detail">🍞 {Math.round(food.carbs)}g</span>
-                          <span className="detail">🥑 {Math.round(food.fat)}g</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                <Box>
+                  <Heading size={{ base: "xs", md: "sm" }} mb={3}>📚 Penjelasan Jenis Latihan</Heading>
+                  <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={{ base: 3, md: 4 }}>
+                    <Box p={4} borderWidth={1} borderRadius="md">
+                      <Text fontWeight="bold" mb={2} fontSize={{ base: "sm", md: "md" }}>🏋️ Full Body Workouts</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }}>Melatih semua kelompok otot utama dalam setiap sesi. Cocok untuk pemula dan orang dengan waktu terbatas.</Text>
+                    </Box>
+                    <Box p={4} borderWidth={1} borderRadius="md">
+                      <Text fontWeight="bold" mb={2} fontSize={{ base: "sm", md: "md" }}>🔄 Upper/Lower Split</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }}>Split latihan atas dan bawah tubuh. Cocok untuk atlet menengah dengan ketersediaan waktu sedang.</Text>
+                    </Box>
+                    <Box p={4} borderWidth={1} borderRadius="md">
+                      <Text fontWeight="bold" mb={2} fontSize={{ base: "sm", md: "md" }}>💪 Push/Pull/Legs</Text>
+                      <Text fontSize={{ base: "xs", md: "sm" }}>Split berdasarkan gerakan dorong, tarik, dan kaki. Cocok untuk atlet lanjutan.</Text>
+                    </Box>
+                  </SimpleGrid>
+                </Box>
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
 
-              {/* Shopping List */}
-              {backendMealPlan.shopping_list && backendMealPlan.shopping_list.length > 0 && (
-                <div className="shopping-list">
-                  <h5>🛒 Daftar Belanja</h5>
-                  <div className="shopping-items">
-                    {backendMealPlan.shopping_list.map((item, index) => (
-                      <div key={index} className="shopping-item">
-                        <span className="item-name">{item.name}</span>
-                        <span className="item-amount">{item.total_amount}g</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Loading state for backend meal plan */}
-          {backendMealPlanLoading && (
-            <div className="ai-meal-plan-loading">
-              <h4>🤖 Memuat AI Meal Plan...</h4>
-              <p>Sedang menghasilkan rencana makan yang dipersonalisasi dengan AI...</p>
-            </div>
-          )}
-          
-          {/* Loading state for meal plan */}
-          {mealPlanLoading && (
-            <div className="meal-plan-loading">
-              <h4>🔄 Memuat Rencana Makan...</h4>
-              <p>Sedang menyusun kombinasi makanan yang optimal untuk Anda...</p>
-            </div>
-          )}
-        </div>
-      )}
+        {/* Nutrition Recommendations */}
+        {nutrition && dailyMacros && (
+          <Card>
+            <CardHeader>
+              <Heading size={{ base: "sm", md: "md" }}>🍎 Program Nutrisi Harian</Heading>
+            </CardHeader>
+            <CardBody>
+              <VStack spacing={{ base: 4, md: 6 }} align="stretch">
+                <Box>
+                  <Heading size={{ base: "xs", md: "sm" }} mb={4}>🎯 Target Harian Berdasarkan Template</Heading>
+                  <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={{ base: 3, md: 4 }}>
+                    <Stat>
+                      <StatLabel>🔥 Kalori</StatLabel>
+                      <StatNumber>{dailyMacros.calories} kkal</StatNumber>
+                      <StatHelpText>
+                        <Badge colorScheme="red">Defisit: {Math.round((1 - (dailyMacros.calories / (recommendations?.user_profile?.tdee || 2000))) * 100)}%</Badge>
+                      </StatHelpText>
+                    </Stat>
+                    <Stat>
+                      <StatLabel>🥩 Protein</StatLabel>
+                      <StatNumber>{dailyMacros.protein}g</StatNumber>
+                      <StatHelpText>{Math.round(dailyMacros.protein / parseFloat(userData.weight))}g/kg</StatHelpText>
+                    </Stat>
+                    <Stat>
+                      <StatLabel>🍞 Karbohidrat</StatLabel>
+                      <StatNumber>{dailyMacros.carbs}g</StatNumber>
+                      <StatHelpText>{Math.round(dailyMacros.carbs / parseFloat(userData.weight))}g/kg</StatHelpText>
+                    </Stat>
+                    <Stat>
+                      <StatLabel>🥑 Lemak</StatLabel>
+                      <StatNumber>{dailyMacros.fat}g</StatNumber>
+                      <StatHelpText>{Math.round(dailyMacros.fat / parseFloat(userData.weight))}g/kg</StatHelpText>
+                    </Stat>
+                  </SimpleGrid>
+                </Box>
 
-      {/* Action Buttons */}
-      <div className="recommendation-actions">
-        <button onClick={onBack} className="btn-secondary">
-          ← Kembali ke Formulir
-        </button>
-        <button onClick={onNewRecommendation} className="btn-primary">
-          🆕 Buat Rekomendasi Baru
-        </button>
-      </div>
+                {/* Food Suggestions with Calculated Portions */}
+                {(!mealPlanLoading) && foodSuggestions.length > 0 && (
+                  <Box>
+                    <Heading size={{ base: "xs", md: "sm" }} mb={4}>
+                      🍽️ {mealPlan ? 'Rencana Makan Berdasarkan Template' : 'Porsi Makanan Indonesia Berdasarkan Template'}
+                    </Heading>
+                    <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600" mb={4}>
+                      {mealPlan ? 'Kombinasi makanan yang sudah diatur untuk mencapai target nutrisi harian Anda' : 'Porsi yang dihitung untuk mencapai target nutrisi harian Anda'}
+                    </Text>
+                    
+                    <VStack spacing={4} align="stretch">
+                      {foodSuggestions.map((meal, index) => (
+                        <Box key={index} p={4} borderWidth={1} borderRadius="md" bg="gray.50">
+                          <Heading size={{ base: "xs", md: "sm" }} mb={2}>{meal.meal}</Heading>
+                          {meal.mealName && (
+                            <Box mb={2}>
+                              <Text fontWeight="bold" fontSize={{ base: "xs", md: "sm" }}>{meal.mealName}</Text>
+                              {meal.description && <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600">{meal.description}</Text>}
+                            </Box>
+                          )}
+                          <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600" mb={3}>
+                            Target: {meal.targetCalories} kkal | {meal.targetProtein}g protein
+                          </Text>
+                          
+                          <VStack spacing={2} align="stretch">
+                            {meal.foods.map((food, foodIndex) => (
+                              <Box key={foodIndex} p={3} bg="white" borderRadius="md" borderWidth={1}>
+                                <Flex justify="space-between" align="center" mb={2}>
+                                  <Text fontWeight="bold" fontSize={{ base: "xs", md: "sm" }}>{food.name}</Text>
+                                  <Badge colorScheme="blue" fontSize={{ base: "2xs", md: "xs" }}>{food.grams}g</Badge>
+                                </Flex>
+                                <SimpleGrid columns={4} spacing={2}>
+                                  <Text fontSize={{ base: "2xs", md: "xs" }}>🔥 {food.actualCalories} kkal</Text>
+                                  <Text fontSize={{ base: "2xs", md: "xs" }}>🥩 {food.actualProtein}g</Text>
+                                  <Text fontSize={{ base: "2xs", md: "xs" }}>🍞 {food.actualCarbs}g</Text>
+                                  <Text fontSize={{ base: "2xs", md: "xs" }}>🥑 {food.actualFat}g</Text>
+                                </SimpleGrid>
+                              </Box>
+                            ))}
+                          </VStack>
+                        </Box>
+                      ))}
+                    </VStack>
+                  </Box>
+                )}
+                
+                {/* Backend AI-Generated Meal Plan */}
+                {!backendMealPlanLoading && backendMealPlan && (
+                  <Box>
+                    <Heading size={{ base: "xs", md: "sm" }} mb={4}>🤖 AI-Generated Meal Plan</Heading>
+                    <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600" mb={4}>
+                      Rencana makan yang dihasilkan oleh AI berdasarkan template nutrisi dan kebutuhan kalori Anda
+                    </Text>
+                    
+                    {/* Daily Summary */}
+                    {backendMealPlan.daily_summary && (
+                      <Box mb={4} p={4} bg="blue.50" borderRadius="md">
+                        <Heading size={{ base: "xs", md: "sm" }} mb={3}>📊 Ringkasan Harian</Heading>
+                        <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
+                          <Stat>
+                            <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Total Kalori</StatLabel>
+                            <StatNumber fontSize={{ base: "sm", md: "md" }}>{Math.round(backendMealPlan.daily_summary.total_calories)} kkal</StatNumber>
+                          </Stat>
+                          <Stat>
+                            <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Protein</StatLabel>
+                            <StatNumber fontSize={{ base: "sm", md: "md" }}>{Math.round(backendMealPlan.daily_summary.total_protein)}g</StatNumber>
+                          </Stat>
+                          <Stat>
+                            <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Karbohidrat</StatLabel>
+                            <StatNumber fontSize={{ base: "sm", md: "md" }}>{Math.round(backendMealPlan.daily_summary.total_carbs)}g</StatNumber>
+                          </Stat>
+                          <Stat>
+                            <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Lemak</StatLabel>
+                            <StatNumber fontSize={{ base: "sm", md: "md" }}>{Math.round(backendMealPlan.daily_summary.total_fat)}g</StatNumber>
+                          </Stat>
+                        </SimpleGrid>
+                      </Box>
+                    )}
 
-      {/* Tips Section */}
-      <div className="tips-section">
-        <h4>💡 Tips Sukses dengan Porsi yang Tepat</h4>
-        <div className="tips-grid">
-          <div className="tip-card">
-            <span className="tip-icon">⚖️</span>
-            <p>Gunakan timbangan digital untuk mengukur porsi makanan secara akurat</p>
-          </div>
-          <div className="tip-card">
-            <span className="tip-icon">📱</span>
-            <p>Catat asupan makanan harian di fitur progress tracking</p>
-          </div>
-          <div className="tip-card">
-            <span className="tip-icon">🥗</span>
-            <p>Variasikan sumber protein dan karbohidrat setiap harinya</p>
-          </div>
-          <div className="tip-card">
-            <span className="tip-icon">💧</span>
-            <p>Minum 2-3 liter air putih setiap hari untuk metabolisme optimal</p>
-          </div>
-        </div>
-      </div>
-    </div>
+                    {/* Detailed Meals */}
+                    {backendMealPlan.meals && (
+                      <VStack spacing={4} align="stretch">
+                        {Object.entries(backendMealPlan.meals).map(([mealType, mealData]) => (
+                          <Box key={mealType} p={4} borderWidth={1} borderRadius="md" bg="green.50">
+                            <Heading size={{ base: "xs", md: "sm" }} mb={3}>
+                              {mealType === 'breakfast' && '🌅 Sarapan'}
+                              {mealType === 'morning_snack' && '🍎 Snack Pagi'}
+                              {mealType === 'lunch' && '🌞 Makan Siang'}
+                              {mealType === 'afternoon_snack' && '🥜 Snack Sore'}
+                              {mealType === 'dinner' && '🌙 Makan Malam'}
+                              {mealType === 'evening_snack' && '🍪 Snack Malam'}
+                            </Heading>
+                            
+                            <SimpleGrid columns={4} spacing={2} mb={3}>
+                              <Text fontSize={{ base: "2xs", md: "xs" }}>🔥 {Math.round(mealData.calories)} kkal</Text>
+                              <Text fontSize={{ base: "2xs", md: "xs" }}>🥩 {Math.round(mealData.protein)}g</Text>
+                              <Text fontSize={{ base: "2xs", md: "xs" }}>🍞 {Math.round(mealData.carbs)}g</Text>
+                              <Text fontSize={{ base: "2xs", md: "xs" }}>🥑 {Math.round(mealData.fat)}g</Text>
+                            </SimpleGrid>
+
+                            <VStack spacing={2} align="stretch">
+                              {mealData.foods && mealData.foods.map((food, foodIndex) => (
+                                <Box key={foodIndex} p={3} bg="white" borderRadius="md" borderWidth={1}>
+                                  <Flex justify="space-between" align="center" mb={2}>
+                                    <Text fontWeight="bold" fontSize={{ base: "xs", md: "sm" }}>{food.name}</Text>
+                                    <Badge colorScheme="green" fontSize={{ base: "2xs", md: "xs" }}>{food.portion}g</Badge>
+                                  </Flex>
+                                  <SimpleGrid columns={4} spacing={2}>
+                                    <Text fontSize={{ base: "2xs", md: "xs" }}>🔥 {Math.round(food.calories)} kkal</Text>
+                                    <Text fontSize={{ base: "2xs", md: "xs" }}>🥩 {Math.round(food.protein)}g</Text>
+                                    <Text fontSize={{ base: "2xs", md: "xs" }}>🍞 {Math.round(food.carbs)}g</Text>
+                                    <Text fontSize={{ base: "2xs", md: "xs" }}>🥑 {Math.round(food.fat)}g</Text>
+                                  </SimpleGrid>
+                                </Box>
+                              ))}
+                            </VStack>
+                          </Box>
+                        ))}
+                      </VStack>
+                    )}
+
+                    {/* Shopping List */}
+                    {backendMealPlan.shopping_list && backendMealPlan.shopping_list.length > 0 && (
+                      <Box mt={4} p={4} bg="orange.50" borderRadius="md">
+                        <Heading size={{ base: "xs", md: "sm" }} mb={3}>🛒 Daftar Belanja</Heading>
+                        <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={2}>
+                          {backendMealPlan.shopping_list.map((item, index) => (
+                            <Flex key={index} justify="space-between" p={2} bg="white" borderRadius="md">
+                              <Text fontSize={{ base: "xs", md: "sm" }}>{item.name}</Text>
+                              <Text fontSize={{ base: "xs", md: "sm" }} fontWeight="bold">{item.total_amount}g</Text>
+                            </Flex>
+                          ))}
+                        </SimpleGrid>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+                
+                {/* Loading state for backend meal plan */}
+                {backendMealPlanLoading && (
+                  <Box p={6} textAlign="center" bg="blue.50" borderRadius="md">
+                    <Heading size={{ base: "sm", md: "md" }} mb={2}>🤖 Memuat AI Meal Plan...</Heading>
+                    <Text fontSize={{ base: "sm", md: "md" }}>Sedang menghasilkan rencana makan yang dipersonalisasi dengan AI...</Text>
+                  </Box>
+                )}
+                
+                {/* Loading state for meal plan */}
+                {mealPlanLoading && (
+                  <Box p={6} textAlign="center" bg="green.50" borderRadius="md">
+                    <Heading size={{ base: "sm", md: "md" }} mb={2}>🔄 Memuat Rencana Makan...</Heading>
+                    <Text fontSize={{ base: "sm", md: "md" }}>Sedang menyusun kombinasi makanan yang optimal untuk Anda...</Text>
+                  </Box>
+                )}
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Action Buttons */}
+        <VStack spacing={4}>
+          <HStack justify="center" spacing={{ base: 2, md: 4 }} w="full">
+            <Button 
+              variant="outline" 
+              colorScheme="brand" 
+              onClick={onBack}
+              size={{ base: "sm", md: "md" }}
+              w={{ base: "full", md: "auto" }}
+            >
+              ← Kembali ke Formulir
+            </Button>
+            <Button 
+              colorScheme="brand" 
+              onClick={onNewRecommendation}
+              size={{ base: "sm", md: "md" }}
+              w={{ base: "full", md: "auto" }}
+            >
+              🆕 Buat Rekomendasi Baru
+            </Button>
+          </HStack>
+        </VStack>
+
+        {/* Tips Section */}
+        <Card>
+          <CardHeader>
+            <Heading size={{ base: "sm", md: "md" }}>💡 Tips Sukses dengan Porsi yang Tepat</Heading>
+          </CardHeader>
+          <CardBody>
+            <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={{ base: 3, md: 4 }}>
+              <Box textAlign="center" p={{ base: 3, md: 4 }}>
+                <Text fontSize={{ base: "xl", md: "2xl" }} mb={2}>⚖️</Text>
+                <Text fontSize={{ base: "xs", md: "sm" }}>Gunakan timbangan digital untuk mengukur porsi makanan secara akurat</Text>
+              </Box>
+              <Box textAlign="center" p={{ base: 3, md: 4 }}>
+                <Text fontSize={{ base: "xl", md: "2xl" }} mb={2}>📱</Text>
+                <Text fontSize={{ base: "xs", md: "sm" }}>Catat asupan makanan harian di fitur progress tracking</Text>
+              </Box>
+              <Box textAlign="center" p={{ base: 3, md: 4 }}>
+                <Text fontSize={{ base: "xl", md: "2xl" }} mb={2}>🥗</Text>
+                <Text fontSize={{ base: "xs", md: "sm" }}>Variasikan sumber protein dan karbohidrat setiap harinya</Text>
+              </Box>
+              <Box textAlign="center" p={{ base: 3, md: 4 }}>
+                <Text fontSize={{ base: "xl", md: "2xl" }} mb={2}>💧</Text>
+                <Text fontSize={{ base: "xs", md: "sm" }}>Minum 2-3 liter air putih setiap hari untuk metabolisme optimal</Text>
+              </Box>
+            </SimpleGrid>
+          </CardBody>
+        </Card>
+      </VStack>
+    </Box>
   );
 };
 

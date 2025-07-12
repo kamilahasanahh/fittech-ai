@@ -1,5 +1,21 @@
 // frontend/src/App.js
 import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  ChakraProvider, 
+  Box, 
+  Flex, 
+  Text, 
+  Button, 
+  Container, 
+  VStack, 
+  HStack,
+  Alert,
+  AlertIcon,
+  AlertDescription,
+  CloseButton,
+  useToast
+} from '@chakra-ui/react';
+import theme from './theme';
 import { apiService } from './services/api';
 import { authService } from './services/authService';
 import { recommendationService } from './services/recommendationService';
@@ -18,6 +34,8 @@ import DashboardPage from './pages/DashboardPage';
 import RecommendationPage from './pages/RecommendationPage';
 import ProgressPage from './pages/ProgressPage';
 import InputPage from './pages/InputPage';
+
+
 
 function App() {
   const [user, setUser] = useState(null);
@@ -181,65 +199,130 @@ function App() {
   };
 
   return (
-    <div className="App">
-      {!isOnline && <OfflineNotice />}
-      
-      {/* Header */}
-      <header className="app-header">
-        <div className="container">
-          <div className="header-content">
-            <div className="header-main">
-              <h1>🏋️ XGFitness</h1>
-              <p>Sistem Rekomendasi Kebugaran Bertenaga AI</p>
-            </div>
-            <div className="header-user">
+    <ChakraProvider theme={theme}>
+      <Box minH="100vh" bg="gray.50">
+        {!isOnline && <OfflineNotice />}
+        
+        {/* Header */}
+        <Box 
+          bg="white" 
+          boxShadow="sm" 
+          borderBottom="1px" 
+          borderColor="gray.200"
+          position="sticky"
+          top={0}
+          zIndex={10}
+        >
+          <Container maxW="container.xl" py={{ base: 2, md: 4 }} px={{ base: 4, md: 6 }}>
+            <Flex 
+              direction={{ base: "column", md: "row" }} 
+              justify="space-between" 
+              align={{ base: "start", md: "center" }}
+              gap={{ base: 3, md: 0 }}
+            >
+              <VStack align="start" spacing={1}>
+                <Text 
+                  fontSize={{ base: "xl", md: "2xl" }} 
+                  fontWeight="bold" 
+                  bgGradient="linear(to-r, brand.500, blue.500)"
+                  bgClip="text"
+                >
+                  🏋️ XGFitness
+                </Text>
+                <Text color="gray.600" fontSize={{ base: "xs", md: "sm" }}>
+                  Sistem Rekomendasi Kebugaran Bertenaga AI
+                </Text>
+              </VStack>
+              
               {user && (
-                <div className="user-info">
-                  <span>Selamat datang, {user.displayName || 'Pengguna'}!</span>
-                  <button onClick={handleLogout} className="btn-secondary small">
+                <HStack spacing={{ base: 2, md: 4 }} w={{ base: "full", md: "auto" }} justify={{ base: "space-between", md: "flex-end" }}>
+                  <Text color="gray.700" fontSize={{ base: "sm", md: "md" }}>
+                    Selamat datang, {user.displayName || 'Pengguna'}!
+                  </Text>
+                  <Button 
+                    size={{ base: "xs", md: "sm" }}
+                    variant="outline" 
+                    colorScheme="brand"
+                    onClick={handleLogout}
+                  >
                     Keluar
-                  </button>
-                </div>
+                  </Button>
+                </HStack>
               )}
-            </div>
-          </div>
-          <SystemStatus status={systemStatus} />
-        </div>
-      </header>
+            </Flex>
+            <SystemStatus status={systemStatus} />
+          </Container>
+        </Box>
 
-      {/* Navigation */}
-      <nav className="app-navigation">
-        <div className="container">
-          <div className="nav-items">
-            <button onClick={() => navigate('/dashboard')} className={`nav-item${window.location.pathname === '/dashboard' ? ' active' : ''}`}>📊 Dashboard</button>
-            <button onClick={() => navigate('/input')} className={`nav-item${window.location.pathname === '/input' ? ' active' : ''}`}>📝 Rencana Baru</button>
-            <button onClick={() => navigate('/recommendation')} className={`nav-item${window.location.pathname === '/recommendation' ? ' active' : ''}`}>🎯 Rekomendasi</button>
-            <button onClick={() => navigate('/progress')} className={`nav-item${window.location.pathname === '/progress' ? ' active' : ''}`}>📈 Progress</button>
-          </div>
-        </div>
-      </nav>
+        {/* Navigation */}
+        <Box bg="white" borderBottom="1px" borderColor="gray.200">
+          <Container maxW="container.xl" px={{ base: 4, md: 6 }}>
+            <Box 
+              overflowX="auto" 
+              css={{
+                '&::-webkit-scrollbar': { display: 'none' },
+                '-ms-overflow-style': 'none',
+                'scrollbarWidth': 'none'
+              }}
+            >
+              <HStack spacing={0} py={2} minW="max-content">
+                {[
+                  { path: '/dashboard', label: '📊 Dashboard', icon: '📊' },
+                  { path: '/input', label: '📝 Rencana Baru', icon: '📝' },
+                  { path: '/recommendation', label: '🎯 Rekomendasi', icon: '🎯' },
+                  { path: '/progress', label: '📈 Progress', icon: '📈' }
+                ].map((item) => (
+                  <Button
+                    key={item.path}
+                    variant={location.pathname === item.path ? "solid" : "ghost"}
+                    colorScheme={location.pathname === item.path ? "brand" : "gray"}
+                    onClick={() => navigate(item.path)}
+                    borderRadius="md"
+                    mx={1}
+                    size={{ base: "xs", md: "sm" }}
+                    fontSize={{ base: "xs", md: "sm" }}
+                    px={{ base: 2, md: 3 }}
+                    _hover={{
+                      bg: location.pathname === item.path ? "brand.600" : "gray.100"
+                    }}
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </HStack>
+            </Box>
+          </Container>
+        </Box>
 
-      {/* Main Content */}
-      <main className="app-main">
-        <div className="container">
-          {error && (
-            <div className="error-message">
-              <p>❌ {error}</p>
-              <button onClick={() => setError('')} className="btn-secondary small">
-                Tutup
-              </button>
-            </div>
-          )}
-          <Routes>
-            <Route path="/" element={<AuthPage onAuthSuccess={handleAuthSuccess} />} />
-            <Route path="/dashboard" element={<DashboardPage user={user} userData={userData} recommendations={recommendations} onNavigate={navigate} />} />
-            <Route path="/input" element={<InputPage onSubmit={handleUserSubmit} loading={loading} initialData={userData} />} />
-            <Route path="/recommendation" element={<RecommendationPage recommendations={recommendations} userData={userData} onBack={() => navigate('/input')} onNewRecommendation={() => navigate('/input')} loading={loading} error={error} />} />
-            <Route path="/progress" element={<ProgressPage user={user} onProgressUpdate={handleProgressUpdate} userProfile={userData} currentRecommendation={currentRecommendation} />} />
-          </Routes>
-        </div>
-      </main>
-    </div>
+        {/* Main Content */}
+        <Box as="main" py={{ base: 4, md: 8 }}>
+          <Container maxW="container.xl" px={{ base: 4, md: 6 }}>
+            {error && (
+              <Alert status="error" mb={6} borderRadius="md">
+                <AlertIcon />
+                <AlertDescription flex={1}>
+                  {error}
+                </AlertDescription>
+                <CloseButton
+                  alignSelf="flex-start"
+                  position="relative"
+                  right={-1}
+                  top={-1}
+                  onClick={() => setError('')}
+                />
+              </Alert>
+            )}
+            <Routes>
+              <Route path="/" element={<AuthPage onAuthSuccess={handleAuthSuccess} />} />
+              <Route path="/dashboard" element={<DashboardPage user={user} userData={userData} recommendations={recommendations} onNavigate={navigate} />} />
+              <Route path="/input" element={<InputPage onSubmit={handleUserSubmit} loading={loading} initialData={userData} />} />
+              <Route path="/recommendation" element={<RecommendationPage recommendations={recommendations} userData={userData} onBack={() => navigate('/input')} onNewRecommendation={() => navigate('/input')} loading={loading} error={error} />} />
+              <Route path="/progress" element={<ProgressPage user={user} onProgressUpdate={handleProgressUpdate} userProfile={userData} currentRecommendation={currentRecommendation} />} />
+            </Routes>
+          </Container>
+        </Box>
+      </Box>
+    </ChakraProvider>
   );
 }
 

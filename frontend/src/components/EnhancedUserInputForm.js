@@ -1,4 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Stack,
+  VStack,
+  HStack,
+  Heading,
+  Text,
+  FormControl,
+  FormLabel,
+  Input,
+  Radio,
+  RadioGroup,
+  Button,
+  Progress,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Badge,
+  useColorModeValue,
+  useToast,
+  Divider,
+  SimpleGrid,
+  Skeleton
+} from '@chakra-ui/react';
 
 const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }) => {
   const [formData, setFormData] = useState({
@@ -322,59 +347,83 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
 
   const progressPercentage = (currentStep / steps.length) * 100;
 
-  return (
-    <div className="user-input-form">
-      <div className="progress-bar">
-        <div className="progress-steps">
-          {steps.map((step) => (
-            <div 
-              key={step.number}
-              className={`progress-step ${
-                step.number === currentStep ? 'active' : ''
-              } ${step.number < currentStep ? 'completed' : ''}`}
-            >
-              <div className="step-number">{step.number}</div>
-              <div className="step-label">{step.label}</div>
-            </div>
-          ))}
-        </div>
-        <div className="progress-line">
-          <div 
-            className="progress-fill" 
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
-      </div>
+  const gradientBg = useColorModeValue(
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)'
+  );
+  const toast = useToast();
 
+  return (
+    <Box maxW={{ base: "full", md: "lg" }} mx="auto" mt={{ base: 4, md: 8 }} p={{ base: 4, md: 8 }} bg="white" borderRadius="xl" boxShadow="lg">
+      {/* Progress Bar */}
+      <Box mb={{ base: 6, md: 8 }}>
+        <Box 
+          overflowX="auto" 
+          css={{
+            '&::-webkit-scrollbar': { display: 'none' },
+            '-ms-overflow-style': 'none',
+            'scrollbarWidth': 'none'
+          }}
+        >
+          <HStack justify="space-between" mb={2} minW="max-content" spacing={{ base: 1, md: 2 }}>
+            {steps.map((step) => (
+              <VStack key={step.number} spacing={0} flex={1} minW={{ base: "60px", md: "80px" }}>
+                <Box
+                  w={{ base: 6, md: 8 }}
+                  h={{ base: 6, md: 8 }}
+                  borderRadius="full"
+                  bg={step.number === currentStep ? 'brand.500' : step.number < currentStep ? 'green.400' : 'gray.200'}
+                  color={step.number === currentStep || step.number < currentStep ? 'white' : 'gray.500'}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  fontWeight="bold"
+                  fontSize={{ base: "sm", md: "md" }}
+                  mb={1}
+                  border={step.number === currentStep ? '2px solid' : '1px solid'}
+                  borderColor={step.number === currentStep ? 'brand.600' : 'gray.300'}
+                  transition="all 0.2s"
+                >
+                  {step.number}
+                </Box>
+                <Text fontSize={{ base: "2xs", md: "xs" }} color={step.number === currentStep ? 'brand.600' : 'gray.500'} textAlign="center">
+                  {step.label}
+                </Text>
+              </VStack>
+            ))}
+          </HStack>
+        </Box>
+        <Progress value={progressPercentage} size="sm" colorScheme="brand" borderRadius="md" />
+      </Box>
+
+      {/* Error Banner */}
       {submissionError && (
-        <div className="error-banner">
-          <h3>Terjadi Kesalahan</h3>
-          <p>{submissionError}</p>
-        </div>
+        <Alert status="error" mb={4} borderRadius="md">
+          <AlertIcon />
+          <Box flex={1}>
+            <AlertTitle>Terjadi Kesalahan</AlertTitle>
+            <AlertDescription>{submissionError}</AlertDescription>
+          </Box>
+        </Alert>
       )}
 
+      {/* Info Banner for stored data */}
       {storedDataLoaded && (
-        <div className="info-banner" style={{
-          backgroundColor: '#dbeafe',
-          border: '1px solid #3b82f6',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          marginBottom: '20px',
-          color: '#1e40af'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>💾</span>
-              <div>
-                <strong>Data Tersimpan Ditemukan!</strong>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.9em' }}>
-                  Usia, tinggi badan, dan jenis kelamin Anda telah dimuat dari penyimpanan lokal. 
-                  Anda hanya perlu memasukkan berat badan saat ini.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
+        <Alert status="info" mb={4} borderRadius="md" bg="blue.50" color="blue.800" borderColor="blue.300">
+          <HStack justify="space-between" w="full">
+            <HStack>
+              <Text fontSize="xl">💾</Text>
+              <Box>
+                <Text fontWeight="bold">Data Tersimpan Ditemukan!</Text>
+                <Text fontSize="sm">
+                  Usia, tinggi badan, dan jenis kelamin Anda telah dimuat dari penyimpanan lokal. Anda hanya perlu memasukkan berat badan saat ini.
+                </Text>
+              </Box>
+            </HStack>
+            <Button
+              size="xs"
+              variant="outline"
+              colorScheme="blue"
               onClick={() => {
                 localStorage.removeItem('fittech_user_data');
                 setFormData({
@@ -387,361 +436,274 @@ const EnhancedUserInputForm = ({ onSubmit, loading: parentLoading, initialData }
                 });
                 setStoredDataLoaded(false);
               }}
-              style={{
-                background: 'none',
-                border: '1px solid #3b82f6',
-                borderRadius: '4px',
-                padding: '4px 8px',
-                fontSize: '0.8em',
-                color: '#3b82f6',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
-              }}
             >
               Mulai Baru
-            </button>
-          </div>
-        </div>
+            </Button>
+          </HStack>
+        </Alert>
       )}
 
       <form onSubmit={handleSubmit}>
+        {/* Step 1: Basic Info */}
         {currentStep === 1 && (
-          <div className="form-step">
-            <h3>Informasi Dasar Anda</h3>
-            
-            <div className="form-group">
-              <label htmlFor="age">Usia (tahun)</label>
-              <input
+          <VStack spacing={6} align="stretch">
+            <Heading size="md">Informasi Dasar Anda</Heading>
+            <FormControl isInvalid={!!validationErrors.age}>
+              <FormLabel>Usia (tahun)</FormLabel>
+              <Input
                 type="number"
-                id="age"
                 name="age"
                 value={formData.age}
                 onChange={handleInputChange}
                 onKeyDown={handleAgeKeyDown}
                 onBlur={handleAgeBlur}
                 placeholder="Contoh: 25"
-                min="18"
-                max="65"
-                className={validationErrors.age ? 'error' : ''}
+                min={18}
+                max={65}
+                disabled={parentLoading}
               />
-              {validationErrors.age && (
-                <span className="error-text">{validationErrors.age}</span>
-              )}
-              <small style={{ color: '#6b7280', fontSize: '0.8em' }}>
-                Usia harus antara 18-65 tahun
-              </small>
-            </div>
-
-            <div className="form-group">
-              <label>Jenis Kelamin</label>
-              <div className="radio-group">
-                <div className="radio-option">
-                  <input
-                    type="radio"
-                    id="male"
-                    name="gender"
-                    value="male"
-                    checked={formData.gender === 'male'}
-                    onChange={handleInputChange}
-                  />
-                  <label htmlFor="male">👨 Pria</label>
-                </div>
-                <div className="radio-option">
-                  <input
-                    type="radio"
-                    id="female"
-                    name="gender"
-                    value="female"
-                    checked={formData.gender === 'female'}
-                    onChange={handleInputChange}
-                  />
-                  <label htmlFor="female">👩 Wanita</label>
-                </div>
-              </div>
-              {validationErrors.gender && (
-                <span className="error-text">{validationErrors.gender}</span>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="height">Tinggi Badan (cm)</label>
-              <input
+              {validationErrors.age && <Text color="red.500" fontSize="sm">{validationErrors.age}</Text>}
+              <Text color="gray.500" fontSize="xs">Usia harus antara 18-65 tahun</Text>
+            </FormControl>
+            <FormControl isInvalid={!!validationErrors.gender}>
+              <FormLabel>Jenis Kelamin</FormLabel>
+              <RadioGroup
+                name="gender"
+                value={formData.gender}
+                onChange={(val) => handleInputChange({ target: { name: 'gender', value: val } })}
+                isDisabled={parentLoading}
+              >
+                <HStack spacing={6}>
+                  <Radio value="male">👨 Pria</Radio>
+                  <Radio value="female">👩 Wanita</Radio>
+                </HStack>
+              </RadioGroup>
+              {validationErrors.gender && <Text color="red.500" fontSize="sm">{validationErrors.gender}</Text>}
+            </FormControl>
+            <FormControl isInvalid={!!validationErrors.height}>
+              <FormLabel>Tinggi Badan (cm)</FormLabel>
+              <Input
                 type="number"
-                id="height"
                 name="height"
                 value={formData.height}
                 onChange={handleInputChange}
                 placeholder="Contoh: 170"
-                min="120"
-                max="250"
-                className={validationErrors.height ? 'error' : ''}
+                min={120}
+                max={250}
+                disabled={parentLoading}
               />
-              {validationErrors.height && (
-                <span className="error-text">{validationErrors.height}</span>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="weight">Berat Badan (kg)</label>
-              <input
+              {validationErrors.height && <Text color="red.500" fontSize="sm">{validationErrors.height}</Text>}
+            </FormControl>
+            <FormControl isInvalid={!!validationErrors.weight}>
+              <FormLabel>Berat Badan (kg)</FormLabel>
+              <Input
                 type="number"
-                id="weight"
                 name="weight"
                 value={formData.weight}
                 onChange={handleInputChange}
                 placeholder="Contoh: 65"
-                min="30"
-                max="300"
-                step="0.1"
-                className={validationErrors.weight ? 'error' : ''}
+                min={30}
+                max={300}
+                step={0.1}
+                disabled={parentLoading}
               />
-              {validationErrors.weight && (
-                <span className="error-text">{validationErrors.weight}</span>
-              )}
+              {validationErrors.weight && <Text color="red.500" fontSize="sm">{validationErrors.weight}</Text>}
               {storedDataLoaded && (
-                <small style={{ color: '#059669', fontSize: '0.8em', fontWeight: '500' }}>
+                <Text color="green.600" fontSize="xs" fontWeight="medium">
                   ⚡ Hanya berat badan yang perlu diperbarui - data lainnya sudah tersimpan!
-                </small>
+                </Text>
               )}
-            </div>
-
+            </FormControl>
             {bmi && bmiCategory && (
-              <div className="bmi-info">
-                <h4>📊 Indeks Massa Tubuh (BMI)</h4>
-                <div className="bmi-result">
-                  <span className="bmi-value">{bmi.toFixed(1)}</span>
-                  <span 
-                    className="bmi-category"
-                    style={{ color: bmiCategory.color }}
-                  >
+              <Box bg="gray.50" borderRadius="md" p={4} mt={2}>
+                <Text fontWeight="bold" mb={1}>📊 Indeks Massa Tubuh (BMI)</Text>
+                <HStack>
+                  <Text fontSize="2xl" fontWeight="bold">{bmi.toFixed(1)}</Text>
+                  <Badge colorScheme={bmiCategory.restriction === 'underweight' ? 'blue' : bmiCategory.restriction === 'normal' ? 'green' : bmiCategory.restriction === 'overweight' ? 'orange' : 'red'} fontSize="md">
                     {bmiCategory.text}
-                  </span>
-                </div>
+                  </Badge>
+                </HStack>
                 {bmiCategory.restriction !== 'normal' && (
-                  <div className="bmi-restriction-note">
-                    <p style={{ fontSize: '0.9em', marginTop: '10px', padding: '8px', backgroundColor: '#f0f9ff', borderRadius: '4px' }}>
-                      💡 <strong>Catatan:</strong> Berdasarkan BMI Anda, beberapa tujuan fitness mungkin tidak tersedia pada langkah selanjutnya untuk hasil yang optimal.
-                    </p>
-                  </div>
+                  <Box mt={2} bg="blue.50" borderRadius="md" p={2}>
+                    <Text fontSize="sm">
+                      💡 <b>Catatan:</b> Berdasarkan BMI Anda, beberapa tujuan fitness mungkin tidak tersedia pada langkah selanjutnya untuk hasil yang optimal.
+                    </Text>
+                  </Box>
                 )}
-              </div>
+              </Box>
             )}
-          </div>
+          </VStack>
         )}
 
+        {/* Step 2: Fitness Goal */}
         {currentStep === 2 && (
-          <div className="form-step">
-            <h3>Apa Tujuan Fitness Anda?</h3>
+          <VStack spacing={6} align="stretch">
+            <Heading size={{ base: "sm", md: "md" }}>Apa Tujuan Fitness Anda?</Heading>
             {bmiCategory && bmiCategory.restriction !== 'normal' && (
-              <div className="bmi-restriction-info" style={{ 
-                padding: '12px', 
-                backgroundColor: '#f0f9ff', 
-                borderRadius: '8px', 
-                marginBottom: '20px',
-                border: '1px solid #bfdbfe'
-              }}>
-                <p style={{ margin: 0, fontSize: '0.9em' }}>
-                  <strong>📋 Rekomendasi berdasarkan BMI Anda ({bmiCategory.text}):</strong><br/>
-                  Pilihan yang diarsir tidak direkomendasikan untuk kategori BMI Anda saat ini.
-                </p>
-              </div>
+              <Alert status="info" mb={2} borderRadius="md" bg="blue.50" color="blue.800" borderColor="blue.300">
+                <AlertIcon />
+                <Box>
+                  <Text fontSize={{ base: "xs", md: "sm" }}>
+                    <b>📋 Rekomendasi berdasarkan BMI Anda ({bmiCategory.text}):</b><br />
+                    Pilihan yang diarsir tidak direkomendasikan untuk kategori BMI Anda saat ini.
+                  </Text>
+                </Box>
+              </Alert>
             )}
-            <div className="option-cards">
+            <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={{ base: 3, md: 4 }}>
               {Object.entries(FITNESS_GOALS).map(([key, goal]) => {
                 const isAllowed = isFitnessGoalAllowed(key);
                 return (
-                  <div
+                  <Box
                     key={key}
-                    className={`option-card ${formData.fitness_goal === key ? 'selected' : ''} ${!isAllowed ? 'disabled' : ''}`}
+                    borderWidth={2}
+                    borderColor={formData.fitness_goal === key ? 'brand.500' : 'gray.200'}
+                    borderRadius="lg"
+                    p={4}
+                    bg={formData.fitness_goal === key ? 'brand.50' : 'white'}
+                    opacity={isAllowed ? 1 : 0.5}
+                    cursor={isAllowed ? 'pointer' : 'not-allowed'}
                     onClick={() => {
                       if (isAllowed) {
                         handleInputChange({ target: { name: 'fitness_goal', value: key } });
                       }
                     }}
-                    style={{
-                      opacity: isAllowed ? 1 : 0.5,
-                      cursor: isAllowed ? 'pointer' : 'not-allowed',
-                      backgroundColor: !isAllowed ? '#f9fafb' : ''
-                    }}
+                    transition="all 0.2s"
                   >
-                    <input
-                      type="radio"
+                    <Radio
                       name="fitness_goal"
                       value={key}
-                      checked={formData.fitness_goal === key}
+                      isChecked={formData.fitness_goal === key}
                       onChange={handleInputChange}
-                      disabled={!isAllowed}
-                    />
-                    <div className="option-content">
-                      <h4>{goal.icon} {goal.label}</h4>
-                      <p>{goal.description}</p>
-                      {!isAllowed && (
-                        <small style={{ color: '#6b7280', fontStyle: 'italic' }}>
-                          Tidak direkomendasikan untuk BMI Anda
-                        </small>
-                      )}
-                    </div>
-                  </div>
+                      isDisabled={!isAllowed}
+                      colorScheme="brand"
+                      mb={2}
+                    >
+                      <Text fontWeight="bold" fontSize="lg">{goal.icon} {goal.label}</Text>
+                    </Radio>
+                    <Text fontSize="sm" color="gray.600">{goal.description}</Text>
+                    {!isAllowed && (
+                      <Text color="gray.400" fontSize="xs" fontStyle="italic" mt={2}>
+                        Tidak direkomendasikan untuk BMI Anda
+                      </Text>
+                    )}
+                  </Box>
                 );
               })}
-            </div>
-            {validationErrors.fitness_goal && (
-              <span className="error-text">{validationErrors.fitness_goal}</span>
-            )}
-          </div>
+            </SimpleGrid>
+            {validationErrors.fitness_goal && <Text color="red.500" fontSize="sm">{validationErrors.fitness_goal}</Text>}
+          </VStack>
         )}
 
+        {/* Step 3: Activity Level */}
         {currentStep === 3 && (
-          <div className="form-step">
-            <h3>Seberapa Aktif Anda Saat Ini?</h3>
-            <div className="option-cards">
+          <VStack spacing={6} align="stretch">
+            <Heading size={{ base: "sm", md: "md" }}>Seberapa Aktif Anda Saat Ini?</Heading>
+            <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={{ base: 3, md: 4 }}>
               {Object.entries(ACTIVITY_LEVELS).map(([key, level]) => (
-                <div
+                <Box
                   key={key}
-                  className={`option-card ${formData.activity_level === key ? 'selected' : ''}`}
+                  borderWidth={2}
+                  borderColor={formData.activity_level === key ? 'brand.500' : 'gray.200'}
+                  borderRadius="lg"
+                  p={4}
+                  bg={formData.activity_level === key ? 'brand.50' : 'white'}
+                  cursor="pointer"
                   onClick={() => handleInputChange({ target: { name: 'activity_level', value: key } })}
+                  transition="all 0.2s"
                 >
-                  <input
-                    type="radio"
+                  <Radio
                     name="activity_level"
                     value={key}
-                    checked={formData.activity_level === key}
+                    isChecked={formData.activity_level === key}
                     onChange={handleInputChange}
-                  />
-                  <div className="option-content">
-                    <h4>{level.icon} {level.label}</h4>
-                    <p>{level.description}</p>
-                    <span className="multiplier">Faktor: {level.multiplier}</span>
-                  </div>
-                </div>
+                    colorScheme="brand"
+                    mb={2}
+                  >
+                    <Text fontWeight="bold" fontSize="lg">{level.icon} {level.label}</Text>
+                  </Radio>
+                  <Text fontSize="sm" color="gray.600">{level.description}</Text>
+                  <Text fontSize="xs" color="blue.500" mt={1}>Faktor: {level.multiplier}</Text>
+                </Box>
               ))}
-            </div>
-            
-            {/* Informational card */}
-            <div className="info-card" style={{
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e9ecef',
-              borderRadius: '12px',
-              padding: '16px',
-              marginTop: '20px',
-              textAlign: 'center'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                marginBottom: '8px'
-              }}>
-                <span style={{ fontSize: '20px' }}>💡</span>
-                <strong style={{ color: '#495057' }}>Informasi</strong>
-              </div>
-              <p style={{
-                margin: 0,
-                color: '#6c757d',
-                fontSize: '14px',
-                lineHeight: '1.4'
-              }}>
-                Aktivitas fisik = semua gerakan tubuh (olahraga + pekerjaan + aktivitas harian) yang membuat Anda bergerak aktif dan berkeringat
-              </p>
-            </div>
-            
-            {validationErrors.activity_level && (
-              <span className="error-text">{validationErrors.activity_level}</span>
-            )}
-          </div>
+            </SimpleGrid>
+            <Box bg="gray.50" borderRadius="md" p={3} mt={2} textAlign="center">
+              <Text fontSize="sm" color="gray.600">
+                💡 <b>Informasi:</b> Aktivitas fisik = semua gerakan tubuh (olahraga + pekerjaan + aktivitas harian) yang membuat Anda bergerak aktif dan berkeringat
+              </Text>
+            </Box>
+            {validationErrors.activity_level && <Text color="red.500" fontSize="sm">{validationErrors.activity_level}</Text>}
+          </VStack>
         )}
 
+        {/* Step 4: Confirmation */}
         {currentStep === 4 && (
-          <div className="form-step">
-            <h3>Konfirmasi Data Anda</h3>
-            <div className="confirmation-summary">
-              <div className="summary-card">
-                <h4>📋 Ringkasan Profil</h4>
-                <div className="summary-grid">
-                  <div className="summary-item">
-                    <span className="label">Usia:</span>
-                    <span className="value">{formData.age} tahun</span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="label">Jenis Kelamin:</span>
-                    <span className="value">{formData.gender === 'male' ? 'Pria' : 'Wanita'}</span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="label">Tinggi Badan:</span>
-                    <span className="value">{formData.height} cm</span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="label">Berat Badan:</span>
-                    <span className="value">{formData.weight} kg</span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="label">BMI:</span>
-                    <span className="value">{bmi ? bmi.toFixed(1) : '-'} ({bmiCategory ? bmiCategory.text : '-'})</span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="label">Tujuan:</span>
-                    <span className="value">{FITNESS_GOALS[formData.fitness_goal]?.label}</span>
-                  </div>
-                  <div className="summary-item">
-                    <span className="label">Level Aktivitas:</span>
-                    <span className="value">{ACTIVITY_LEVELS[formData.activity_level]?.label}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="confirmation-note">
-                <p>
-                  <strong>📝 Catatan:</strong> Data ini akan digunakan untuk membuat 
-                  rekomendasi fitness yang personal untuk Anda. Pastikan semua informasi sudah benar.
-                </p>
-              </div>
-            </div>
-          </div>
+          <VStack spacing={6} align="stretch">
+            <Heading size="md">Konfirmasi Data Anda</Heading>
+            <Box bg="gray.50" borderRadius="md" p={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <VStack align="start" spacing={1}>
+                  <Text><b>Usia:</b> {formData.age} tahun</Text>
+                  <Text><b>Jenis Kelamin:</b> {formData.gender === 'male' ? 'Pria' : 'Wanita'}</Text>
+                  <Text><b>Tinggi Badan:</b> {formData.height} cm</Text>
+                  <Text><b>Berat Badan:</b> {formData.weight} kg</Text>
+                  <Text><b>BMI:</b> {bmi ? bmi.toFixed(1) : '-'} ({bmiCategory ? bmiCategory.text : '-'})</Text>
+                </VStack>
+                <VStack align="start" spacing={1}>
+                  <Text><b>Tujuan:</b> {FITNESS_GOALS[formData.fitness_goal]?.label}</Text>
+                  <Text><b>Level Aktivitas:</b> {ACTIVITY_LEVELS[formData.activity_level]?.label}</Text>
+                </VStack>
+              </SimpleGrid>
+              <Divider my={3} />
+              <Text fontSize="sm" color="gray.600">
+                📝 <b>Catatan:</b> Data ini akan digunakan untuk membuat rekomendasi fitness yang personal untuk Anda. Pastikan semua informasi sudah benar.
+              </Text>
+            </Box>
+          </VStack>
         )}
 
-        <div className="form-navigation">
-          {currentStep > 1 && (
-            <button
-              type="button"
-              onClick={handlePrevious}
-              className="btn-secondary"
-              disabled={parentLoading}
-            >
-              ← Sebelumnya
-            </button>
-          )}
-          
-          <div style={{ flex: 1 }}></div>
-          
-          {currentStep < steps.length ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="btn-primary"
-              disabled={parentLoading}
-            >
-              Selanjutnya →
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="btn-primary submit-btn"
-              disabled={parentLoading}
-            >
-              {parentLoading ? (
-                <>
-                  <div className="spinner small"></div>
-                  Memproses...
-                </>
-              ) : (
-                '🎯 Buat Rekomendasi'
-              )}
-            </button>
-          )}
-        </div>
+        {/* Navigation Buttons */}
+        <VStack mt={8} spacing={4}>
+          <HStack w="full" justify="space-between">
+            {currentStep > 1 && (
+              <Button
+                onClick={handlePrevious}
+                variant="outline"
+                colorScheme="brand"
+                isDisabled={parentLoading}
+                size={{ base: "sm", md: "md" }}
+              >
+                ← Sebelumnya
+              </Button>
+            )}
+            <Box flex={1} />
+            {currentStep < steps.length ? (
+              <Button
+                onClick={handleNext}
+                colorScheme="brand"
+                isDisabled={parentLoading}
+                size={{ base: "sm", md: "md" }}
+              >
+                Selanjutnya →
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                colorScheme="brand"
+                isLoading={parentLoading}
+                loadingText="Memproses..."
+                fontWeight="bold"
+                px={{ base: 6, md: 8 }}
+                size={{ base: "sm", md: "md" }}
+                w={{ base: "full", md: "auto" }}
+              >
+                🎯 Buat Rekomendasi
+              </Button>
+            )}
+          </HStack>
+        </VStack>
       </form>
-    </div>
+    </Box>
   );
 };
 
