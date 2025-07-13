@@ -44,7 +44,7 @@
     "workout_schedule": "WXXWXXX",
     "sets_per_exercise": 4,
     "exercises_per_session": 6,
-    "cardio_minutes_per_day": 18,
+    "cardio_minutes_per_day": 0,
     "cardio_sessions_per_day": 0
   },
   {
@@ -80,7 +80,7 @@
     "workout_schedule": "WXXWXXX",
     "sets_per_exercise": 3,
     "exercises_per_session": 4,
-    "cardio_minutes_per_day": 30,
+    "cardio_minutes_per_day": 0,
     "cardio_sessions_per_day": 0
   },
   {

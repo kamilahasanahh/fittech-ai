@@ -15,7 +15,7 @@
         "description": "Food and nutrition data",
         "files": {
           "food_database.json": "Indonesian food nutrition database with categories",
-          "macro_summary.csv": "Legacy CSV format (for frontend compatibility)"
+          "nutrition_macro_summary.json": "Nutrition macro summary for common foods"
         }
       },
       "meals/": {

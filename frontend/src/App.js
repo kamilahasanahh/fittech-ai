@@ -73,6 +73,33 @@ function App() {
     }
   }, [location.pathname, user]);
 
+  const handleMealPlanGenerated = async (mealPlan) => {
+    if (!currentRecommendation || !user) return;
+    
+    try {
+      console.log('🔄 Updating recommendation with meal plan:', mealPlan);
+      
+      // Update the current recommendation with meal plan data
+      const updatedRecommendation = {
+        ...currentRecommendation,
+        mealPlan: mealPlan
+      };
+      
+      // Save to Firebase
+      await recommendationService.updateRecommendationMealPlan(
+        currentRecommendation.id, 
+        mealPlan
+      );
+      
+      // Update local state
+      setCurrentRecommendation(updatedRecommendation);
+      console.log('✅ Meal plan saved to recommendation history');
+      
+    } catch (error) {
+      console.error('❌ Error saving meal plan to recommendation:', error);
+    }
+  };
+
   const checkAuthState = async () => {
     try {
       const currentUser = await authService.getCurrentUser();
@@ -131,13 +158,33 @@ function App() {
       const saveResult = await authService.saveUserData(formData);
       console.log('✅ Data pengguna tersimpan:', saveResult);
       
-      // Simpan rekomendasi dengan timestamp menggunakan service baru
+      // Extract userProfile data from recommendations for comprehensive storage
+      const userProfile = recommendations.user_metrics || recommendations.user_profile || null;
+      
+      // Simpan rekomendasi dengan timestamp dan data lengkap menggunakan service baru
       console.log('🔄 Menyimpan rekomendasi ke Firebase...');
-      await recommendationService.saveRecommendation(user.uid, formData, recommendations);
-      console.log('✅ Rekomendasi tersimpan');
+      const savedRecommendation = await recommendationService.saveRecommendation(
+        user.uid, 
+        formData, 
+        recommendations, 
+        userProfile, 
+        null // displayData can be added later if needed
+      );
+      console.log('✅ Rekomendasi tersimpan:', savedRecommendation);
       
       setUserData(formData);
       setRecommendations(recommendations);
+      
+      // Update current recommendation with the saved data including userProfile
+      setCurrentRecommendation({
+        id: savedRecommendation.id || Date.now(),
+        userData: formData,
+        recommendations: recommendations,
+        userProfile: userProfile,
+        createdAt: { seconds: Date.now() / 1000 },
+        ...savedRecommendation
+      });
+      
       navigate('/recommendation');
       
     } catch (err) {
@@ -316,7 +363,7 @@ function App() {
               <Route path="/" element={<AuthPage onAuthSuccess={handleAuthSuccess} />} />
               <Route path="/dashboard" element={<DashboardPage user={user} userData={userData} recommendations={recommendations} onNavigate={navigate} />} />
               <Route path="/input" element={<InputPage onSubmit={handleUserSubmit} loading={loading} initialData={userData} />} />
-              <Route path="/recommendation" element={<RecommendationPage recommendations={recommendations} userData={userData} onBack={() => navigate('/input')} onNewRecommendation={() => navigate('/input')} loading={loading} error={error} />} />
+              <Route path="/recommendation" element={<RecommendationPage recommendations={recommendations} userData={userData} onBack={() => navigate('/input')} onNewRecommendation={() => navigate('/input')} onMealPlanGenerated={handleMealPlanGenerated} loading={loading} error={error} />} />
               <Route path="/progress" element={<ProgressPage user={user} onProgressUpdate={handleProgressUpdate} userProfile={userData} currentRecommendation={currentRecommendation} />} />
             </Routes>
           </Container>

@@ -39,7 +39,7 @@ import { nutritionService } from '../services/nutritionService';
 import { mealPlanService } from '../services/mealPlanService';
 import { apiService } from '../services/api';
 
-const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecommendation }) => {
+const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecommendation, onMealPlanGenerated }) => {
   const [nutritionData, setNutritionData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mealPlan, setMealPlan] = useState(null);
@@ -132,6 +132,12 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
               );
               console.log('✅ Backend meal plan received:', backendPlan);
               setBackendMealPlan(backendPlan);
+              
+              // Store the detailed meal plan in the recommendation for future reference
+              if (backendPlan && backendPlan.meal_plan && onMealPlanGenerated) {
+                console.log('🔄 Storing meal plan for recommendation history...');
+                onMealPlanGenerated(backendPlan.meal_plan);
+              }
             } catch (backendError) {
               console.error('❌ Failed to fetch backend meal plan:', backendError);
               setBackendMealPlan(null);
@@ -498,7 +504,14 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
         {workout && (
           <Card>
             <CardHeader>
-              <Heading size={{ base: "sm", md: "md" }}>🏋️ Program Latihan Harian</Heading>
+              <HStack justify="space-between">
+                <Heading size={{ base: "sm", md: "md" }}>🏋️ Program Latihan Harian</Heading>
+                {workout.template_id && (
+                  <Badge colorScheme="blue" fontSize="0.8em">
+                    Template ID: {workout.template_id}
+                  </Badge>
+                )}
+              </HStack>
             </CardHeader>
             <CardBody>
               <VStack spacing={{ base: 4, md: 6 }} align="stretch">
@@ -548,12 +561,12 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                   )}
                 </SimpleGrid>
 
-                {workout.workout_schedule && (
+                {(workout.workout_schedule || workout.schedule || workout.weekly_schedule) && (
                   <Box>
                     <Heading size={{ base: "xs", md: "sm" }} mb={3}>📋 Jadwal yang Disarankan</Heading>
                     <Box p={4} bg="gray.50" borderRadius="md">
                       <Text fontFamily="mono" fontSize={{ base: "md", md: "lg" }}>
-                        {workout.workout_schedule}
+                        {workout.workout_schedule || workout.schedule || workout.weekly_schedule}
                       </Text>
                       <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600" mt={2}>
                         W = Hari latihan, X = Hari istirahat
@@ -588,7 +601,14 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
         {nutrition && dailyMacros && (
           <Card>
             <CardHeader>
-              <Heading size={{ base: "sm", md: "md" }}>🍎 Program Nutrisi Harian</Heading>
+              <HStack justify="space-between">
+                <Heading size={{ base: "sm", md: "md" }}>🍎 Program Nutrisi Harian</Heading>
+                {nutrition.template_id && (
+                  <Badge colorScheme="green" fontSize="0.8em">
+                    Template ID: {nutrition.template_id}
+                  </Badge>
+                )}
+              </HStack>
             </CardHeader>
             <CardBody>
               <VStack spacing={{ base: 4, md: 6 }} align="stretch">

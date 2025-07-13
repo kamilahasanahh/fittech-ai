@@ -2604,7 +2604,12 @@ class XGFitnessAIModel:
                     'goal': str(template['goal']) if 'goal' in template and pd.notna(template['goal']) else 'Unknown',
                     'activity_level': str(template['activity_level']) if 'activity_level' in template and pd.notna(template['activity_level']) else 'Unknown',
                     'workout_type': str(template['workout_type']) if 'workout_type' in template and pd.notna(template['workout_type']) else 'Unknown',
-                    'days_per_week': int(template['days_per_week']) if 'days_per_week' in template and pd.notna(template['days_per_week']) else 'Unknown'
+                    'days_per_week': int(template['days_per_week']) if 'days_per_week' in template and pd.notna(template['days_per_week']) else 'Unknown',
+                    'workout_schedule': str(template['workout_schedule']) if 'workout_schedule' in template and pd.notna(template['workout_schedule']) else 'Unknown',
+                    'sets_per_exercise': int(template['sets_per_exercise']) if 'sets_per_exercise' in template and pd.notna(template['sets_per_exercise']) else 'Unknown',
+                    'exercises_per_session': int(template['exercises_per_session']) if 'exercises_per_session' in template and pd.notna(template['exercises_per_session']) else 'Unknown',
+                    'cardio_minutes_per_day': int(template['cardio_minutes_per_day']) if 'cardio_minutes_per_day' in template and pd.notna(template['cardio_minutes_per_day']) else 'Unknown',
+                    'cardio_sessions_per_day': int(template['cardio_sessions_per_day']) if 'cardio_sessions_per_day' in template and pd.notna(template['cardio_sessions_per_day']) else 'Unknown'
                 }
                 if 'description' in template and pd.notna(template['description']) and template['description']:
                     workout_template['description'] = str(template['description'])

@@ -3,21 +3,40 @@ import { db } from './firebaseConfig';
 import { doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 
 export const recommendationService = {
-  // Save a new recommendation with timestamp
-  async saveRecommendation(userId, userData, recommendations) {
+  // Save a new recommendation with timestamp and complete display data
+  async saveRecommendation(userId, userData, recommendations, userProfile = null, displayData = null) {
     try {
       const timestamp = new Date();
       const recommendationId = `${userId}_${timestamp.getTime()}`;
       
+      // Create comprehensive recommendation data that matches what users see
       const recommendationData = {
         id: recommendationId,
         userId: userId,
         userData: userData,
         recommendations: recommendations,
+        userProfile: userProfile, // Store calculated BMI, BMR, TDEE, etc.
+        displayData: displayData, // Store any formatted display data
         createdAt: timestamp,
         date: timestamp.toISOString().split('T')[0], // YYYY-MM-DD format
         dateTime: timestamp.toISOString(),
-        isActive: true // Mark as the current active recommendation
+        isActive: true, // Mark as the current active recommendation
+        
+        // Store calculated nutrition values for quick access
+        calculatedNutrition: this.calculateNutritionFromTemplate(userData, userProfile, recommendations),
+        
+        // Store workout summary for quick access
+        workoutSummary: this.extractWorkoutSummary(recommendations),
+        
+        // Store template data for offline access
+        templateData: {
+          nutritionTemplate: recommendations.predictions?.nutrition_template || recommendations.nutrition_recommendation,
+          workoutTemplate: recommendations.predictions?.workout_template || recommendations.workout_recommendation
+        },
+        
+        // Metadata for tracking
+        version: '2.0', // Version for future compatibility
+        source: 'web_app' // Source of recommendation
       };
 
       // Save the recommendation
@@ -35,10 +54,64 @@ export const recommendationService = {
       // Set previous recommendations as inactive
       await this.setOtherRecommendationsInactive(userId, recommendationId);
 
+      console.log('✅ Comprehensive recommendation saved:', recommendationId);
       return recommendationData;
     } catch (error) {
       console.error('Error saving recommendation:', error);
       throw error;
+    }
+  },
+
+  // Calculate nutrition values from template data
+  calculateNutritionFromTemplate(userData, userProfile, recommendations) {
+    try {
+      const nutrition = recommendations.nutrition_recommendation || 
+                       recommendations.predictions?.nutrition_template ||
+                       recommendations.nutrition_template;
+      
+      if (!nutrition || !userProfile) return null;
+      
+      const userWeight = parseFloat(userData.weight) || 70;
+      const tdee = userProfile.tdee || userProfile.total_daily_energy_expenditure || 2000;
+      
+      // Use template data if available, otherwise fallback to direct values
+      const templateId = nutrition.template_id || recommendations.predicted_nutrition_template_id;
+      
+      return {
+        templateId: templateId,
+        targetCalories: nutrition.target_calories || nutrition.daily_calories || Math.round(tdee * 0.8),
+        targetProtein: nutrition.target_protein || nutrition.protein_grams || Math.round(userWeight * 2),
+        targetCarbs: nutrition.target_carbs || nutrition.carbs_grams || Math.round(userWeight * 3),
+        targetFat: nutrition.target_fat || nutrition.fat_grams || Math.round(userWeight * 1),
+        calculatedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error calculating nutrition from template:', error);
+      return null;
+    }
+  },
+
+  // Extract workout summary for quick display
+  extractWorkoutSummary(recommendations) {
+    try {
+      const workout = recommendations.workout_recommendation || 
+                     recommendations.predictions?.workout_template;
+      
+      if (!workout) return null;
+      
+      return {
+        templateId: workout.template_id,
+        workoutType: workout.workout_type,
+        daysPerWeek: workout.days_per_week,
+        setsPerExercise: workout.sets_per_exercise,
+        exercisesPerSession: workout.exercises_per_session,
+        cardioMinutesPerDay: workout.cardio_minutes_per_day || 0,
+        schedule: workout.workout_schedule || workout.schedule || workout.weekly_schedule,
+        extractedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error extracting workout summary:', error);
+      return null;
     }
   },
 
@@ -63,6 +136,24 @@ export const recommendationService = {
       await Promise.all(updatePromises);
     } catch (error) {
       console.error('Error updating recommendation status:', error);
+    }
+  },
+
+  // Update recommendation with meal plan data
+  async updateRecommendationMealPlan(recommendationId, mealPlan) {
+    try {
+      const recommendationRef = doc(db, 'recommendations', recommendationId);
+      await setDoc(recommendationRef, {
+        mealPlan: mealPlan,
+        mealPlanGeneratedAt: new Date(),
+        updatedAt: new Date()
+      }, { merge: true });
+
+      console.log('✅ Meal plan updated in recommendation:', recommendationId);
+      return true;
+    } catch (error) {
+      console.error('Error updating recommendation with meal plan:', error);
+      throw error;
     }
   },
 
@@ -234,6 +325,64 @@ export const recommendationService = {
     } catch (error) {
       console.error('Error getting feedback history:', error);
       return [];
+    }
+  },
+
+  // Helper method to calculate nutrition from template
+  calculateNutritionFromTemplate(userData, userProfile, recommendations) {
+    try {
+      const nutrition = recommendations.predictions?.nutrition_template || 
+                       recommendations.nutrition_recommendation;
+      
+      if (!nutrition || !userProfile || !userData) {
+        return null;
+      }
+
+      const weight = parseFloat(userData.weight);
+      const tdee = userProfile.tdee || 2000;
+
+      return {
+        templateId: nutrition.template_id,
+        targetCalories: Math.round(tdee * (nutrition.caloric_intake_multiplier || 0.8)),
+        targetProtein: Math.round(weight * (nutrition.protein_per_kg || 2)),
+        targetCarbs: Math.round(weight * (nutrition.carbs_per_kg || 3)),
+        targetFat: Math.round(weight * (nutrition.fat_per_kg || 1)),
+        multipliers: {
+          caloric: nutrition.caloric_intake_multiplier || 0.8,
+          protein: nutrition.protein_per_kg || 2,
+          carbs: nutrition.carbs_per_kg || 3,
+          fat: nutrition.fat_per_kg || 1
+        }
+      };
+    } catch (error) {
+      console.error('Error calculating nutrition from template:', error);
+      return null;
+    }
+  },
+
+  // Helper method to extract workout summary
+  extractWorkoutSummary(recommendations) {
+    try {
+      const workout = recommendations.predictions?.workout_template || 
+                     recommendations.workout_recommendation;
+      
+      if (!workout) {
+        return null;
+      }
+
+      return {
+        templateId: workout.template_id,
+        workoutType: workout.workout_type,
+        daysPerWeek: workout.days_per_week,
+        setsPerExercise: workout.sets_per_exercise,
+        exercisesPerSession: workout.exercises_per_session,
+        cardioMinutesPerDay: workout.cardio_minutes_per_day || 0,
+        cardioSessionsPerDay: workout.cardio_sessions_per_day || 0,
+        schedule: workout.workout_schedule || workout.schedule || workout.weekly_schedule
+      };
+    } catch (error) {
+      console.error('Error extracting workout summary:', error);
+      return null;
     }
   }
 };

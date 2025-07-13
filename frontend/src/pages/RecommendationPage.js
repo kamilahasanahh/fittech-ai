@@ -1,7 +1,7 @@
 import React from 'react';
 import RecommendationDisplay from '../components/RecommendationDisplay';
 
-const RecommendationPage = ({ recommendations, userData, onBack, onNewRecommendation, loading, error }) => {
+const RecommendationPage = ({ recommendations, userData, onBack, onNewRecommendation, onMealPlanGenerated, loading, error }) => {
   if (loading) {
     return (
       <div className="loading-message">
@@ -34,6 +34,7 @@ const RecommendationPage = ({ recommendations, userData, onBack, onNewRecommenda
       userData={userData}
       onBack={onBack}
       onNewRecommendation={onNewRecommendation}
+      onMealPlanGenerated={onMealPlanGenerated}
     />
   );
 };
