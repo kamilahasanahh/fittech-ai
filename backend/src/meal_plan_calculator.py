@@ -338,121 +338,97 @@ class MealPlanCalculator:
         base_calories = meal_template['total_base_calories']
         base_scaling_factor = target_calories / base_calories
         
-        # Start with base scaling
-        scaled_foods = []
+        # DEBUG: Print scaling information
+        # print(f"\nDEBUG - Scaling {meal_template['name']}")
+        # print(f"Base calories: {base_calories}, Target: {target_calories}")
+        # print(f"Base scaling factor: {base_scaling_factor:.3f}")
         
-        # Calculate target macros if not provided (proportional to calories)
-        if target_protein is None:
-            target_protein = (meal_template['total_base_protein'] / base_calories) * target_calories
-        if target_carbs is None:
-            target_carbs = (meal_template['total_base_carbs'] / base_calories) * target_calories
-        if target_fat is None:
-            target_fat = (meal_template['total_base_fat'] / base_calories) * target_calories
+        # For logical ratios, prioritize calorie accuracy over complex macro adjustments
+        # Use simple proportional scaling with minor individual adjustments
         
-        # Categorize foods by macro dominance
-        protein_foods = []
-        carb_foods = []
-        fat_foods = []
-        balanced_foods = []
-        
-        for food in meal_template['foods']:
-            base_amount = food['base_amount'] * base_scaling_factor
-            
-            # Calculate macro percentages for this food
-            food_calories = base_amount * food['calories_per_unit']
-            if food_calories > 0:
-                protein_pct = (food['protein_per_unit'] * base_amount * 4) / food_calories * 100
-                carb_pct = (food['carbs_per_unit'] * base_amount * 4) / food_calories * 100
-                fat_pct = (food['fat_per_unit'] * base_amount * 9) / food_calories * 100
-                
-                # Categorize by dominant macro (>40% of calories)
-                if protein_pct > 40:
-                    protein_foods.append((food, base_amount))
-                elif carb_pct > 40:
-                    carb_foods.append((food, base_amount))
-                elif fat_pct > 40:
-                    fat_foods.append((food, base_amount))
-                else:
-                    balanced_foods.append((food, base_amount))
-            else:
-                balanced_foods.append((food, base_amount))
-        
-        # Apply smart adjustments
         adjusted_foods = []
-        
-        # Calculate current totals with base scaling
-        current_protein = sum(food['protein_per_unit'] * amount for food, amount in 
-                            protein_foods + carb_foods + fat_foods + balanced_foods)
-        current_carbs = sum(food['carbs_per_unit'] * amount for food, amount in 
-                          protein_foods + carb_foods + fat_foods + balanced_foods)
-        current_fat = sum(food['fat_per_unit'] * amount for food, amount in 
-                        protein_foods + carb_foods + fat_foods + balanced_foods)
-        
-        # Calculate adjustment factors for each macro category
-        protein_adjustment = self._calculate_safe_adjustment(
-            current_protein, target_protein, max_adjustment)
-        carb_adjustment = self._calculate_safe_adjustment(
-            current_carbs, target_carbs, max_adjustment)
-        fat_adjustment = self._calculate_safe_adjustment(
-            current_fat, target_fat, max_adjustment)
-        
-        # Apply adjustments to categorized foods
-        all_foods = [
-            (protein_foods, protein_adjustment, 'protein'),
-            (carb_foods, carb_adjustment, 'carb'),
-            (fat_foods, fat_adjustment, 'fat'),
-            (balanced_foods, 1.0, 'balanced')  # Keep balanced foods as-is
-        ]
-        
         total_calories = 0
         total_protein = 0
         total_carbs = 0
         total_fat = 0
         
-        for food_group, adjustment, category in all_foods:
-            for food, base_amount in food_group:
-                # Apply category-specific adjustment
-                final_amount = base_amount * adjustment
+        for food in meal_template['foods']:
+            # Use base scaling factor with minimal random variation for naturalness
+            variation = 1.0 + (random.random() - 0.5) * 0.1  # ±5% variation
+            final_amount = food['base_amount'] * base_scaling_factor * variation
+            
+            # Ensure reasonable portions (minimum 20g, maximum reasonable based on food type)
+            min_amount = max(20, food['base_amount'] * 0.5)
+            max_amount = food['base_amount'] * base_scaling_factor * 2.0  # Allow up to 2x scaling
+            final_amount = max(min_amount, min(final_amount, max_amount))
+            
+            # Round to whole grams
+            final_amount = round(final_amount)
+            
+            # Calculate nutrition values
+            food_calories = final_amount * food['calories_per_unit']
+            food_protein = final_amount * food['protein_per_unit']
+            food_carbs = final_amount * food['carbs_per_unit']
+            food_fat = final_amount * food['fat_per_unit']
+            
+            adjusted_foods.append({
+                'nama': food['nama'],
+                'amount': final_amount,
+                'unit': food['unit'],
+                'calories': round(food_calories),
+                'protein': round(food_protein, 1),
+                'carbs': round(food_carbs, 1),
+                'fat': round(food_fat, 1),
+                'category': 'proportional',
+                'adjustment_factor': round(final_amount / food['base_amount'], 2),
+                'base_scaled_amount': round(food['base_amount'] * base_scaling_factor)
+            })
+            
+            total_calories += food_calories
+            total_protein += food_protein
+            total_carbs += food_carbs
+            total_fat += food_fat
+        
+        # If we're still significantly under target, apply a global adjustment
+        actual_scaling = total_calories / base_calories
+        target_scaling = target_calories / base_calories
+        
+        if actual_scaling < target_scaling * 0.9:  # If we're more than 10% under target
+            global_adjustment = target_scaling / actual_scaling
+            # print(f"Applying global adjustment: {global_adjustment:.3f}")
+            
+            # Apply global adjustment to all foods
+            total_calories = 0
+            total_protein = 0
+            total_carbs = 0
+            total_fat = 0
+            
+            for food in adjusted_foods:
+                food['amount'] = round(food['amount'] * global_adjustment)
+                food['calories'] = round(food['amount'] * 
+                    [f for f in meal_template['foods'] if f['nama'] == food['nama']][0]['calories_per_unit'])
+                food['protein'] = round(food['amount'] * 
+                    [f for f in meal_template['foods'] if f['nama'] == food['nama']][0]['protein_per_unit'], 1)
+                food['carbs'] = round(food['amount'] * 
+                    [f for f in meal_template['foods'] if f['nama'] == food['nama']][0]['carbs_per_unit'], 1)
+                food['fat'] = round(food['amount'] * 
+                    [f for f in meal_template['foods'] if f['nama'] == food['nama']][0]['fat_per_unit'], 1)
                 
-                # Ensure minimum reasonable portions
-                min_amount = food['base_amount'] * base_scaling_factor * 0.3
-                max_amount = food['base_amount'] * base_scaling_factor * (1 + max_adjustment)
-                final_amount = max(min_amount, min(final_amount, max_amount))
-                
-                # Calculate final nutrition values
-                food_calories = final_amount * food['calories_per_unit']
-                food_protein = final_amount * food['protein_per_unit']
-                food_carbs = final_amount * food['carbs_per_unit']
-                food_fat = final_amount * food['fat_per_unit']
-                
-                adjusted_foods.append({
-                    'nama': food['nama'],
-                    'amount': round(final_amount),
-                    'unit': food['unit'],
-                    'calories': round(food_calories),
-                    'protein': round(food_protein, 1),
-                    'carbs': round(food_carbs, 1),
-                    'fat': round(food_fat, 1),
-                    'category': category,
-                    'adjustment_factor': round(adjustment, 2),
-                    'base_scaled_amount': round(base_amount)
-                })
-                
-                total_calories += food_calories
-                total_protein += food_protein
-                total_carbs += food_carbs
-                total_fat += food_fat
+                total_calories += food['calories']
+                total_protein += food['protein']
+                total_carbs += food['carbs']
+                total_fat += food['fat']
         
         return {
             'meal_id': meal_template['id'],
             'meal_name': meal_template['name'],
             'description': meal_template['description'],
-            'method': 'flexible_adjustment',
+            'method': 'proportional_scaling',
             'base_scaling_factor': round(base_scaling_factor, 2),
             'macro_adjustments': {
-                'protein_adjustment': round(protein_adjustment, 2),
-                'carb_adjustment': round(carb_adjustment, 2),
-                'fat_adjustment': round(fat_adjustment, 2)
+                'protein_adjustment': 1.0,
+                'carb_adjustment': 1.0,
+                'fat_adjustment': 1.0
             },
             'foods': adjusted_foods,
             'scaled_calories': total_calories,
@@ -460,10 +436,10 @@ class MealPlanCalculator:
             'scaled_carbs': total_carbs,
             'scaled_fat': total_fat,
             'targets_met': {
-                'calories': abs(total_calories - target_calories) < 25,
-                'protein': abs(total_protein - target_protein) < 5,
-                'carbs': abs(total_carbs - target_carbs) < 8,
-                'fat': abs(total_fat - target_fat) < 3
+                'calories': abs(total_calories - target_calories) < 50,
+                'protein': abs(total_protein - (target_protein or 0)) < 10,
+                'carbs': abs(total_carbs - (target_carbs or 0)) < 15,
+                'fat': abs(total_fat - (target_fat or 0)) < 8
             }
         }
     

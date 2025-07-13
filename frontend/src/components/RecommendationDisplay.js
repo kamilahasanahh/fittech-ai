@@ -231,17 +231,19 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
 
     const suggestions = [];
     
-    // Distribute daily calories across meals
+    // More balanced meal distribution
     const mealDistribution = {
-      sarapan: { percentage: 0.25, name: '🌅 Sarapan' },
-      makan_siang: { percentage: 0.40, name: '☀️ Makan Siang' },
-      makan_malam: { percentage: 0.30, name: '🌙 Makan Malam' },
-      camilan: { percentage: 0.05, name: '🍪 Camilan' }
+      sarapan: { percentage: 0.25, name: '🌅 Sarapan', foodCount: 3 },
+      makan_siang: { percentage: 0.40, name: '☀️ Makan Siang', foodCount: 4 },
+      makan_malam: { percentage: 0.30, name: '🌙 Makan Malam', foodCount: 3 },
+      camilan: { percentage: 0.05, name: '🍪 Camilan', foodCount: 1 }
     };
 
     Object.entries(mealDistribution).forEach(([mealType, config]) => {
       const targetCalories = targetMacros.calories * config.percentage;
       const targetProtein = targetMacros.protein * config.percentage;
+      const targetCarbs = targetMacros.carbs * config.percentage;
+      const targetFat = targetMacros.fat * config.percentage;
       
       // Select appropriate foods for this meal using nutrition service
       let selectedFoods = [];
@@ -256,36 +258,88 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
         selectedFoods = nutritionService.getFoodsByCategory('snack');
       }
 
-      // If no specific foods found, use all available
+      // If no specific foods found, use fallback selections
       if (selectedFoods.length === 0) {
-        if (mealType === 'camilan') {
-          // For snacks, use lighter options
+        if (mealType === 'sarapan') {
           selectedFoods = nutritionData.filter(food => 
-            food.name.toLowerCase().includes('jagung') ||
-            food.name.toLowerCase().includes('telur rebus') ||
-            food.calories < 200
-          ).slice(0, 2);
-        } else {
-          selectedFoods = nutritionData.slice(0, 3);
+            food.name.toLowerCase().includes('telur') ||
+            food.name.toLowerCase().includes('roti') ||
+            food.name.toLowerCase().includes('mie') ||
+            food.name.toLowerCase().includes('nasi')
+          ).slice(0, 3);
+        } else if (mealType === 'makan_siang') {
+          selectedFoods = nutritionData.filter(food => 
+            food.name.toLowerCase().includes('ayam') ||
+            food.name.toLowerCase().includes('nasi') ||
+            food.name.toLowerCase().includes('sayur') ||
+            food.name.toLowerCase().includes('kentang')
+          ).slice(0, 4);
+        } else if (mealType === 'makan_malam') {
+          selectedFoods = nutritionData.filter(food => 
+            food.name.toLowerCase().includes('ikan') ||
+            food.name.toLowerCase().includes('ayam') ||
+            food.name.toLowerCase().includes('sayur') ||
+            food.name.toLowerCase().includes('kentang')
+          ).slice(0, 3);
+        } else if (mealType === 'camilan') {
+          selectedFoods = nutritionData.filter(food => 
+            food.name.toLowerCase().includes('yogurt') ||
+            food.name.toLowerCase().includes('buah') ||
+            food.calories < 150
+          ).slice(0, 1);
+        }
+        
+        // Final fallback
+        if (selectedFoods.length === 0) {
+          selectedFoods = nutritionData.slice(0, config.foodCount);
         }
       }
 
-      // Calculate portions to meet targets
-      const mealFoods = selectedFoods.slice(0, mealType === 'camilan' ? 1 : 3).map((food, index) => {
-        // Calculate how many grams needed to meet portion of target calories
-        const divisor = mealType === 'camilan' ? 1 : 3; // Only 1 food for snacks, 3 for meals
-        const caloriesPerFood = targetCalories / divisor;
+      // Ensure we have enough foods for the meal
+      if (selectedFoods.length < config.foodCount) {
+        const additionalFoods = nutritionData.filter(food => 
+          !selectedFoods.some(selected => selected.name === food.name)
+        ).slice(0, config.foodCount - selectedFoods.length);
+        selectedFoods = [...selectedFoods, ...additionalFoods];
+      }
+
+      // Calculate portions using a more balanced approach
+      const mealFoods = selectedFoods.slice(0, config.foodCount).map((food, index) => {
+        let baseCalories, finalGrams;
         
-        // More accurate calculation based on food calories per 100g
-        const gramsNeeded = Math.min(
-          mealType === 'camilan' ? 100 : 300, 
-          Math.max(
-            mealType === 'camilan' ? 30 : 50, 
-            (caloriesPerFood * 100) / food.calories
-          )
-        );
+        if (mealType === 'camilan') {
+          // Snacks should be smaller
+          baseCalories = targetCalories;
+          finalGrams = Math.min(100, Math.max(30, (baseCalories * 100) / food.calories));
+        } else {
+          // For main meals, distribute calories based on food type and position
+          let calorieWeight = 1;
+          
+          // Give more calories to protein sources
+          if (food.name.toLowerCase().includes('ayam') || 
+              food.name.toLowerCase().includes('ikan') ||
+              food.name.toLowerCase().includes('daging') ||
+              food.name.toLowerCase().includes('telur')) {
+            calorieWeight = 1.3;
+          }
+          // Less calories for vegetables
+          else if (food.name.toLowerCase().includes('sayur') ||
+                   food.name.toLowerCase().includes('tomat') ||
+                   food.name.toLowerCase().includes('wortel')) {
+            calorieWeight = 0.7;
+          }
+          // Moderate calories for carbs
+          else if (food.name.toLowerCase().includes('nasi') ||
+                   food.name.toLowerCase().includes('kentang') ||
+                   food.name.toLowerCase().includes('roti')) {
+            calorieWeight = 1.1;
+          }
+          
+          baseCalories = (targetCalories / config.foodCount) * calorieWeight;
+          finalGrams = Math.min(350, Math.max(50, (baseCalories * 100) / food.calories));
+        }
         
-        const finalGrams = Math.round(gramsNeeded);
+        finalGrams = Math.round(finalGrams);
         
         return {
           ...food,
@@ -297,12 +351,32 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
         };
       });
 
+      // Adjust portions to better match targets
+      const totalActualCalories = mealFoods.reduce((sum, food) => sum + food.actualCalories, 0);
+      const calorieRatio = targetCalories / totalActualCalories;
+      
+      // Only adjust if the ratio is significantly off (more than 15% difference)
+      if (Math.abs(calorieRatio - 1) > 0.15) {
+        mealFoods.forEach(food => {
+          const adjustedGrams = Math.round(food.grams * calorieRatio);
+          food.grams = Math.min(mealType === 'camilan' ? 150 : 400, Math.max(30, adjustedGrams));
+          food.actualCalories = Math.round((food.calories / 100) * food.grams);
+          food.actualProtein = Math.round(((food.protein / 100) * food.grams) * 10) / 10;
+          food.actualCarbs = Math.round(((food.carbs / 100) * food.grams) * 10) / 10;
+          food.actualFat = Math.round(((food.fat / 100) * food.grams) * 10) / 10;
+        });
+      }
+
       suggestions.push({
         meal: config.name,
         targetCalories: Math.round(targetCalories),
         targetProtein: Math.round(targetProtein),
+        targetCarbs: Math.round(targetCarbs),
+        targetFat: Math.round(targetFat),
         actualCalories: mealFoods.reduce((sum, food) => sum + food.actualCalories, 0),
         actualProtein: Math.round(mealFoods.reduce((sum, food) => sum + food.actualProtein, 0) * 10) / 10,
+        actualCarbs: Math.round(mealFoods.reduce((sum, food) => sum + food.actualCarbs, 0) * 10) / 10,
+        actualFat: Math.round(mealFoods.reduce((sum, food) => sum + food.actualFat, 0) * 10) / 10,
         foods: mealFoods
       });
     });
@@ -310,12 +384,76 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
     return suggestions;
   };
 
+  // Transform backend meal plan to frontend format
+  const transformBackendMealPlan = (backendPlan) => {
+    if (!backendPlan || !backendPlan.daily_meal_plan) return [];
+
+    const mealTypeMapping = {
+      'sarapan': '🌅 Sarapan',
+      'makan_siang': '☀️ Makan Siang', 
+      'makan_malam': '🌙 Makan Malam',
+      'snack': '🍪 Camilan'
+    };
+
+    const suggestions = [];
+
+    Object.entries(backendPlan.daily_meal_plan).forEach(([mealType, mealData]) => {
+      if (mealData && mealData.foods) {
+        const foods = mealData.foods.map(food => ({
+          name: food.nama,
+          grams: food.amount,
+          actualCalories: food.calories,
+          actualProtein: food.protein,
+          actualCarbs: food.carbs,
+          actualFat: food.fat,
+          calories: food.calories, // For compatibility
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat
+        }));
+
+        // Get meal targets from backend response
+        const mealTargets = backendPlan.meal_targets && backendPlan.meal_targets[mealType];
+
+        const targetCalories = mealTargets ? Math.round(mealTargets.calories) : Math.round(mealData.scaled_calories);
+        const targetProtein = mealTargets ? Math.round(mealTargets.protein) : Math.round(mealData.scaled_protein);
+        const targetCarbs = mealTargets ? Math.round(mealTargets.carbs) : Math.round(mealData.scaled_carbs);
+        const targetFat = mealTargets ? Math.round(mealTargets.fat) : Math.round(mealData.scaled_fat);
+
+        // Ensure we have valid numbers (fallback to scaled values if targets are missing)
+        const finalTargetCalories = isNaN(targetCalories) ? Math.round(mealData.scaled_calories) : targetCalories;
+        const finalTargetProtein = isNaN(targetProtein) ? Math.round(mealData.scaled_protein) : targetProtein;
+        const finalTargetCarbs = isNaN(targetCarbs) ? Math.round(mealData.scaled_carbs) : targetCarbs;
+        const finalTargetFat = isNaN(targetFat) ? Math.round(mealData.scaled_fat) : targetFat;
+
+        suggestions.push({
+          meal: mealTypeMapping[mealType] || mealType,
+          mealName: mealData.meal_name,
+          description: mealData.description,
+          targetCalories: finalTargetCalories,
+          targetProtein: finalTargetProtein,
+          targetCarbs: finalTargetCarbs,
+          targetFat: finalTargetFat,
+          actualCalories: Math.round(mealData.scaled_calories),
+          actualProtein: Math.round(mealData.scaled_protein * 10) / 10,
+          actualCarbs: Math.round(mealData.scaled_carbs * 10) / 10,
+          actualFat: Math.round(mealData.scaled_fat * 10) / 10,
+          foods: foods
+        });
+      }
+    });
+
+    return suggestions;
+  };
+
   const dailyMacros = calculateDailyMacros();
   
-  // Use organized meal plan if available, otherwise use fallback calculation
-  const foodSuggestions = mealPlan && mealPlan.length > 0 
-    ? mealPlan 
-    : (dailyMacros ? calculateFoodPortions(dailyMacros) : []);
+  // Use backend meal plan first (more accurate), then fallback to local plan, then calculated portions
+  const foodSuggestions = backendMealPlan && backendMealPlan.daily_meal_plan 
+    ? transformBackendMealPlan(backendMealPlan)
+    : (mealPlan && mealPlan.length > 0 
+      ? mealPlan 
+      : (dailyMacros ? calculateFoodPortions(dailyMacros) : []));
 
   // Loading skeleton for the entire component
   if (loading) {
@@ -702,7 +840,7 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                 </Box>
 
                 {/* Food Suggestions with Calculated Portions */}
-                {(!mealPlanLoading) && foodSuggestions.length > 0 && (
+                {(!mealPlanLoading && !backendMealPlanLoading) && foodSuggestions.length > 0 && (
                   <Box>
                     <Heading size={{ base: "xs", md: "sm" }} mb={4}>
                       🍽️ {mealPlan ? 'Rencana Makan Berdasarkan Template' : 'Porsi Makanan Indonesia Berdasarkan Template'}
@@ -722,10 +860,10 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                             </Box>
                           )}
                           <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600" mb={3}>
-                            Target: {meal.targetCalories} kkal | {meal.targetProtein}g protein
+                            Target: {meal.targetCalories} kkal | {meal.targetProtein}g protein | {meal.targetCarbs}g carbs | {meal.targetFat}g fat
                             {meal.actualCalories && (
                               <Text as="span" color="blue.600" ml={2}>
-                                • Aktual: {meal.actualCalories} kkal | {meal.actualProtein}g protein
+                                • Aktual: {meal.actualCalories} kkal | {meal.actualProtein}g protein | {meal.actualCarbs}g carbs | {meal.actualFat}g fat
                               </Text>
                             )}
                           </Text>
@@ -776,7 +914,7 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                           <Stat>
                             <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Total Karbo</StatLabel>
                             <StatNumber fontSize={{ base: "sm", md: "md" }}>
-                              {Math.round(foodSuggestions.reduce((sum, meal) => sum + meal.foods.reduce((foodSum, food) => foodSum + food.actualCarbs, 0), 0) * 10) / 10}g
+                              {Math.round(foodSuggestions.reduce((sum, meal) => sum + (meal.actualCarbs || 0), 0) * 10) / 10}g
                             </StatNumber>
                             <StatHelpText fontSize={{ base: "2xs", md: "xs" }}>
                               Target: {dailyMacros.carbs}g
@@ -785,13 +923,48 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                           <Stat>
                             <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Total Lemak</StatLabel>
                             <StatNumber fontSize={{ base: "sm", md: "md" }}>
-                              {Math.round(foodSuggestions.reduce((sum, meal) => sum + meal.foods.reduce((foodSum, food) => foodSum + food.actualFat, 0), 0) * 10) / 10}g
+                              {Math.round(foodSuggestions.reduce((sum, meal) => sum + (meal.actualFat || 0), 0) * 10) / 10}g
                             </StatNumber>
                             <StatHelpText fontSize={{ base: "2xs", md: "xs" }}>
                               Target: {dailyMacros.fat}g
                             </StatHelpText>
                           </Stat>
                         </SimpleGrid>
+                        
+                        {/* Accuracy indicators */}
+                        <Box mt={4}>
+                          <Text fontSize={{ base: "2xs", md: "xs" }} fontWeight="bold" mb={2}>📈 Akurasi Target:</Text>
+                          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={2}>
+                            {(() => {
+                              const totalActualCalories = foodSuggestions.reduce((sum, meal) => sum + (meal.actualCalories || 0), 0);
+                              const totalActualProtein = foodSuggestions.reduce((sum, meal) => sum + (meal.actualProtein || 0), 0);
+                              const totalActualCarbs = foodSuggestions.reduce((sum, meal) => sum + (meal.actualCarbs || 0), 0);
+                              const totalActualFat = foodSuggestions.reduce((sum, meal) => sum + (meal.actualFat || 0), 0);
+                              
+                              const calorieAccuracy = Math.round((totalActualCalories / dailyMacros.calories) * 100);
+                              const proteinAccuracy = Math.round((totalActualProtein / dailyMacros.protein) * 100);
+                              const carbAccuracy = Math.round((totalActualCarbs / dailyMacros.carbs) * 100);
+                              const fatAccuracy = Math.round((totalActualFat / dailyMacros.fat) * 100);
+                              
+                              return (
+                                <>
+                                  <Badge colorScheme={calorieAccuracy >= 90 && calorieAccuracy <= 110 ? 'green' : calorieAccuracy >= 80 && calorieAccuracy <= 120 ? 'yellow' : 'red'} fontSize={{ base: "2xs", md: "xs" }}>
+                                    Kalori: {calorieAccuracy}%
+                                  </Badge>
+                                  <Badge colorScheme={proteinAccuracy >= 90 && proteinAccuracy <= 110 ? 'green' : proteinAccuracy >= 80 && proteinAccuracy <= 120 ? 'yellow' : 'red'} fontSize={{ base: "2xs", md: "xs" }}>
+                                    Protein: {proteinAccuracy}%
+                                  </Badge>
+                                  <Badge colorScheme={carbAccuracy >= 90 && carbAccuracy <= 110 ? 'green' : carbAccuracy >= 80 && carbAccuracy <= 120 ? 'yellow' : 'red'} fontSize={{ base: "2xs", md: "xs" }}>
+                                    Karbo: {carbAccuracy}%
+                                  </Badge>
+                                  <Badge colorScheme={fatAccuracy >= 90 && fatAccuracy <= 110 ? 'green' : fatAccuracy >= 80 && fatAccuracy <= 120 ? 'yellow' : 'red'} fontSize={{ base: "2xs", md: "xs" }}>
+                                    Lemak: {fatAccuracy}%
+                                  </Badge>
+                                </>
+                              );
+                            })()}
+                          </SimpleGrid>
+                        </Box>
                       </Box>
                     )}
                   </Box>
