@@ -175,7 +175,7 @@ class XGFitnessAIModel:
     def _create_nutrition_templates(self):
         """Load nutrition templates from JSON file"""
         try:
-            template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'data', 'nutrition_templates.json')
+            template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'nutrition_templates.json')
             with open(template_path, 'r') as f:
                 nutrition_data = json.load(f)
             nutrition_df = pd.DataFrame(nutrition_data)

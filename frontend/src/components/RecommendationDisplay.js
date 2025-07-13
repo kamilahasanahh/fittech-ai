@@ -67,8 +67,24 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
     const userProfile = recommendations?.user_profile || {};
     const tdee = userProfile.tdee || userProfile.total_daily_energy_expenditure || 2000;
     
+    // Debug logging to see what data we're getting
+    console.log('🔍 Frontend Debug - Data Sources:', {
+      weight,
+      tdee,
+      nutrition_recommendation: recommendations?.nutrition_recommendation,
+      predictions_nutrition: recommendations?.predictions?.nutrition_template,
+      nutrition_template: recommendations?.nutrition_template,
+      selected_nutrition: nutrition
+    });
+    
     // Priority 1: Use pre-calculated values from the API if available
     if (nutrition.target_calories && nutrition.target_protein && nutrition.target_carbs && nutrition.target_fat) {
+      console.log('✅ Using pre-calculated API values:', {
+        calories: nutrition.target_calories,
+        protein: nutrition.target_protein,
+        carbs: nutrition.target_carbs,
+        fat: nutrition.target_fat
+      });
       return {
         calories: Math.round(nutrition.target_calories),
         protein: Math.round(nutrition.target_protein),
@@ -84,8 +100,18 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
       const carbs = Math.round(weight * nutrition.carbs_per_kg);
       const fat = Math.round(weight * nutrition.fat_per_kg);
       
+      console.log('✅ Using template multipliers:', {
+        caloric_multiplier: nutrition.caloric_intake_multiplier,
+        protein_per_kg: nutrition.protein_per_kg,
+        carbs_per_kg: nutrition.carbs_per_kg,
+        fat_per_kg: nutrition.fat_per_kg,
+        calculated: { calories, protein, carbs, fat }
+      });
+      
       return { calories, protein, carbs, fat };
     }
+    
+    console.log('⚠️ Using fallback calculations');
     
     // Fallback: Use standard macro calculations for different goals (last resort)
     let calories, protein, carbs, fat;
