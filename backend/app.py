@@ -24,13 +24,17 @@ if src_dir not in sys.path:
 
 from thesis_model import XGFitnessAIModel
 from validation import validate_api_request_data, create_validation_summary, get_validation_rules
-from calculations import calculate_bmr, calculate_tdee, categorize_bmi
+from calculations import (calculate_bmr, calculate_tdee, categorize_bmi, 
+                         calculate_complete_nutrition_plan, verify_daily_totals)
 from templates import get_template_manager
-from src.meal_plan_calculator import meal_plan_calculator
+from src.meal_plan_calculator import MealPlanCalculator
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend integration
+
+# Initialize meal plan calculator
+meal_plan_calculator = MealPlanCalculator()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -89,7 +93,9 @@ def home():
             '/meal-plan': 'POST - Generate daily meal plan including snacks',
             '/meal-options/<meal_type>': 'GET - Get available meal options for a specific meal type',
             '/scale-meal': 'POST - Scale a specific meal to target calories',
-            '/weekly-meal-plan': 'POST - Generate a 7-day meal plan with variety including snacks'
+            '/weekly-meal-plan': 'POST - Generate a 7-day meal plan with variety including snacks',
+            '/calculate-complete-nutrition': 'POST - Complete 8-step nutrition calculation pipeline',
+            '/nutrition-from-model': 'POST - Get complete nutrition plan using model prediction'
         },
         'documentation': 'Send POST request to /predict with user data'
     })
@@ -640,6 +646,197 @@ def generate_weekly_meal_plan():
             'error': f'Internal server error: {str(e)}'
         }), 500
 
+@app.route('/calculate-complete-nutrition', methods=['POST'])
+def calculate_complete_nutrition():
+    """
+    Complete 8-step nutrition calculation pipeline:
+    1. Calculate BMR
+    2. Apply activity factor (TDEE)  
+    3. Apply template caloric multiplier to get target calories
+    4. Determine calculation weight
+    5. Calculate each macronutrient using template multipliers
+    6. Verify totals (macro calories should match target calories ±50)
+    7. Generate meal plan according to output calories and macros
+    8. Verify totals for a full day
+    
+    Expected JSON input:
+    {
+        "user_profile": {
+            "age": 25,
+            "gender": "Male", 
+            "height": 175,
+            "weight": 70,
+            "activity_level": "Moderate Activity",
+            "fitness_goal": "Muscle Gain"
+        },
+        "nutrition_template": {
+            "template_id": 5,
+            "goal": "Muscle Gain",
+            "bmi_category": "Normal",
+            "caloric_intake_multiplier": 1.10,
+            "protein_per_kg": 2.1,
+            "carbs_per_kg": 4.25,
+            "fat_per_kg": 0.95
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        user_profile = data.get('user_profile')
+        nutrition_template = data.get('nutrition_template')
+        
+        if not user_profile or not nutrition_template:
+            return jsonify({
+                'error': 'Both user_profile and nutrition_template are required'
+            }), 400
+        
+        # Steps 1-6: Complete nutrition calculations
+        nutrition_result = calculate_complete_nutrition_plan(user_profile, nutrition_template)
+        
+        if not nutrition_result['success']:
+            return jsonify({
+                'success': False,
+                'error': nutrition_result['error']
+            }), 400
+        
+        calculations = nutrition_result['calculations']
+        
+        # Step 7: Generate meal plan according to output calories and macros
+        target_calories = calculations['target_calories']
+        target_protein = calculations['macronutrients']['protein_g']
+        target_carbs = calculations['macronutrients']['carbs_g']
+        target_fat = calculations['macronutrients']['fat_g']
+        
+        meal_plan_result = meal_plan_calculator.calculate_daily_meal_plan(
+            target_calories=target_calories,
+            target_protein=int(target_protein),
+            target_carbs=int(target_carbs),
+            target_fat=int(target_fat),
+            preferences=data.get('preferences', {})
+        )
+        
+        # Step 8: Verify totals for a full day
+        daily_verification = verify_daily_totals(
+            meal_plan_result, target_calories, target_protein, target_carbs, target_fat
+        )
+        
+        # Compile complete response
+        complete_response = {
+            'success': True,
+            'nutrition_calculations': nutrition_result,
+            'meal_plan': meal_plan_result,
+            'daily_verification': daily_verification,
+            'summary': {
+                'step_1_bmr': calculations['bmr'],
+                'step_2_tdee': calculations['tdee'],
+                'step_3_target_calories': calculations['target_calories'],
+                'step_4_calculation_weight': calculations['calculation_weight'],
+                'step_5_macronutrients': calculations['macronutrients'],
+                'step_6_verification': nutrition_result['verification'],
+                'step_7_meal_plan_generated': meal_plan_result.get('success', False),
+                'step_8_daily_verification': daily_verification.get('verified', False)
+            }
+        }
+        
+        return jsonify(complete_response)
+        
+    except Exception as e:
+        logger.error(f"Error in complete nutrition calculation: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}'
+        }), 500
+
+@app.route('/nutrition-from-model', methods=['POST'])
+def nutrition_from_model():
+    """
+    Get complete nutrition plan using model prediction and template lookup
+    
+    Expected JSON input:
+    {
+        "age": 25,
+        "gender": "Male",
+        "height": 175,
+        "weight": 70,
+        "activity_level": "Moderate Activity", 
+        "fitness_goal": "Muscle Gain"
+    }
+    """
+    global model
+    
+    try:
+        # Check if model is available
+        if not model or not model.is_trained:
+            return jsonify({
+                'success': False,
+                'error': 'Model not available. Please try again later.',
+                'code': 'MODEL_UNAVAILABLE'
+            }), 503
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Get model prediction to find the right nutrition template
+        prediction_result = model.predict_with_confidence(data)
+        
+        if not prediction_result:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to get model prediction'
+            }), 500
+        
+        # Extract nutrition template from prediction
+        nutrition_template = prediction_result['predictions']['nutrition_template']
+        
+        # Use the complete nutrition calculation pipeline
+        complete_nutrition = calculate_complete_nutrition_plan(data, nutrition_template)
+        
+        if not complete_nutrition['success']:
+            return jsonify({
+                'success': False,
+                'error': complete_nutrition['error']
+            }), 400
+        
+        calculations = complete_nutrition['calculations']
+        
+        # Generate meal plan
+        meal_plan_result = meal_plan_calculator.calculate_daily_meal_plan(
+            target_calories=calculations['target_calories'],
+            target_protein=int(calculations['macronutrients']['protein_g']),
+            target_carbs=int(calculations['macronutrients']['carbs_g']),
+            target_fat=int(calculations['macronutrients']['fat_g']),
+            preferences=data.get('preferences', {})
+        )
+        
+        # Verify daily totals
+        daily_verification = verify_daily_totals(
+            meal_plan_result, 
+            calculations['target_calories'],
+            calculations['macronutrients']['protein_g'],
+            calculations['macronutrients']['carbs_g'],
+            calculations['macronutrients']['fat_g']
+        )
+        
+        return jsonify({
+            'success': True,
+            'model_prediction': prediction_result,
+            'nutrition_calculations': complete_nutrition,
+            'meal_plan': meal_plan_result,
+            'daily_verification': daily_verification
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in nutrition from model: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}'
+        }), 500
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors"""
@@ -839,6 +1036,67 @@ def create_app():
         logger.error("Failed to initialize model. API may not function properly.")
     
     return app
+
+@app.route('/meal-plan-flexible', methods=['POST'])
+def generate_flexible_meal_plan():
+    """Generate daily meal plan with flexible individual food adjustments for best accuracy"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Extract required parameters
+        target_calories = data.get('target_calories')
+        target_protein = data.get('target_protein')
+        target_carbs = data.get('target_carbs') 
+        target_fat = data.get('target_fat')
+        preferences = data.get('preferences', {})
+        max_food_adjustment = data.get('max_food_adjustment', 0.4)  # Default ±40%
+        
+        if not target_calories:
+            return jsonify({'error': 'target_calories is required'}), 400
+        
+        # Set defaults for macros if not provided
+        if not target_protein:
+            target_protein = int(target_calories * 0.25 / 4)  # 25% of calories from protein
+        if not target_carbs:
+            target_carbs = int(target_calories * 0.45 / 4)   # 45% of calories from carbs
+        if not target_fat:
+            target_fat = int(target_calories * 0.30 / 9)     # 30% of calories from fat
+        
+        # Validate max_food_adjustment
+        if not (0.1 <= max_food_adjustment <= 1.0):
+            return jsonify({'error': 'max_food_adjustment must be between 0.1 and 1.0'}), 400
+        
+        # Generate flexible meal plan
+        meal_plan = meal_plan_calculator.calculate_daily_meal_plan(
+            target_calories=int(target_calories),
+            target_protein=int(target_protein),
+            target_carbs=int(target_carbs),
+            target_fat=int(target_fat),
+            preferences=preferences,
+            max_food_adjustment=max_food_adjustment
+        )
+        
+        if meal_plan.get('success'):
+            return jsonify({
+                'success': True,
+                'meal_plan': meal_plan,
+                'message': f'Flexible meal plan generated with ±{int(max_food_adjustment*100)}% food adjustments'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': meal_plan.get('error', 'Failed to generate flexible meal plan')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error generating flexible meal plan: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
 if __name__ == '__main__':
     # Initialize model

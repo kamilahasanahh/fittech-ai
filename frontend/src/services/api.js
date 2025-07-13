@@ -93,8 +93,8 @@ class ApiService {
   // Get workout templates
   async getWorkoutTemplates() {
     try {
-      const response = await this.api.get('/templates/workout');
-      return response.data.templates;
+      const response = await this.api.get('/templates');
+      return response.data.workout_templates || [];
     } catch (error) {
       throw new Error(`Failed to fetch workout templates: ${error.message}`);
     }
@@ -103,10 +103,29 @@ class ApiService {
   // Get nutrition templates
   async getNutritionTemplates() {
     try {
-      const response = await this.api.get('/templates/nutrition');
-      return response.data.templates;
+      const response = await this.api.get('/templates');
+      return response.data.nutrition_templates || [];
     } catch (error) {
       throw new Error(`Failed to fetch nutrition templates: ${error.message}`);
+    }
+  }
+
+  // Get all templates (both workout and nutrition) in one call
+  async getAllTemplates() {
+    try {
+      const response = await this.api.get('/templates');
+      if (response.data.success) {
+        return {
+          success: true,
+          workoutTemplates: response.data.workout_templates || [],
+          nutritionTemplates: response.data.nutrition_templates || [],
+          templateCount: response.data.template_count || { workout: 0, nutrition: 0 }
+        };
+      } else {
+        throw new Error('API returned unsuccessful response');
+      }
+    } catch (error) {
+      throw new Error(`Failed to fetch templates: ${error.message}`);
     }
   }
 

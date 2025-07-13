@@ -52,35 +52,59 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
     'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)'
   );
 
-  // Calculate user's daily macro targets based on API response
+  // Calculate user's daily macro targets based on API response and template data
   const calculateDailyMacros = () => {
     if (!recommendations || !userData) return null;
 
-    const nutrition = recommendations?.predictions?.nutrition_template;
+    // Try to get nutrition data from various possible locations in the API response
+    const nutrition = recommendations?.nutrition_recommendation || 
+                     recommendations?.predictions?.nutrition_template ||
+                     recommendations?.nutrition_template;
+    
     if (!nutrition) return null;
 
-    // Calculate based on TDEE from user_profile and standard ratios
-    const tdee = recommendations?.user_profile?.tdee || 2000;
     const weight = parseFloat(userData.weight);
+    const userProfile = recommendations?.user_profile || {};
+    const tdee = userProfile.tdee || userProfile.total_daily_energy_expenditure || 2000;
     
-    // Standard macro calculations for different goals
+    // Priority 1: Use pre-calculated values from the API if available
+    if (nutrition.target_calories && nutrition.target_protein && nutrition.target_carbs && nutrition.target_fat) {
+      return {
+        calories: Math.round(nutrition.target_calories),
+        protein: Math.round(nutrition.target_protein),
+        carbs: Math.round(nutrition.target_carbs),
+        fat: Math.round(nutrition.target_fat)
+      };
+    }
+    
+    // Priority 2: Use template multipliers if available
+    if (nutrition.caloric_intake_multiplier && nutrition.protein_per_kg && nutrition.carbs_per_kg && nutrition.fat_per_kg) {
+      const calories = Math.round(tdee * nutrition.caloric_intake_multiplier);
+      const protein = Math.round(weight * nutrition.protein_per_kg);
+      const carbs = Math.round(weight * nutrition.carbs_per_kg);
+      const fat = Math.round(weight * nutrition.fat_per_kg);
+      
+      return { calories, protein, carbs, fat };
+    }
+    
+    // Fallback: Use standard macro calculations for different goals (last resort)
     let calories, protein, carbs, fat;
     
     if (userData.fitness_goal === 'Fat Loss') {
       calories = Math.round(tdee * 0.8); // 20% deficit
-      protein = Math.round(weight * 2.2); // High protein for fat loss
-      fat = Math.round(weight * 0.8);
-      carbs = Math.round((calories - (protein * 4) - (fat * 9)) / 4);
+      protein = Math.round(weight * 2.3); // Use template 1 value
+      carbs = Math.round(weight * 1.8); // Use template 1 value
+      fat = Math.round(weight * 1.0); // Use template 1 value
     } else if (userData.fitness_goal === 'Muscle Gain') {
       calories = Math.round(tdee * 1.1); // 10% surplus
-      protein = Math.round(weight * 2.0);
-      fat = Math.round(weight * 1.0);
-      carbs = Math.round((calories - (protein * 4) - (fat * 9)) / 4);
+      protein = Math.round(weight * 2.1); // Use template 5 value
+      carbs = Math.round(weight * 4.25); // Use template 5 value
+      fat = Math.round(weight * 1.0); // Use template 5 value
     } else { // Maintenance
-      calories = Math.round(tdee);
-      protein = Math.round(weight * 1.8);
-      fat = Math.round(weight * 0.9);
-      carbs = Math.round((calories - (protein * 4) - (fat * 9)) / 4);
+      calories = Math.round(tdee * 0.95); // Use template 7 value
+      protein = Math.round(weight * 1.8); // Use template 7 value
+      carbs = Math.round(weight * 4.5); // Use template 7 value
+      fat = Math.round(weight * 1.0); // Use template 7 value
     }
 
     return { calories, protein, carbs, fat };
@@ -221,24 +245,29 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
       }
 
       // Calculate portions to meet targets
-      const mealFoods = selectedFoods.slice(0, mealType === 'camilan' ? 1 : 3).map(food => {
+      const mealFoods = selectedFoods.slice(0, mealType === 'camilan' ? 1 : 3).map((food, index) => {
         // Calculate how many grams needed to meet portion of target calories
         const divisor = mealType === 'camilan' ? 1 : 3; // Only 1 food for snacks, 3 for meals
+        const caloriesPerFood = targetCalories / divisor;
+        
+        // More accurate calculation based on food calories per 100g
         const gramsNeeded = Math.min(
-          mealType === 'camilan' ? 100 : 200, 
+          mealType === 'camilan' ? 100 : 300, 
           Math.max(
             mealType === 'camilan' ? 30 : 50, 
-            (targetCalories / divisor) / (food.calories / 100)
+            (caloriesPerFood * 100) / food.calories
           )
         );
         
+        const finalGrams = Math.round(gramsNeeded);
+        
         return {
           ...food,
-          grams: Math.round(gramsNeeded),
-          actualCalories: Math.round((food.calories / 100) * gramsNeeded),
-          actualProtein: Math.round((food.protein / 100) * gramsNeeded * 10) / 10,
-          actualCarbs: Math.round((food.carbs / 100) * gramsNeeded * 10) / 10,
-          actualFat: Math.round((food.fat / 100) * gramsNeeded * 10) / 10
+          grams: finalGrams,
+          actualCalories: Math.round((food.calories / 100) * finalGrams),
+          actualProtein: Math.round(((food.protein / 100) * finalGrams) * 10) / 10,
+          actualCarbs: Math.round(((food.carbs / 100) * finalGrams) * 10) / 10,
+          actualFat: Math.round(((food.fat / 100) * finalGrams) * 10) / 10
         };
       });
 
@@ -246,6 +275,8 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
         meal: config.name,
         targetCalories: Math.round(targetCalories),
         targetProtein: Math.round(targetProtein),
+        actualCalories: mealFoods.reduce((sum, food) => sum + food.actualCalories, 0),
+        actualProtein: Math.round(mealFoods.reduce((sum, food) => sum + food.actualProtein, 0) * 10) / 10,
         foods: mealFoods
       });
     });
@@ -619,23 +650,27 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                       <StatLabel>🔥 Kalori</StatLabel>
                       <StatNumber>{dailyMacros.calories} kkal</StatNumber>
                       <StatHelpText>
-                        <Badge colorScheme="red">Defisit: {Math.round((1 - (dailyMacros.calories / (recommendations?.user_profile?.tdee || 2000))) * 100)}%</Badge>
+                        <Badge colorScheme={
+                          userData?.fitness_goal === 'Fat Loss' ? 'red' : 
+                          userData?.fitness_goal === 'Muscle Gain' ? 'green' : 'blue'
+                        }>
+                          {userData?.fitness_goal === 'Fat Loss' ? `Defisit: ${Math.round((1 - (dailyMacros.calories / (recommendations?.user_profile?.tdee || 2000))) * 100)}%` :
+                           userData?.fitness_goal === 'Muscle Gain' ? `Surplus: +${Math.round(((dailyMacros.calories / (recommendations?.user_profile?.tdee || 2000)) - 1) * 100)}%` :
+                           'Maintenance'}
+                        </Badge>
                       </StatHelpText>
                     </Stat>
                     <Stat>
                       <StatLabel>🥩 Protein</StatLabel>
                       <StatNumber>{dailyMacros.protein}g</StatNumber>
-                      <StatHelpText>{Math.round(dailyMacros.protein / parseFloat(userData.weight))}g/kg</StatHelpText>
                     </Stat>
                     <Stat>
                       <StatLabel>🍞 Karbohidrat</StatLabel>
                       <StatNumber>{dailyMacros.carbs}g</StatNumber>
-                      <StatHelpText>{Math.round(dailyMacros.carbs / parseFloat(userData.weight))}g/kg</StatHelpText>
                     </Stat>
                     <Stat>
                       <StatLabel>🥑 Lemak</StatLabel>
                       <StatNumber>{dailyMacros.fat}g</StatNumber>
-                      <StatHelpText>{Math.round(dailyMacros.fat / parseFloat(userData.weight))}g/kg</StatHelpText>
                     </Stat>
                   </SimpleGrid>
                 </Box>
@@ -662,6 +697,11 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                           )}
                           <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600" mb={3}>
                             Target: {meal.targetCalories} kkal | {meal.targetProtein}g protein
+                            {meal.actualCalories && (
+                              <Text as="span" color="blue.600" ml={2}>
+                                • Aktual: {meal.actualCalories} kkal | {meal.actualProtein}g protein
+                              </Text>
+                            )}
                           </Text>
                           
                           <VStack spacing={2} align="stretch">
@@ -683,6 +723,51 @@ const RecommendationDisplay = ({ recommendations, userData, onBack, onNewRecomme
                         </Box>
                       ))}
                     </VStack>
+                    
+                    {/* Total Summary */}
+                    {foodSuggestions.length > 0 && foodSuggestions[0].actualCalories && (
+                      <Box mt={4} p={4} bg="blue.50" borderRadius="md">
+                        <Heading size={{ base: "xs", md: "sm" }} mb={3}>📊 Ringkasan Total Harian</Heading>
+                        <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
+                          <Stat>
+                            <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Total Kalori</StatLabel>
+                            <StatNumber fontSize={{ base: "sm", md: "md" }}>
+                              {foodSuggestions.reduce((sum, meal) => sum + (meal.actualCalories || 0), 0)} kkal
+                            </StatNumber>
+                            <StatHelpText fontSize={{ base: "2xs", md: "xs" }}>
+                              Target: {dailyMacros.calories} kkal
+                            </StatHelpText>
+                          </Stat>
+                          <Stat>
+                            <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Total Protein</StatLabel>
+                            <StatNumber fontSize={{ base: "sm", md: "md" }}>
+                              {Math.round(foodSuggestions.reduce((sum, meal) => sum + (meal.actualProtein || 0), 0) * 10) / 10}g
+                            </StatNumber>
+                            <StatHelpText fontSize={{ base: "2xs", md: "xs" }}>
+                              Target: {dailyMacros.protein}g
+                            </StatHelpText>
+                          </Stat>
+                          <Stat>
+                            <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Total Karbo</StatLabel>
+                            <StatNumber fontSize={{ base: "sm", md: "md" }}>
+                              {Math.round(foodSuggestions.reduce((sum, meal) => sum + meal.foods.reduce((foodSum, food) => foodSum + food.actualCarbs, 0), 0) * 10) / 10}g
+                            </StatNumber>
+                            <StatHelpText fontSize={{ base: "2xs", md: "xs" }}>
+                              Target: {dailyMacros.carbs}g
+                            </StatHelpText>
+                          </Stat>
+                          <Stat>
+                            <StatLabel fontSize={{ base: "2xs", md: "xs" }}>Total Lemak</StatLabel>
+                            <StatNumber fontSize={{ base: "sm", md: "md" }}>
+                              {Math.round(foodSuggestions.reduce((sum, meal) => sum + meal.foods.reduce((foodSum, food) => foodSum + food.actualFat, 0), 0) * 10) / 10}g
+                            </StatNumber>
+                            <StatHelpText fontSize={{ base: "2xs", md: "xs" }}>
+                              Target: {dailyMacros.fat}g
+                            </StatHelpText>
+                          </Stat>
+                        </SimpleGrid>
+                      </Box>
+                    )}
                   </Box>
                 )}
                 

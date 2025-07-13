@@ -37,19 +37,35 @@ class TemplateManager:
             if os.path.exists(workout_path):
                 with open(workout_path, 'r') as f:
                     workout_data = json.load(f)
-                self.workout_templates = pd.DataFrame(workout_data['workout_templates'])
+                # Handle both direct array and wrapped object formats
+                if isinstance(workout_data, list):
+                    self.workout_templates = pd.DataFrame(workout_data)
+                else:
+                    self.workout_templates = pd.DataFrame(workout_data['workout_templates'])
             else:
                 # Create default templates if file doesn't exist
                 self.workout_templates = self._create_default_workout_templates()
                 self.save_workout_templates()
             
             # Load nutrition templates
+            # Try both locations: data/nutrition_templates.json (backend) and data/nutrition/nutrition_templates.json (main)
             nutrition_path = os.path.join(self.templates_dir, 'nutrition_templates.json')
+            if not os.path.exists(nutrition_path):
+                nutrition_path = os.path.join(self.templates_dir, 'nutrition', 'nutrition_templates.json')
+            
             if os.path.exists(nutrition_path):
+                print(f"Loading nutrition templates from: {nutrition_path}")
                 with open(nutrition_path, 'r') as f:
                     nutrition_data = json.load(f)
-                self.nutrition_templates = pd.DataFrame(nutrition_data['nutrition_templates'])
+                # Handle both direct array and wrapped object formats
+                if isinstance(nutrition_data, list):
+                    print(f"Loading {len(nutrition_data)} nutrition templates from direct array")
+                    self.nutrition_templates = pd.DataFrame(nutrition_data)
+                else:
+                    print(f"Loading nutrition templates from wrapped object")
+                    self.nutrition_templates = pd.DataFrame(nutrition_data['nutrition_templates'])
             else:
+                print("No nutrition templates file found, using defaults")
                 # Create default templates if file doesn't exist
                 self.nutrition_templates = self._create_default_nutrition_templates()
                 self.save_nutrition_templates()
@@ -61,6 +77,8 @@ class TemplateManager:
             
         except Exception as e:
             print(f"Error loading templates: {e}")
+            import traceback
+            traceback.print_exc()
             # Fall back to default templates
             self.workout_templates = self._create_default_workout_templates()
             self.nutrition_templates = self._create_default_nutrition_templates()

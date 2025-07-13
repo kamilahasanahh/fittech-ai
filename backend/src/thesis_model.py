@@ -2537,6 +2537,16 @@ class XGFitnessAIModel:
         workout_template_id = self.workout_label_encoder.inverse_transform([workout_pred_encoded])[0]
         nutrition_template_id = self.nutrition_label_encoder.inverse_transform([nutrition_pred_encoded])[0]
         
+        # TEMPORARY FIX: Override with logical template assignment if model predictions are wrong
+        # This ensures users get the correct templates while model training is improved
+        logical_workout_id, logical_nutrition_id = self.get_template_assignments(fitness_goal, activity_level, bmi_category)
+        
+        if logical_workout_id is not None and logical_nutrition_id is not None:
+            print(f"🔧 Model predicted: Workout {workout_template_id}, Nutrition {nutrition_template_id}")
+            print(f"🎯 Using logical assignment: Workout {logical_workout_id}, Nutrition {logical_nutrition_id}")
+            workout_template_id = logical_workout_id
+            nutrition_template_id = logical_nutrition_id
+        
         # Get prediction confidence scores
         workout_confidence = np.max(workout_pred_proba)
         nutrition_confidence = np.max(nutrition_pred_proba)

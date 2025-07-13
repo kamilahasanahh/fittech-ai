@@ -109,62 +109,30 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedTextColor = useColorModeValue('gray.600', 'gray.400');
 
-  // Load nutrition templates
-  const loadNutritionTemplates = useCallback(async () => {
-    try {
-      console.log('🔄 Loading nutrition templates...');
-      const templates = await apiService.getNutritionTemplates();
-      console.log('✅ Nutrition templates loaded:', templates);
-      setNutritionTemplates(templates);
-      return templates;
-    } catch (error) {
-      console.error('❌ Error loading nutrition templates:', error);
-      // Don't show toast for template loading errors - use fallback data instead
-      console.log('⚠️ Will use template data from recommendations as fallback');
-      return [];
-    }
-  }, []);
-
-  // Load workout templates
-  const loadWorkoutTemplates = useCallback(async () => {
-    try {
-      console.log('🔄 Loading workout templates...');
-      const templates = await apiService.getWorkoutTemplates();
-      console.log('✅ Workout templates loaded:', templates);
-      setWorkoutTemplates(templates);
-      return templates;
-    } catch (error) {
-      console.error('❌ Error loading workout templates:', error);
-      // Don't show toast for template loading errors - use fallback data instead
-      console.log('⚠️ Will use template data from recommendations as fallback');
-      return [];
-    }
-  }, []);
-
-  // Load all templates
+  // Load all templates with a single API call
   const loadAllTemplates = useCallback(async () => {
     setTemplatesLoading(true);
     try {
-      const results = await Promise.allSettled([
-        loadNutritionTemplates(),
-        loadWorkoutTemplates()
-      ]);
+      console.log('🔄 Loading all templates...');
+      const result = await apiService.getAllTemplates();
       
-      // Log results but don't throw errors - we'll use fallback data
-      results.forEach((result, index) => {
-        const templateType = index === 0 ? 'nutrition' : 'workout';
-        if (result.status === 'fulfilled') {
-          console.log(`✅ ${templateType} templates loaded successfully`);
-        } else {
-          console.log(`⚠️ ${templateType} templates failed to load, will use fallback data`);
-        }
+      console.log('✅ All templates loaded:', { 
+        workoutCount: result.workoutTemplates?.length || 0, 
+        nutritionCount: result.nutritionTemplates?.length || 0 
       });
+      
+      setWorkoutTemplates(result.workoutTemplates || []);
+      setNutritionTemplates(result.nutritionTemplates || []);
+      
     } catch (error) {
-      console.error('❌ Error in loadAllTemplates:', error);
+      console.error('❌ Error loading templates:', error);
+      console.log('⚠️ Will use template data from recommendations as fallback');
+      setWorkoutTemplates([]);
+      setNutritionTemplates([]);
     } finally {
       setTemplatesLoading(false);
     }
-  }, [loadNutritionTemplates, loadWorkoutTemplates]);
+  }, []);
 
   // Find nutrition template by ID - with fallback to recommendation data
   const findNutritionTemplate = (templateId, recommendationData = null) => {
@@ -631,9 +599,11 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                               })}
                             </Text>
                             <Text fontSize="xs" color={mutedTextColor}>
-                              🕐 {new Date(recommendation.createdAt.seconds * 1000).toLocaleTimeString('id-ID', {
+                              🕐 {new Date(recommendation.createdAt.seconds * 1000).toLocaleString('id-ID', {
                                 hour: '2-digit',
-                                minute: '2-digit'
+                                minute: '2-digit',
+                                second: '2-digit',
+                                timeZoneName: 'short'
                               })}
                             </Text>
                           </VStack>
@@ -655,11 +625,21 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                         <SimpleGrid columns={{ base: 2, sm: 4 }} spacing={3}>
                           <Stat>
                             <StatLabel fontSize="xs">Tujuan</StatLabel>
-                            <StatNumber fontSize="sm">{recommendation.userData.fitness_goal}</StatNumber>
+                            <StatNumber fontSize="sm">
+                              {recommendation.userData.fitness_goal === 'Fat Loss' ? 'Membakar Lemak' :
+                               recommendation.userData.fitness_goal === 'Muscle Gain' ? 'Menambah Otot' :
+                               recommendation.userData.fitness_goal === 'Maintenance' ? 'Mempertahankan' :
+                               recommendation.userData.fitness_goal}
+                            </StatNumber>
                           </Stat>
                           <Stat>
                             <StatLabel fontSize="xs">Aktivitas</StatLabel>
-                            <StatNumber fontSize="sm">{recommendation.userData.activity_level}</StatNumber>
+                            <StatNumber fontSize="sm">
+                              {recommendation.userData.activity_level === 'High Activity' ? 'Aktivitas Tinggi' :
+                               recommendation.userData.activity_level === 'Moderate Activity' ? 'Aktivitas Sedang' :
+                               recommendation.userData.activity_level === 'Low Activity' ? 'Aktivitas Rendah' :
+                               recommendation.userData.activity_level}
+                            </StatNumber>
                           </Stat>
                           <Stat>
                             <StatLabel fontSize="xs">BMI</StatLabel>
@@ -733,9 +713,11 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                                   })}
                                 </Text>
                                 <Text fontSize="xs" color={mutedTextColor}>
-                                  🕐 {new Date(recommendation.createdAt.seconds * 1000).toLocaleTimeString('id-ID', {
+                                  🕐 {new Date(recommendation.createdAt.seconds * 1000).toLocaleString('id-ID', {
                                     hour: '2-digit',
-                                    minute: '2-digit'
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    timeZoneName: 'short'
                                   })}
                                 </Text>
                               </VStack>
@@ -744,11 +726,21 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                             <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
                               <Stat>
                                 <StatLabel fontSize="xs">Tujuan</StatLabel>
-                                <StatNumber fontSize="sm">{recommendation.userData.fitness_goal}</StatNumber>
+                                <StatNumber fontSize="sm">
+                                  {recommendation.userData.fitness_goal === 'Fat Loss' ? 'Membakar Lemak' :
+                                   recommendation.userData.fitness_goal === 'Muscle Gain' ? 'Menambah Otot' :
+                                   recommendation.userData.fitness_goal === 'Maintenance' ? 'Mempertahankan' :
+                                   recommendation.userData.fitness_goal}
+                                </StatNumber>
                               </Stat>
                               <Stat>
                                 <StatLabel fontSize="xs">Aktivitas</StatLabel>
-                                <StatNumber fontSize="sm">{recommendation.userData.activity_level}</StatNumber>
+                                <StatNumber fontSize="sm">
+                                  {recommendation.userData.activity_level === 'High Activity' ? 'Aktivitas Tinggi' :
+                                   recommendation.userData.activity_level === 'Moderate Activity' ? 'Aktivitas Sedang' :
+                                   recommendation.userData.activity_level === 'Low Activity' ? 'Aktivitas Rendah' :
+                                   recommendation.userData.activity_level}
+                                </StatNumber>
                               </Stat>
                               <Stat>
                                 <StatLabel fontSize="xs">BMI</StatLabel>
@@ -836,6 +828,44 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
           <ModalBody pb={6}>
             {selectedRecommendation && (
               <VStack spacing={6} align="stretch">
+                {/* Header dengan timestamp lengkap */}
+                <Card variant="outline" bg="blue.50" borderColor="blue.200">
+                  <CardHeader>
+                    <Heading size="md">📅 Informasi Rekomendasi</Heading>
+                  </CardHeader>
+                  <CardBody>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <Stat>
+                        <StatLabel>Dibuat pada</StatLabel>
+                        <StatNumber fontSize="md">
+                          {new Date(selectedRecommendation.createdAt.seconds * 1000).toLocaleDateString('id-ID', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </StatNumber>
+                        <StatHelpText>
+                          {new Date(selectedRecommendation.createdAt.seconds * 1000).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })}
+                        </StatHelpText>
+                      </Stat>
+                      <Stat>
+                        <StatLabel>Status</StatLabel>
+                        <StatNumber fontSize="md">
+                          {selectedRecommendation.isActive ? '✅ Aktif' : '📋 Tersimpan'}
+                        </StatNumber>
+                        <StatHelpText>
+                          ID: {selectedRecommendation.id?.substring(0, 8)}...
+                        </StatHelpText>
+                      </Stat>
+                    </SimpleGrid>
+                  </CardBody>
+                </Card>
+
                 {/* Complete User Profile */}
                 <Card variant="outline">
                   <CardHeader>
@@ -888,22 +918,29 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                       <Heading size="md">📊 Analisis Tubuh Anda</Heading>
                     </CardHeader>
                     <CardBody>
-                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                        <Stat>
-                          <StatLabel>BMI</StatLabel>
-                          <StatNumber>
-                            {(selectedRecommendation.userProfile?.bmi || 
-                              selectedRecommendation.recommendations?.user_metrics?.bmi ||
-                              (selectedRecommendation.userData?.weight && selectedRecommendation.userData?.height ? 
-                                (selectedRecommendation.userData.weight / ((selectedRecommendation.userData.height / 100) ** 2)).toFixed(1) : 
-                                'N/A'))}
-                          </StatNumber>
-                          <StatHelpText>
-                            {selectedRecommendation.userProfile?.bmi_category || 
-                             selectedRecommendation.recommendations?.user_metrics?.bmi_category ||
-                             'Kategori BMI'}
-                          </StatHelpText>
-                        </Stat>
+                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>                          <Stat>
+                            <StatLabel>BMI</StatLabel>
+                            <StatNumber>
+                              {(() => {
+                                const bmi = selectedRecommendation.userProfile?.bmi || 
+                                           selectedRecommendation.recommendations?.user_metrics?.bmi;
+                                if (bmi) {
+                                  return bmi.toFixed(1);
+                                }
+                                // Calculate from userData if not available
+                                if (selectedRecommendation.userData?.weight && selectedRecommendation.userData?.height) {
+                                  const calculatedBMI = selectedRecommendation.userData.weight / ((selectedRecommendation.userData.height / 100) ** 2);
+                                  return calculatedBMI.toFixed(1);
+                                }
+                                return 'N/A';
+                              })()}
+                            </StatNumber>
+                            <StatHelpText>
+                              {selectedRecommendation.userProfile?.bmi_category || 
+                               selectedRecommendation.recommendations?.user_metrics?.bmi_category ||
+                               'Kategori BMI'}
+                            </StatHelpText>
+                          </Stat>
                         <Stat>
                           <StatLabel>BMR</StatLabel>
                           <StatNumber>
@@ -1007,10 +1044,25 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                         <Text fontWeight="bold" fontSize="md">📅 Jadwal Mingguan</Text>
                         
                         {(() => {
+                          // ONLY USE SAVED WORKOUT DATA - NO CALCULATIONS
                           const workout = selectedRecommendation.recommendations.workout_recommendation || 
                                          selectedRecommendation.recommendations.predictions?.workout_template;
                           
-                          if (!workout) return <Text>No workout data available</Text>;
+                          if (!workout) {
+                            return (
+                              <Alert status="warning" borderRadius="md">
+                                <AlertIcon />
+                                <Box>
+                                  <AlertTitle fontSize="sm">Data Workout Tidak Tersimpan</AlertTitle>
+                                  <AlertDescription fontSize="xs">
+                                    Data program latihan dari rekomendasi ini tidak tersimpan dengan benar.
+                                  </AlertDescription>
+                                </Box>
+                              </Alert>
+                            );
+                          }
+                          
+                          console.log('🏋️ Progress: Using saved workout data:', workout);
                           
                           return (
                             <>
@@ -1065,6 +1117,9 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                                     </Text>
                                     <Text fontSize="xs" color="gray.600" mt={2} textAlign="center">
                                       W = Hari latihan, X = Hari istirahat, A/B/C = Jenis latihan
+                                    </Text>
+                                    <Text fontSize="xs" color="blue.600" mt={1} textAlign="center">
+                                      💾 Data tersimpan: {new Date(selectedRecommendation.createdAt.seconds * 1000).toLocaleString('id-ID')}
                                     </Text>
                                   </Box>
                                 </Box>
@@ -1127,16 +1182,27 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                         {(() => {
                           // Debug log the recommendations structure
                           console.log('🔍 Recommendations structure:', selectedRecommendation.recommendations);
+                          console.log('🔍 Nutrition data check:', {
+                            nutrition_recommendation: selectedRecommendation.recommendations.nutrition_recommendation,
+                            predictions_nutrition: selectedRecommendation.recommendations.predictions?.nutrition_template,
+                            direct_nutrition: selectedRecommendation.recommendations.nutrition_template
+                          });
                           
                           const nutrition = selectedRecommendation.recommendations.nutrition_recommendation || 
                                            selectedRecommendation.recommendations.predictions?.nutrition_template ||
                                            selectedRecommendation.recommendations.nutrition_template;
                           
+                          console.log('🔍 Final nutrition object:', nutrition);
+                          
                           // Get template ID and find the actual template
                           const templateId = nutrition?.template_id || 
                                            selectedRecommendation.recommendations.predicted_nutrition_template_id;
                           
+                          console.log('🔍 Template ID:', templateId);
+                          
                           const nutritionTemplate = findNutritionTemplate(templateId, selectedRecommendation);
+                          
+                          console.log('🔍 Found nutrition template:', nutritionTemplate);
                           
                           // Extract user metrics for calculations with better fallback
                           const userWeight = selectedRecommendation.userData?.weight || 70;
@@ -1147,52 +1213,51 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                                       userProfile?.total_daily_energy_expenditure || 
                                       2000;
                           
-                          // Calculate target values using template data if available
-                          let targetCalories, targetProtein, targetCarbs, targetFat, deficitInfo;
+                          // USE ORIGINAL VALUES FROM RECOMMENDATION - MATCHING DASHBOARD DISPLAY
+                          let targetCalories, targetProtein, targetCarbs, targetFat, deficitInfo, deficitPercentage;
                           
-                          if (nutritionTemplate) {
-                            // Use template multipliers
-                            targetCalories = Math.round(tdee * nutritionTemplate.caloric_intake_multiplier);
-                            targetProtein = Math.round(userWeight * nutritionTemplate.protein_per_kg);
-                            targetCarbs = Math.round(userWeight * nutritionTemplate.carbs_per_kg);
-                            targetFat = Math.round(userWeight * nutritionTemplate.fat_per_kg);
+                          console.log('📋 Progress: USING ORIGINAL VALUES FROM RECOMMENDATION - MATCHING DASHBOARD');
+                          console.log('🔍 Available nutrition data:', {
+                            nutrition_recommendation: selectedRecommendation.recommendations?.nutrition_recommendation,
+                            predictions_nutrition: selectedRecommendation.recommendations?.predictions?.nutrition_template,
+                            userProfile: userProfile
+                          });
+                          
+                          // Priority 1: Use original nutrition recommendation values (matching dashboard)
+                          if (nutrition && (nutrition.target_calories || nutrition.daily_calories || nutrition.scaled_calories)) {
+                            console.log('✅ Progress: Using original nutrition recommendation values');
                             
-                            // Calculate deficit/surplus percentage
-                            const calorieChange = Math.round((nutritionTemplate.caloric_intake_multiplier - 1) * 100);
-                            if (calorieChange < 0) {
-                              deficitInfo = `Defisit: ${Math.abs(calorieChange)}%`;
-                            } else if (calorieChange > 0) {
-                              deficitInfo = `Surplus: ${calorieChange}%`;
-                            } else {
-                              deficitInfo = 'Maintenance';
-                            }
-                          } else if (nutrition) {
-                            // Fallback: use direct values from nutrition data and try to calculate from recommendation
-                            targetCalories = nutrition.target_calories || nutrition.daily_calories || 
-                                           nutrition.scaled_calories || Math.round(tdee * 0.8); // Default 20% deficit
-                            targetProtein = nutrition.target_protein || nutrition.protein_grams || 
-                                          nutrition.scaled_protein || Math.round(userWeight * 2); // Default 2g/kg
-                            targetCarbs = nutrition.target_carbs || nutrition.carbs_grams || 
-                                        nutrition.scaled_carbs || Math.round(userWeight * 3); // Default 3g/kg
-                            targetFat = nutrition.target_fat || nutrition.fat_grams || 
-                                      nutrition.scaled_fat || Math.round(userWeight * 1); // Default 1g/kg
+                            // Get TDEE for percentage calculation
+                            const actualTDEE = userProfile?.tdee || userProfile?.total_daily_energy_expenditure || 2471;
                             
-                            // Try to determine deficit/surplus from calorie comparison
-                            const estimatedDeficit = Math.round(((targetCalories - tdee) / tdee) * 100);
-                            if (estimatedDeficit < -5) {
-                              deficitInfo = `Defisit: ${Math.abs(estimatedDeficit)}%`;
-                            } else if (estimatedDeficit > 5) {
-                              deficitInfo = `Surplus: ${estimatedDeficit}%`;
+                            // Use the original values from recommendation
+                            targetCalories = nutrition.target_calories || nutrition.daily_calories || nutrition.scaled_calories || actualTDEE;
+                            targetProtein = nutrition.target_protein || nutrition.protein_grams || nutrition.scaled_protein;
+                            targetCarbs = nutrition.target_carbs || nutrition.carbs_grams || nutrition.scaled_carbs;
+                            targetFat = nutrition.target_fat || nutrition.fat_grams || nutrition.scaled_fat;
+                            
+                            // Calculate deficit percentage
+                            deficitPercentage = Math.round(((actualTDEE - targetCalories) / actualTDEE) * 100);
+                            
+                            // Set deficit info based on goal and calculation
+                            if (selectedRecommendation.userData.fitness_goal === 'Maintenance') {
+                              deficitInfo = `Defisit: ${deficitPercentage}%`;
+                            } else if (selectedRecommendation.userData.fitness_goal === 'Fat Loss') {
+                              deficitInfo = `Defisit: ${deficitPercentage}%`;
+                            } else if (selectedRecommendation.userData.fitness_goal === 'Muscle Gain') {
+                              deficitInfo = `Surplus: ${Math.abs(deficitPercentage)}%`;
                             } else {
-                              deficitInfo = 'Maintenance';
+                              deficitInfo = `Defisit: ${deficitPercentage}%`;
                             }
+                            
+                          // Fallback: Show that data is not available
                           } else {
-                            // Last resort: use basic calculations
-                            targetCalories = Math.round(tdee * 0.8); // Default 20% deficit
-                            targetProtein = Math.round(userWeight * 2);
-                            targetCarbs = Math.round(userWeight * 3);
-                            targetFat = Math.round(userWeight * 1);
-                            deficitInfo = 'Estimasi (Template tidak tersedia)';
+                            console.log('❌ Progress: No nutrition values found in recommendation');
+                            targetCalories = userProfile?.tdee || 2471;
+                            targetProtein = 0;
+                            targetCarbs = 0;
+                            targetFat = 0;
+                            deficitInfo = 'Data tidak tersimpan';
                           }
                           
                           return (
@@ -1213,7 +1278,7 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                                     {Math.round(targetProtein || 0)}g
                                   </StatNumber>
                                   <StatHelpText fontSize="xs">
-                                    {nutritionTemplate ? `${nutritionTemplate.protein_per_kg}g/kg` : 'N/A'}
+                                    {userWeight ? `${(targetProtein / userWeight).toFixed(1)}g/kg` : 'N/A'}
                                   </StatHelpText>
                                 </Stat>
                                 <Stat>
@@ -1222,7 +1287,7 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                                     {Math.round(targetCarbs || 0)}g
                                   </StatNumber>
                                   <StatHelpText fontSize="xs">
-                                    {nutritionTemplate ? `${nutritionTemplate.carbs_per_kg}g/kg` : 'N/A'}
+                                    {userWeight ? `${(targetCarbs / userWeight).toFixed(1)}g/kg` : 'N/A'}
                                   </StatHelpText>
                                 </Stat>
                                 <Stat>
@@ -1231,167 +1296,41 @@ const DailyProgress = ({ user, onProgressUpdate, userProfile, currentRecommendat
                                     {Math.round(targetFat || 0)}g
                                   </StatNumber>
                                   <StatHelpText fontSize="xs">
-                                    {nutritionTemplate ? `${nutritionTemplate.fat_per_kg}g/kg` : 'N/A'}
+                                    {userWeight ? `${(targetFat / userWeight).toFixed(1)}g/kg` : 'N/A'}
                                   </StatHelpText>
                                 </Stat>
                               </SimpleGrid>
 
-                              {/* Template Information */}
-                              {nutritionTemplate && (
-                                <Box mt={4} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
-                                  <Text fontWeight="bold" fontSize="sm" mb={2}>📋 Informasi Template</Text>
-                                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
-                                    <Text fontSize="xs">
-                                      <Text as="span" fontWeight="semibold">Tujuan:</Text> {nutritionTemplate.goal}
-                                    </Text>
-                                    <Text fontSize="xs">
-                                      <Text as="span" fontWeight="semibold">Kategori BMI:</Text> {nutritionTemplate.bmi_category}
-                                    </Text>
-                                    <Text fontSize="xs">
-                                      <Text as="span" fontWeight="semibold">Multiplier Kalori:</Text> {nutritionTemplate.caloric_intake_multiplier}x
-                                    </Text>
-                                  </SimpleGrid>
-                                </Box>
-                              )}
-
-                              {/* Rest of the meal plan section remains the same */}
-
-                              {/* Meal Plan Section - Enhanced to show detailed meal plan */}
-                              <Box mt={4}>
-                                <Text fontWeight="bold" mb={3}>🍽️ Rencana Makan Berdasarkan Template</Text>
-                                <Text fontSize="sm" color="gray.600" mb={4}>
-                                  Kombinasi makanan yang sudah diatur untuk mencapai target nutrisi harian Anda
+                              {/* Template Information - Enhanced to show data source */}
+                              <Box mt={4} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
+                                <Text fontWeight="bold" fontSize="sm" mb={2}>📋 Informasi Template</Text>
+                                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
+                                  {nutritionTemplate && (
+                                    <>
+                                      <Text fontSize="xs">
+                                        <Text as="span" fontWeight="semibold">Tujuan:</Text> {nutritionTemplate.goal}
+                                      </Text>
+                                      <Text fontSize="xs">
+                                        <Text as="span" fontWeight="semibold">Kategori BMI:</Text> {nutritionTemplate.bmi_category}
+                                      </Text>
+                                      <Text fontSize="xs">
+                                        <Text as="span" fontWeight="semibold">Multiplier Kalori:</Text> {nutritionTemplate.caloric_intake_multiplier}x
+                                      </Text>
+                                    </>
+                                  )}
+                                </SimpleGrid>
+                                {/* Data source indicator */}
+                                <Text fontSize="xs" color="gray.600" mt={2}>
+                                  <Text as="span" fontWeight="semibold">Status Data:</Text> {
+                                    nutrition && (nutrition.target_calories || nutrition.daily_calories || nutrition.scaled_calories)
+                                      ? '✅ Data asli dari rekomendasi backend'
+                                      : '❌ Data tidak tersimpan dengan benar'
+                                  }
                                 </Text>
-                                
-                                {/* Check if meal plan exists */}
-                                {(selectedRecommendation.mealPlan || mealPlanLoading) ? (
-                                  mealPlanLoading ? (
-                                    <Alert status="info" borderRadius="md">
-                                      <AlertIcon />
-                                      <Box>
-                                        <AlertTitle fontSize="sm">Sedang Menyiapkan Rencana Makan...</AlertTitle>
-                                        <AlertDescription fontSize="xs">
-                                          Mohon tunggu, sistem sedang membuat rencana makan yang disesuaikan dengan kebutuhan nutrisi Anda.
-                                        </AlertDescription>
-                                      </Box>
-                                    </Alert>
-                                  ) : (
-                                    <VStack spacing={4} align="stretch">
-                                      {/* Handle meal plan data structure */}
-                                      {(() => {
-                                        const mealPlan = selectedRecommendation.mealPlan;
-                                        
-                                        if (!mealPlan) return null;
-                                        
-                                        // Check different possible structures
-                                        const dailyPlan = mealPlan.daily_meal_plan || mealPlan.meals || mealPlan;
-                                        
-                                        console.log('🍽️ Displaying meal plan:', dailyPlan);
-                                        
-                                        // Helper function to render meal
-                                        const renderMeal = (mealKey, mealData, bgColor, borderColor, icon, title) => {
-                                          if (!mealData || !mealData.foods || mealData.foods.length === 0) return null;
-                                          
-                                          const mealName = mealData.meal_name || mealData.name || title;
-                                          const description = mealData.description || '';
-                                          const calories = mealData.scaled_calories || mealData.total_calories || 0;
-                                          const protein = mealData.scaled_protein || mealData.total_protein || 0;
-                                          const foods = mealData.foods || [];
-                                          
-                                          return (
-                                            <Box key={mealKey} p={4} bg={bgColor} borderRadius="md" border="1px" borderColor={borderColor}>
-                                              <Text fontWeight="bold" fontSize="sm" mb={2}>{icon} {title}</Text>
-                                              <Text fontSize="sm" fontWeight="semibold">{mealName}</Text>
-                                              {description && <Text fontSize="xs" color="gray.600" mb={2}>{description}</Text>}
-                                              <Text fontSize="xs" color="blue.600" mb={3}>
-                                                Target: {Math.round(calories)} kkal | {Math.round(protein)}g protein
-                                              </Text>
-                                              
-                                              {/* Food items */}
-                                              <VStack spacing={2} align="stretch">
-                                                {foods.map((food, index) => (
-                                                  <HStack key={index} justify="space-between" p={2} bg="white" borderRadius="sm" fontSize="xs">
-                                                    <VStack align="start" spacing={0}>
-                                                      <Text fontWeight="semibold">{food.nama || food.name || 'Unknown Food'}</Text>
-                                                      <Text color="gray.600">{Math.round(food.amount || food.quantity || 0)}g</Text>
-                                                    </VStack>
-                                                    <HStack spacing={3}>
-                                                      <Text>🔥 {Math.round(food.calories || 0)} kkal</Text>
-                                                      <Text>🥩 {Math.round(food.protein || 0)}g</Text>
-                                                      <Text>🍞 {Math.round(food.carbs || food.carbohydrates || 0)}g</Text>
-                                                      <Text>🥑 {Math.round(food.fat || food.fats || 0)}g</Text>
-                                                    </HStack>
-                                                  </HStack>
-                                                ))}
-                                              </VStack>
-                                            </Box>
-                                          );
-                                        };
-                                        
-                                        return (
-                                          <>
-                                            {/* Sarapan */}
-                                            {renderMeal('sarapan', dailyPlan.sarapan || dailyPlan.breakfast, 'orange.50', 'orange.200', '🌅', 'Sarapan')}
-                                            
-                                            {/* Makan Siang */}
-                                            {renderMeal('makan_siang', dailyPlan.makan_siang || dailyPlan.lunch, 'yellow.50', 'yellow.200', '☀️', 'Makan Siang')}
-                                            
-                                            {/* Makan Malam */}
-                                            {renderMeal('makan_malam', dailyPlan.makan_malam || dailyPlan.dinner, 'purple.50', 'purple.200', '🌙', 'Makan Malam')}
-                                            
-                                            {/* Snack */}
-                                            {renderMeal('snack', dailyPlan.snack, 'green.50', 'green.200', '🍪', 'Camilan')}
-                                          </>
-                                        );
-                                      })()}
-                                    </VStack>
-                                  )
-                                ) : (
-                                  /* Show that meal plan will be generated or was not found */
-                                  selectedRecommendation.mealPlanStatus === 'original_not_found' ? (
-                                    <Alert status="warning" borderRadius="md">
-                                      <AlertIcon />
-                                      <Box>
-                                        <AlertTitle fontSize="sm">Rencana Makan Asli Tidak Ditemukan</AlertTitle>
-                                        <AlertDescription fontSize="xs">
-                                          Rencana makan asli dari rekomendasi ini tidak tersimpan. 
-                                          Data nutrisi dan template masih tersedia untuk referensi.
-                                        </AlertDescription>
-                                      </Box>
-                                    </Alert>
-                                  ) : (
-                                    <Alert status="info" borderRadius="md">
-                                      <AlertIcon />
-                                      <Box>
-                                        <AlertTitle fontSize="sm">Rencana Makan Akan Dibuat</AlertTitle>
-                                        <AlertDescription fontSize="xs">
-                                          Rencana makan detail akan dibuat otomatis berdasarkan template nutrisi dan target kalori Anda. 
-                                          Sistem akan mengatur kombinasi makanan yang seimbang untuk mencapai target harian.
-                                        </AlertDescription>
-                                      </Box>
-                                    </Alert>
-                                  )
-                                )}
+                                <Text fontSize="xs" color="blue.600" mt={1}>
+                                  <Text as="span" fontWeight="semibold">Timestamp:</Text> {new Date(selectedRecommendation.createdAt.seconds * 1000).toLocaleString('id-ID')}
+                                </Text>
                               </Box>
-
-                              {/* Additional nutrition details */}
-                              {nutrition.meal_plan && (
-                                <Box mt={4}>
-                                  <Text fontWeight="bold" mb={2}>🍽️ Rencana Makan Detail:</Text>
-                                  <Box p={3} bg="gray.50" borderRadius="md">
-                                    <Text fontSize="sm">{nutrition.meal_plan}</Text>
-                                  </Box>
-                                </Box>
-                              )}
-
-                              {nutrition.dietary_notes && (
-                                <Box>
-                                  <Text fontWeight="bold" mb={2}>📝 Catatan Diet:</Text>
-                                  <Box p={3} bg="gray.50" borderRadius="md">
-                                    <Text fontSize="sm">{nutrition.dietary_notes}</Text>
-                                  </Box>
-                                </Box>
-                              )}
                             </>
                           );
                         })()}
