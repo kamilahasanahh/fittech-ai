@@ -23,8 +23,8 @@
     "bmi_category": "Obese",
     "caloric_intake_multiplier": 0.7,
     "protein_per_kg": 1.8,
-    "carbs_per_kg": 1.4,
-    "fat_per_kg": 1.0
+    "carbs_per_kg": 1.8,
+    "fat_per_kg": 0.8
   },
   {
     "template_id": 4,
@@ -47,15 +47,6 @@
   {
     "template_id": 6,
     "goal": "Maintenance",
-    "bmi_category": "Underweight",
-    "caloric_intake_multiplier": 1.0,
-    "protein_per_kg": 1.8,
-    "carbs_per_kg": 4.5,
-    "fat_per_kg": 1.0
-  },
-  {
-    "template_id": 7,
-    "goal": "Maintenance",
     "bmi_category": "Normal",
     "caloric_intake_multiplier": 0.95,
     "protein_per_kg": 1.8,
@@ -63,7 +54,7 @@
     "fat_per_kg": 1.0
   },
   {
-    "template_id": 8,
+    "template_id": 7,
     "goal": "Maintenance",
     "bmi_category": "Overweight",
     "caloric_intake_multiplier": 0.9,

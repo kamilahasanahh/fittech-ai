@@ -1,0 +1,10 @@
+fitness_goal,activity_level,bmi_category,workout_template_id,nutrition_template_id,count
+Fat Loss,High Activity,Normal,3,1,846
+Fat Loss,High Activity,Obese,3,3,513
+Fat Loss,High Activity,Overweight,3,2,638
+Fat Loss,Low Activity,Normal,1,1,71
+Fat Loss,Low Activity,Obese,1,3,80
+Fat Loss,Low Activity,Overweight,1,2,64
+Fat Loss,Moderate Activity,Normal,2,1,101
+Fat Loss,Moderate Activity,Obese,2,3,75
+Fat Loss,Moderate Activity,Overweight,2,2,108

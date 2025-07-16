@@ -36,9 +36,9 @@ except ImportError:
 
 # Import model components
 try:
-    from .thesis_model import XGFitnessAIModel
-    from .calculations import calculate_bmr, calculate_tdee, categorize_bmi
-    from .templates import TemplateManager
+    from thesis_model import XGFitnessAIModel
+    from calculations import calculate_bmr, calculate_tdee, categorize_bmi
+    from templates import TemplateManager
 except ImportError:
     # Fallback for when run from backend directory
     import sys
