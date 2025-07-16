@@ -22,12 +22,12 @@ import os
 import sys
 import time
 from datetime import datetime
+import argparse
 
 # Add the src directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 from src import thesis_model
-from src.fitness_data_augmenter import FitnessDataAugmenter
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,51 +35,74 @@ import seaborn as sns
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay, f1_score, precision_score, recall_score
 import copy
+import re
+
+def clean_raw_data(raw_txt_path, output_csv_path):
+    """
+    Cleans the raw data file according to constraints:
+    - Age: 18–65 years
+    - Height: 150–200 cm (convert from feet.inches)
+    - Weight: 40–150 kg (convert from pounds)
+    - BMI must be consistent with height/weight
+    Saves cleaned data as CSV.
+    """
+    import pandas as pd
+    import numpy as np
+    # Read as tab-separated, skip bad lines
+    df = pd.read_csv(raw_txt_path, sep='\t', header=0, dtype=str, na_values=['', ' '])
+    # Rename columns for clarity
+    df = df.rename(columns={
+        'Member_Age_Orig': 'age',
+        'Member_Gender_Orig': 'gender',
+        'HEIGHT': 'height_ft',
+        'WEIGHT': 'weight_lb',
+        'Mod_act': 'mod_act',
+        'Vig_act': 'vig_act',
+    })
+    # Drop rows with missing age, gender, height, or weight
+    df = df.dropna(subset=['age', 'gender', 'height_ft', 'weight_lb'])
+    # Convert age to int
+    df['age'] = pd.to_numeric(df['age'], errors='coerce')
+    # Convert gender to string (1=Male, 2=Female)
+    df['gender'] = df['gender'].map({'1': 'Male', '2': 'Female'})
+    # Convert height from feet.inches to cm
+    def feet_inches_to_cm(val):
+        if pd.isna(val):
+            return np.nan
+        match = re.match(r'^(\d+)(?:\.(\d+))?$', str(val))
+        if not match:
+            return np.nan
+        feet = int(match.group(1))
+        inches = int(match.group(2)) if match.group(2) else 0
+        total_inches = feet * 12 + inches
+        return total_inches * 2.54
+    df['height_cm'] = df['height_ft'].apply(feet_inches_to_cm)
+    # Convert weight from pounds to kg
+    df['weight_kg'] = pd.to_numeric(df['weight_lb'], errors='coerce') * 0.453592
+    # Filter by age, height, weight
+    df = df[(df['age'] >= 18) & (df['age'] <= 65)]
+    df = df[(df['height_cm'] >= 150) & (df['height_cm'] <= 200)]
+    df = df[(df['weight_kg'] >= 40) & (df['weight_kg'] <= 150)]
+    # Calculate BMI
+    df['bmi'] = df['weight_kg'] / ((df['height_cm'] / 100) ** 2)
+    # Filter for plausible BMI (15-40)
+    df = df[(df['bmi'] >= 15) & (df['bmi'] <= 40)]
+    # Save cleaned data
+    df.to_csv(output_csv_path, index=False)
+    print(f"✅ Cleaned data saved to {output_csv_path} ({len(df)} rows)")
+
 
 # --- Load splits at the top ---
 import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-train_balanced = pd.read_csv(os.path.join(BASE_DIR, 'strict_balanced_train_250.csv'))
-val_df = pd.read_csv(os.path.join(BASE_DIR, 'real_val.csv'))
-test_df = pd.read_csv(os.path.join(BASE_DIR, 'real_test.csv'))
 
-# --- Use all 21 valid combinations ---
-valid_combos = pd.read_csv('valid_template_combinations.csv')
-valid_combos_set = set(
-    tuple(x) for x in valid_combos[['fitness_goal', 'activity_level', 'bmi_category']].values
-)
-def filter_valid_combos(df):
-    return df[
-        df.apply(lambda row: (row['fitness_goal'], row['activity_level'], row['bmi_category']) in valid_combos_set, axis=1)
-    ]
-train_balanced = filter_valid_combos(train_balanced)
-val_df = filter_valid_combos(val_df)
-test_df = filter_valid_combos(test_df)
-
-# --- Compute and use class weights ---
-def get_class_weights(y):
-    classes = np.unique(y)
-    weights = compute_class_weight('balanced', classes=classes, y=y)
-    return dict(zip(classes, weights))
-
-nutrition_class_weights = get_class_weights(train_balanced['nutrition_template_id'])
-workout_class_weights = get_class_weights(train_balanced['workout_template_id'])
-print('Nutrition class weights:', nutrition_class_weights)
-print('Workout class weights:', workout_class_weights)
-# Pass these to your model (e.g., XGBoost, RandomForest) as class_weight or sample_weight
-
-# --- Drop rows with missing template IDs in all splits ---
-def drop_missing_templates(df, name):
-    before = len(df)
-    df = df.dropna(subset=['nutrition_template_id', 'workout_template_id'])
-    after = len(df)
-    if after < before:
-        print(f"Dropped {before - after} rows with missing template IDs from {name}.")
-    return df
-
-train_balanced = drop_missing_templates(train_balanced, 'train_balanced')
-val_df = drop_missing_templates(val_df, 'val_df')
-test_df = drop_missing_templates(test_df, 'test_df')
+def load_experiment_splits(experiment):
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base = os.path.join(project_root, 'backend', 'outputs', experiment)
+    train = pd.read_csv(os.path.join(base, 'train.csv'))
+    val = pd.read_csv(os.path.join(base, 'val.csv'))
+    test = pd.read_csv(os.path.join(base, 'test.csv'))
+    return train, val, test
 
 def main():
     """Train XGBoost + Random Forest models with STRICT AUTHENTICITY"""
@@ -283,16 +306,12 @@ def main():
         print(f"Dropped {before - after} rows with missing template IDs from training_data before model training.")
 
     # Train all models using the unified training method
-    print("\n🚀 Training ALL Models (XGBoost + Random Forest)...")
+    print("\n🚀 Training ALL Models (XGBoost)...")
     comprehensive_info = model.train_all_models(training_data, random_state=42)
     
     training_time = time.time() - start_time
     print(f"✅ COMPREHENSIVE training completed in {training_time:.2f} seconds")
     print()
-    
-    # Extract training info
-    # xgboost_info = comprehensive_info['xgb_training_info']
-    # random_forest_info = comprehensive_info['rf_training_info']
 
     # Display comprehensive training results
     print("📊 COMPREHENSIVE TRAINING RESULTS:")
@@ -325,52 +344,6 @@ def main():
     print(f"    - Recall: {nutrition_recall:.4f}" if isinstance(nutrition_recall, (float, int)) else f"    - Recall: N/A")
     print()
 
-    print(f"RANDOM FOREST MODEL PERFORMANCE (Academic Comparison):")
-    print(f"  Workout Model:")
-    rf_workout_accuracy = comprehensive_info.get('rf_workout_accuracy', None)
-    print(f"    - Accuracy: {rf_workout_accuracy:.4f}" if isinstance(rf_workout_accuracy, (float, int)) else f"    - Accuracy: N/A")
-    rf_workout_f1 = comprehensive_info.get('rf_workout_f1', None)
-    print(f"    - F1 Score: {rf_workout_f1:.4f}" if isinstance(rf_workout_f1, (float, int)) else f"    - F1 Score: N/A")
-    rf_workout_precision = comprehensive_info.get('rf_workout_precision', None)
-    print(f"    - Precision: {rf_workout_precision:.4f}" if isinstance(rf_workout_precision, (float, int)) else f"    - Precision: N/A")
-    rf_workout_recall = comprehensive_info.get('rf_workout_recall', None)
-    print(f"    - Recall: {rf_workout_recall:.4f}" if isinstance(rf_workout_recall, (float, int)) else f"    - Recall: N/A")
-    print(f"  Nutrition Model:")
-    rf_nutrition_accuracy = comprehensive_info.get('rf_nutrition_accuracy', None)
-    print(f"    - Accuracy: {rf_nutrition_accuracy:.4f}" if isinstance(rf_nutrition_accuracy, (float, int)) else f"    - Accuracy: N/A")
-    rf_nutrition_f1 = comprehensive_info.get('rf_nutrition_f1', None)
-    print(f"    - F1 Score: {rf_nutrition_f1:.4f}" if isinstance(rf_nutrition_f1, (float, int)) else f"    - F1 Score: N/A")
-    rf_nutrition_precision = comprehensive_info.get('rf_nutrition_precision', None)
-    print(f"    - Precision: {rf_nutrition_precision:.4f}" if isinstance(rf_nutrition_precision, (float, int)) else f"    - Precision: N/A")
-    rf_nutrition_recall = comprehensive_info.get('rf_nutrition_recall', None)
-    print(f"    - Recall: {rf_nutrition_recall:.4f}" if isinstance(rf_nutrition_recall, (float, int)) else f"    - Recall: N/A")
-    print()
-
-    # Model comparison summary
-    print("🔍 MODEL COMPARISON SUMMARY:")
-    print("-" * 40)
-    xgb_workout_acc = comprehensive_info.get('workout_accuracy', 0)
-    rf_workout_acc = comprehensive_info.get('rf_workout_accuracy', 0)
-    xgb_nutrition_acc = comprehensive_info.get('nutrition_accuracy', 0)
-    rf_nutrition_acc = comprehensive_info.get('rf_nutrition_accuracy', 0)
-
-    # Ensure only numeric values are compared
-    if not isinstance(xgb_workout_acc, (float, int)):
-        xgb_workout_acc = 0.0
-    if not isinstance(rf_workout_acc, (float, int)):
-        rf_workout_acc = 0.0
-    if not isinstance(xgb_nutrition_acc, (float, int)):
-        xgb_nutrition_acc = 0.0
-    if not isinstance(rf_nutrition_acc, (float, int)):
-        rf_nutrition_acc = 0.0
-
-    workout_winner = "XGBoost" if xgb_workout_acc > rf_workout_acc else "Random Forest"
-    nutrition_winner = "XGBoost" if xgb_nutrition_acc > rf_nutrition_acc else "Random Forest"
-
-    print(f"Workout Model Winner: {workout_winner} ({max(xgb_workout_acc, rf_workout_acc):.4f})")
-    print(f"Nutrition Model Winner: {nutrition_winner} ({max(xgb_nutrition_acc, rf_nutrition_acc):.4f})")
-    print()
-
     # Save models using the streamlined TWO-MODEL approach
     print("💾 Saving models using DUAL-MODEL strategy...")
     print()
@@ -393,13 +366,13 @@ def main():
     print()
 
     # 2. RESEARCH MODEL: Both algorithms (for thesis analysis)
-    print("📊 Saving RESEARCH model (XGBoost + Random Forest for thesis)...")
+    print("📊 Saving RESEARCH model (XGBoost for thesis)...")
     research_path = 'models/research_model_comparison.pkl'
     model.save_model(research_path, include_research_models=True)  # Both algorithms
     research_size = os.path.getsize(research_path) / (1024 * 1024)  # Size in MB
     print(f"✅ RESEARCH model saved: {research_path}")
     print(f"   - File size: {research_size:.2f} MB") 
-    print(f"   - Contains: XGBoost + Random Forest models (complete analysis)")
+    print(f"   - Contains: XGBoostmodels (complete analysis)")
     rf_wa = comprehensive_info.get('rf_workout_accuracy', None)
     rf_na = comprehensive_info.get('rf_nutrition_accuracy', None)
     print(f"   - Random Forest Workout Accuracy: {rf_wa:.1%}" if isinstance(rf_wa, (float, int)) else f"   - Random Forest Workout Accuracy: N/A")
@@ -428,12 +401,6 @@ def main():
     print(f"Total training time: {training_time:.2f} seconds")
     print()
     print("🚀 Your DUAL model system is now ready:")
-    print()
-    print("📊 NEXT STEPS:")
-    print("   1. Generate comprehensive visualizations:")
-    print("      python run_visualizations.py")
-    print("   2. Restart your Flask app to use the new models:")
-    print("      python app.py")
     print()
 
     # --- SUMMARY TABLE AND WARNINGS FOR THESIS ---
@@ -611,7 +578,7 @@ def main():
     for split_name, df in [('synthetic_train', synth_train), ('synthetic_val', synth_val), ('synthetic_test', synth_test)]:
         missing_nutrition = df['nutrition_template_id'].isnull().any() if 'nutrition_template_id' in df.columns and not df.empty else False
         missing_workout = df['workout_template_id'].isnull().any() if 'workout_template_id' in df.columns and not df.empty else False
-        if missing_nutrition or missing_workout:
+        if bool(missing_nutrition) or bool(missing_workout):
             print(f'⚠️ WARNING: {split_name} contains rows with missing template IDs!')
     # Train and save XGBoost model for synthetic experiment
     print('\nTraining XGBoost on synthetic split...')
@@ -641,13 +608,41 @@ def main():
     print('\nAll done!')
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n⚠️ Training interrupted by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Training failed with error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    print("\n=== Running ALL THREE experiments: REAL, AUGMENTED, FULLY SYNTHETIC ===\n")
+
+    experiments = [
+        ("REAL", "real"),
+        ("AUGMENTED", "synthetic"),
+        ("FULLY_SYNTHETIC", "fully_synthetic"),
+    ]
+    results = {}
+    for exp_name, exp_dir in experiments:
+        print(f"\n=== {exp_name} EXPERIMENT ===\n")
+        train, val, test = load_experiment_splits(exp_dir)
+        train = train.dropna(subset=['nutrition_template_id', 'workout_template_id'])
+        val = val.dropna(subset=['nutrition_template_id', 'workout_template_id'])
+        test = test.dropna(subset=['nutrition_template_id', 'workout_template_id'])
+        data = pd.concat([train, val, test], ignore_index=True)
+        print(f"\n📚 Initializing XGFitness AI Model for {exp_name}...")
+        model = thesis_model.XGFitnessAIModel(templates_dir='../data')
+        print("✅ Model initialized successfully\n")
+        print(f"\n🚀 Training ALL Models (XGBoost) on {exp_name}...")
+        info = model.train_all_models(data, random_state=42)
+        # Ensure output directory exists before saving model
+        os.makedirs(f'outputs/{exp_dir}', exist_ok=True)
+        model.save_model(f'outputs/{exp_dir}/xgboost_model.pkl', include_research_models=False)
+        print(f'Saved outputs/{exp_dir}/xgboost_model.pkl')
+        results[exp_name] = info
+
+    # --- SUMMARY COMPARISON ---
+    print("\n=== SUMMARY COMPARISON: REAL vs AUGMENTED vs FULLY SYNTHETIC ===\n")
+    def print_metrics(metrics, label):
+        print(f"{label}:")
+        print(f"  Workout Accuracy: {metrics.get('workout_accuracy', 'N/A')}")
+        print(f"  Nutrition Accuracy: {metrics.get('nutrition_accuracy', 'N/A')}")
+        print(f"  Workout F1: {metrics.get('workout_f1', 'N/A')}")
+        print(f"  Nutrition F1: {metrics.get('nutrition_f1', 'N/A')}")
+        print()
+    for exp_name in ["REAL", "AUGMENTED", "FULLY_SYNTHETIC"]:
+        print_metrics(results[exp_name], exp_name)
+    print("\nSee outputs/real/, outputs/synthetic/, and outputs/fully_synthetic/ for all models, splits, and metrics.\n")

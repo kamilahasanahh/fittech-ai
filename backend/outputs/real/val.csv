@@ -1,0 +1,490 @@
+HH_ID,age,Member_ID,gender,height_ft_in,weight_lb,mod_act,vig_act,height_cm,weight_kg,bmi,bmi_category,activity_level,fitness_goal,nutrition_template_id,workout_template_id,split
+304,20.0,7109,1,6.3,165,7.0,3.0,190.5,74.84268,20.62335751338169,Normal,Moderate Activity,Muscle Gain,0,80,validation
+9111,47.0,2906,2,5.8,190,3.0,1.0,172.72,86.18248,28.88908113456365,Overweight,Low Activity,Fat Loss,71,9,validation
+2940,60.0,128,2,5.4,145,7.0,0.0,162.56,65.77083999999999,24.888917453616155,Normal,Low Activity,Maintenance,51,66,validation
+5816,61.0,6632,2,5.7,140,6.0,3.0,170.18,63.50288,21.92685695239958,Normal,Moderate Activity,Maintenance,36,93,validation
+8221,57.0,751,1,5.7,290,10.0,0.0,170.18,131.54168,45.4199179728277,Obese,Low Activity,Fat Loss,3,4,validation
+11215,49.0,6105,2,5.8,160,4.0,0.0,172.72,72.57472,24.327647271211493,Normal,Low Activity,Maintenance,51,66,validation
+12239,44.0,6178,2,5.5,135,5.0,4.0,165.1,61.23492,22.46492682334477,Normal,Moderate Activity,Maintenance,36,93,validation
+6154,32.0,3605,2,5.7,140,8.0,3.0,170.18,63.50288,21.92685695239958,Normal,Moderate Activity,Maintenance,36,93,validation
+8261,65.0,6761,1,5.11,220,2.0,0.0,180.34,99.79024,30.68343212663413,Obese,Low Activity,Fat Loss,3,4,validation
+5831,62.0,6634,2,5.7,165,0.0,0.0,170.18,74.84268,25.842367122470936,Overweight,Low Activity,Maintenance,17,22,validation
+14301,25.0,4394,2,5.8,170,5.0,0.0,172.72,77.11064,25.848125225662216,Overweight,Low Activity,Maintenance,17,22,validation
+12839,65.0,1340,1,6.1,165,15.0,0.0,185.42,74.84268,21.76888459612912,Normal,Moderate Activity,Maintenance,36,93,validation
+1668,25.0,6451,2,5.8,165,8.0,0.0,172.72,74.84268,25.087886248436856,Overweight,Low Activity,Maintenance,17,22,validation
+8503,46.0,6776,1,5.9,180,10.0,5.0,175.26,81.64656,26.58105883319517,Overweight,Moderate Activity,Maintenance,2,37,validation
+1470,35.0,5487,1,6.3,250,8.0,4.0,190.5,113.398,31.247511383911657,Obese,Moderate Activity,Fat Loss,86,51,validation
+13733,19.0,4369,1,5.7,170,40.0,0.0,170.18,77.11064,26.62546915648521,Overweight,High Activity,Maintenance,16,39,validation
+12133,63.0,6957,2,5.4,150,30.0,0.0,162.56,68.0388,25.74715598649947,Overweight,Moderate Activity,Maintenance,2,37,validation
+6936,37.0,6697,2,5.2,120,3.0,1.0,157.48000000000002,54.43104,21.948043896087785,Normal,Low Activity,Maintenance,51,66,validation
+4965,64.0,346,2,5.4,165,3.0,0.0,162.56,74.84268,28.32187158514942,Overweight,Low Activity,Fat Loss,71,9,validation
+14129,55.0,3362,2,5.1,125,20.0,0.0,154.94,56.699,23.618281582169185,Normal,Moderate Activity,Maintenance,36,93,validation
+8684,54.0,810,1,5.9,135,16.0,6.0,175.26,61.23492,19.93579412489638,Normal,Moderate Activity,Maintenance,36,93,validation
+10994,19.0,5178,1,5.1,150,24.0,10.0,154.94,68.0388,28.34193789860302,Overweight,High Activity,Fat Loss,87,17,validation
+12497,64.0,3239,2,5.2,130,14.0,0.0,157.48000000000002,58.96696,23.777047554095105,Normal,Moderate Activity,Maintenance,36,93,validation
+5965,32.0,3595,1,5.11,200,10.0,1.0,180.34,90.7184,27.89402920603104,Overweight,Moderate Activity,Fat Loss,54,56,validation
+1421,46.0,6442,2,5.5,160,7.0,7.0,165.1,72.57472,26.625098457297504,Overweight,Moderate Activity,Maintenance,2,37,validation
+7001,36.0,624,2,5.6,128,25.0,3.0,167.64,58.059776,20.659511658784563,Normal,High Activity,Maintenance,50,11,validation
+11947,34.0,3722,2,5.7,140,14.0,0.0,170.18,63.50288,21.92685695239958,Normal,Moderate Activity,Maintenance,36,93,validation
+9163,62.0,6810,2,5.11,155,22.0,1.0,180.34,70.30676,21.61787263467405,Normal,Moderate Activity,Maintenance,36,93,validation
+10020,44.0,941,1,5.8,170,5.0,0.0,172.72,77.11064,25.848125225662216,Overweight,Low Activity,Maintenance,17,22,validation
+7265,59.0,651,1,5.1,150,20.0,10.0,154.94,68.0388,28.34193789860302,Overweight,High Activity,Fat Loss,87,17,validation
+8681,60.0,2862,2,6.6,170,4.0,4.0,198.12,77.11064,19.64525493811014,Normal,Moderate Activity,Maintenance,36,93,validation
+1178,61.0,3468,2,5.4,190,2.0,0.0,162.56,86.18248,32.613064249566,Obese,Low Activity,Fat Loss,3,4,validation
+14706,47.0,1518,2,5.6,230,4.0,0.0,167.64,104.32616,37.12256001187851,Obese,Low Activity,Fat Loss,3,4,validation
+9060,39.0,6806,2,5.8,135,28.0,2.0,172.72,61.23492,20.5264523850847,Normal,High Activity,Maintenance,50,11,validation
+2804,43.0,5564,1,6.2,175,3.0,2.0,187.96,79.3786,22.46842148907088,Normal,Low Activity,Maintenance,51,66,validation
+3891,26.0,3991,1,6.2,160,20.0,10.0,187.96,72.57472,20.542556790007666,Normal,High Activity,Muscle Gain,16,78,validation
+10380,60.0,3067,2,5.8,170,5.0,0.0,172.72,77.11064,25.848125225662216,Overweight,Low Activity,Maintenance,17,22,validation
+8999,43.0,3682,2,5.4,130,28.0,4.0,162.56,58.96696,22.31420185496621,Normal,High Activity,Maintenance,50,11,validation
+555,45.0,6393,2,5.1,123,10.0,2.0,154.94,55.791816,23.24038907685448,Normal,Moderate Activity,Maintenance,36,93,validation
+8572,63.0,5340,1,5.9,190,10.0,3.0,175.26,86.18248,28.057784323928235,Overweight,Moderate Activity,Fat Loss,54,56,validation
+8112,53.0,5919,1,5.8,200,15.0,7.0,172.72,90.7184,30.40955908901437,Obese,Moderate Activity,Fat Loss,86,51,validation
+6823,53.0,3808,2,5.4,110,12.0,0.0,162.56,49.89512,18.881247723432946,Normal,Moderate Activity,Maintenance,36,93,validation
+1411,52.0,997,1,5.9,250,7.0,0.0,175.26,113.398,36.91813726832663,Obese,Low Activity,Fat Loss,3,4,validation
+2672,37.0,2335,2,5.8,275,5.0,6.0,172.72,124.7378,41.813143747394754,Obese,Moderate Activity,Fat Loss,86,51,validation
+9593,45.0,1878,1,5.8,240,5.0,0.0,172.72,108.86208,36.49147090681724,Obese,Low Activity,Fat Loss,3,4,validation
+11798,45.0,1206,2,5.8,180,35.0,5.0,172.72,81.64656,27.36860318011293,Overweight,High Activity,Fat Loss,87,17,validation
+2362,46.0,6481,2,5.4,165,7.0,4.0,162.56,74.84268,28.32187158514942,Overweight,Moderate Activity,Fat Loss,54,56,validation
+9869,65.0,6028,1,5.1,175,40.0,20.0,154.94,79.3786,33.06559421503687,Obese,High Activity,Fat Loss,19,0,validation
+466,54.0,3450,2,5.5,130,0.0,0.0,165.1,58.96696,21.632892496554224,Normal,Low Activity,Maintenance,51,66,validation
+2236,42.0,1626,2,5.9,260,2.0,0.0,175.26,117.93392,38.39486275905969,Obese,Low Activity,Fat Loss,3,4,validation
+943,56.0,6418,2,5.3,180,20.0,0.0,160.02,81.64656,31.88521569786904,Obese,Moderate Activity,Fat Loss,86,51,validation
+2938,56.0,2362,2,5.5,230,0.0,0.0,165.1,104.32616,38.27357903236516,Obese,Low Activity,Fat Loss,3,4,validation
+11898,37.0,3826,2,5.11,145,1.0,0.0,180.34,65.77083999999999,20.223171174372496,Normal,Low Activity,Maintenance,51,66,validation
+14384,65.0,6320,1,5.9,150,15.0,10.0,175.26,68.0388,22.150882360995976,Normal,High Activity,Maintenance,50,11,validation
+6390,35.0,530,1,5.11,160,10.0,2.0,180.34,72.57472,22.315223364824828,Normal,Moderate Activity,Maintenance,36,93,validation
+11335,19.0,7365,2,5.7,130,5.0,0.0,170.18,58.96696,20.36065288437104,Normal,Low Activity,Muscle Gain,0,98,validation
+11637,55.0,1905,2,5.4,145,4.0,0.0,162.56,65.77083999999999,24.888917453616155,Normal,Low Activity,Maintenance,51,66,validation
+6496,37.0,553,2,5.2,116,4.0,0.0,157.48000000000002,52.616672,21.216442432884858,Normal,Low Activity,Maintenance,51,66,validation
+13333,45.0,6261,2,5.4,150,12.0,0.0,162.56,68.0388,25.74715598649947,Overweight,Moderate Activity,Maintenance,2,37,validation
+3713,33.0,190,2,5.5,138,12.0,6.0,165.1,62.595696,22.964147419419096,Normal,Moderate Activity,Maintenance,36,93,validation
+817,34.0,6410,2,5.4,145,15.0,0.0,162.56,65.77083999999999,24.888917453616155,Normal,Moderate Activity,Maintenance,36,93,validation
+6522,63.0,558,2,5.6,170,5.0,0.0,167.64,77.11064,27.43841392182325,Overweight,Low Activity,Fat Loss,71,9,validation
+4085,52.0,239,1,5.11,200,2.0,0.0,180.34,90.7184,27.89402920603104,Overweight,Low Activity,Fat Loss,71,9,validation
+8988,30.0,3681,1,6.2,175,4.0,20.0,187.96,79.3786,22.46842148907088,Normal,High Activity,Maintenance,50,11,validation
+7024,52.0,627,2,5.4,120,26.0,2.0,162.56,54.43104,20.597724789199575,Normal,Moderate Activity,Maintenance,36,93,validation
+491,65.0,5417,1,5.9,200,50.0,0.0,175.26,90.7184,29.534509814661305,Overweight,High Activity,Fat Loss,87,17,validation
+2651,55.0,2210,2,5.8,130,8.0,3.0,172.72,58.96696,19.76621340785934,Normal,Moderate Activity,Maintenance,36,93,validation
+8361,38.0,3660,2,5.4,140,21.0,5.0,162.56,63.50288,24.030678920732843,Normal,High Activity,Maintenance,50,11,validation
+9,26.0,7098,2,5.5,140,10.0,15.0,165.1,63.50288,23.29696115013532,Normal,High Activity,Maintenance,50,11,validation
+303,18.0,4646,1,5.9,128,5.0,5.0,175.26,58.059776,18.902086281383237,Normal,Moderate Activity,Muscle Gain,0,80,validation
+7623,53.0,684,1,5.1,205,12.0,10.0,154.94,92.98636,38.73398179475747,Obese,High Activity,Fat Loss,19,0,validation
+2060,46.0,5520,1,5.6,120,40.0,0.0,167.64,54.43104,19.36829218011053,Normal,High Activity,Maintenance,50,11,validation
+12,44.0,3842,2,5.2,120,17.0,1.0,157.48000000000002,54.43104,21.948043896087785,Normal,Moderate Activity,Maintenance,36,93,validation
+5603,47.0,2588,2,5.5,150,10.0,10.0,165.1,68.0388,24.96102980371641,Normal,Moderate Activity,Maintenance,36,93,validation
+3950,37.0,2432,2,5.4,180,20.0,0.0,162.56,81.64656,30.896587183799365,Obese,Moderate Activity,Fat Loss,86,51,validation
+966,41.0,3899,2,5.3,110,0.0,0.0,160.02,49.89512,19.48540959314219,Normal,Low Activity,Maintenance,51,66,validation
+4689,55.0,6566,2,5.6,155,5.0,0.0,167.64,70.30676,25.01737739930943,Overweight,Low Activity,Maintenance,17,22,validation
+1037,28.0,967,2,5.11,160,4.0,5.0,180.34,72.57472,22.315223364824828,Normal,Moderate Activity,Maintenance,36,93,validation
+11107,30.0,6103,2,5.3,130,3.0,0.0,160.02,58.96696,23.02821133734986,Normal,Low Activity,Maintenance,51,66,validation
+5104,21.0,7671,1,5.9,165,10.0,6.0,175.26,74.84268,24.365970597095576,Normal,Moderate Activity,Maintenance,36,93,validation
+14166,41.0,7060,2,5.7,160,2.0,0.0,170.18,72.57472,25.059265088456662,Overweight,Low Activity,Maintenance,17,22,validation
+6707,53.0,6683,2,5.6,128,4.0,0.0,167.64,58.059776,20.659511658784563,Normal,Low Activity,Maintenance,51,66,validation
+6938,65.0,2018,1,5.1,208,30.0,0.0,154.94,94.347136,39.30082055272953,Obese,Moderate Activity,Fat Loss,86,51,validation
+13942,34.0,5362,1,6.1,190,20.0,4.0,185.42,86.18248,25.067200444027463,Overweight,Moderate Activity,Maintenance,2,37,validation
+14889,50.0,3429,2,5.4,250,45.0,7.0,162.56,113.398,42.91192664416579,Obese,High Activity,Fat Loss,19,0,validation
+11335,54.0,6119,1,6.1,185,5.0,2.0,185.42,83.91452,24.407537274447797,Normal,Low Activity,Maintenance,51,66,validation
+12559,53.0,6205,1,6.3,220,6.0,0.0,190.5,99.79024,27.49781001784226,Overweight,Low Activity,Fat Loss,71,9,validation
+8830,52.0,1854,2,5.8,138,0.0,8.0,172.72,62.595696,20.982595771419916,Normal,Moderate Activity,Maintenance,36,93,validation
+11436,49.0,6125,1,5.8,190,60.0,20.0,172.72,86.18248,28.88908113456365,Overweight,High Activity,Fat Loss,87,17,validation
+10618,60.0,3086,1,5.7,190,10.0,0.0,170.18,86.18248,29.75787729254229,Overweight,Low Activity,Fat Loss,71,9,validation
+8791,45.0,825,1,5.4,130,10.0,9.0,162.56,58.96696,22.31420185496621,Normal,Moderate Activity,Maintenance,36,93,validation
+7652,55.0,690,2,5.4,130,15.0,0.0,162.56,58.96696,22.31420185496621,Normal,Moderate Activity,Maintenance,36,93,validation
+5807,58.0,452,1,5.8,200,60.0,5.0,172.72,90.7184,30.40955908901437,Obese,High Activity,Fat Loss,19,0,validation
+6743,33.0,1791,1,5.11,188,40.0,2.0,180.34,85.275296,26.22038745366917,Overweight,High Activity,Maintenance,16,39,validation
+2525,59.0,79,1,6.1,185,40.0,1.0,185.42,83.91452,24.407537274447797,Normal,High Activity,Maintenance,50,11,validation
+11294,39.0,6114,1,5.9,170,56.0,4.0,175.26,77.11064,25.10433334246211,Overweight,High Activity,Maintenance,16,39,validation
+6619,61.0,2706,2,5.4,100,20.0,1.0,162.56,45.3592,17.164770657666317,Underweight,Moderate Activity,Maintenance,94,18,validation
+466,56.0,1564,1,5.11,230,0.0,0.0,180.34,104.32616,32.07813358693569,Obese,Low Activity,Fat Loss,3,4,validation
+10268,25.0,6857,2,5.6,150,20.0,0.0,167.64,68.0388,24.21036522513816,Normal,Moderate Activity,Maintenance,36,93,validation
+11024,43.0,6098,1,5.1,180,20.0,2.0,154.94,81.64656,34.01032547832363,Obese,Moderate Activity,Fat Loss,86,51,validation
+5122,44.0,367,2,5.7,145,5.0,0.0,170.18,65.77083999999999,22.70995898641385,Normal,Low Activity,Maintenance,51,66,validation
+12053,34.0,1237,2,5.9,165,4.0,0.0,175.26,74.84268,24.365970597095576,Normal,Low Activity,Maintenance,51,66,validation
+974,31.0,2128,1,5.11,190,4.0,2.0,180.34,86.18248,26.49932774572948,Overweight,Low Activity,Maintenance,17,22,validation
+291,55.0,6373,1,5.5,140,50.0,0.0,165.1,63.50288,23.29696115013532,Normal,High Activity,Maintenance,50,11,validation
+13365,54.0,3308,2,5.1,125,7.0,0.0,154.94,56.699,23.618281582169185,Normal,Low Activity,Maintenance,51,66,validation
+9253,65.0,2025,1,6.1,245,10.0,2.0,185.42,111.13004,32.32349530940383,Obese,Moderate Activity,Fat Loss,86,51,validation
+9891,43.0,6844,2,5.1,135,12.0,0.0,154.94,61.23492,25.507744108742724,Overweight,Moderate Activity,Maintenance,2,37,validation
+2266,54.0,57,2,5.5,140,6.0,0.0,165.1,63.50288,23.29696115013532,Normal,Low Activity,Maintenance,51,66,validation
+525,45.0,2095,2,5.11,210,60.0,12.0,180.34,95.25432,29.288730666332583,Overweight,High Activity,Fat Loss,87,17,validation
+9578,40.0,905,2,5.8,260,2.0,0.0,172.72,117.93392,39.53242681571868,Obese,Low Activity,Fat Loss,3,4,validation
+5619,25.0,4493,2,5.9,130,80.0,2.0,175.26,58.96696,19.19743137952985,Normal,High Activity,Muscle Gain,16,78,validation
+12200,58.0,3216,2,5.6,130,7.0,0.0,167.64,58.96696,20.982316528453072,Normal,Low Activity,Maintenance,51,66,validation
+8791,45.0,2874,2,5.1,120,20.0,0.0,154.94,54.43104,22.67355031888242,Normal,Moderate Activity,Maintenance,36,93,validation
+12057,65.0,1238,1,5.9,175,40.0,8.0,175.26,79.3786,25.84269608782864,Overweight,High Activity,Maintenance,16,39,validation
+11332,58.0,5257,1,5.11,185,20.0,2.0,180.34,83.91452,25.801977015578704,Overweight,Moderate Activity,Maintenance,2,37,validation
+9300,61.0,1865,1,5.1,210,4.0,0.0,154.94,95.25432,39.67871305804423,Obese,Low Activity,Fat Loss,3,4,validation
+2110,47.0,5296,1,5.9,160,50.0,4.0,175.26,72.57472,23.62760785172904,Normal,High Activity,Maintenance,50,11,validation
+7094,52.0,6712,2,5.2,115,4.0,2.0,157.48000000000002,52.16308,21.033542067084127,Normal,Low Activity,Maintenance,51,66,validation
+13160,63.0,6246,1,6.2,188,6.0,1.0,187.96,85.275296,24.137504228259,Normal,Low Activity,Maintenance,51,66,validation
+11024,39.0,6901,2,5.5,145,20.0,6.0,165.1,65.77083999999999,24.128995476925866,Normal,High Activity,Maintenance,50,11,validation
+11706,56.0,1906,1,5.1,180,2.0,0.0,154.94,81.64656,34.01032547832363,Obese,Low Activity,Fat Loss,3,4,validation
+7689,53.0,6746,2,5.4,150,40.0,0.0,162.56,68.0388,25.74715598649947,Overweight,High Activity,Maintenance,16,39,validation
+3949,60.0,223,1,5.1,179,25.0,2.0,154.94,81.192968,33.82137922566627,Obese,Moderate Activity,Fat Loss,86,51,validation
+7068,18.0,4522,2,5.6,165,5.0,0.0,167.64,74.84268,26.631401747651974,Overweight,Low Activity,Maintenance,17,22,validation
+4525,44.0,2491,2,5.8,150,3.0,4.0,172.72,68.0388,22.80716931676077,Normal,Moderate Activity,Maintenance,36,93,validation
+4542,47.0,296,1,5.7,160,5.0,2.0,170.18,72.57472,25.059265088456662,Overweight,Low Activity,Maintenance,17,22,validation
+3818,21.0,7200,2,5.5,140,7.0,7.0,165.1,63.50288,23.29696115013532,Normal,Moderate Activity,Maintenance,36,93,validation
+5920,39.0,5033,1,5.1,185,10.0,0.0,154.94,83.91452,34.9550567416104,Obese,Low Activity,Fat Loss,3,4,validation
+10816,26.0,5170,1,5.1,210,11.0,0.0,154.94,95.25432,39.67871305804423,Obese,Moderate Activity,Fat Loss,86,51,validation
+1629,53.0,1020,2,5.3,130,9.0,2.0,160.02,58.96696,23.02821133734986,Normal,Moderate Activity,Maintenance,36,93,validation
+9519,39.0,901,1,5.11,230,8.0,3.0,180.34,104.32616,32.07813358693569,Obese,Moderate Activity,Fat Loss,86,51,validation
+117,27.0,3847,1,5.6,165,90.0,5.0,167.64,74.84268,26.631401747651974,Overweight,High Activity,Maintenance,16,39,validation
+2073,53.0,2167,1,6.4,202,11.0,6.0,193.04,91.625584,24.587939619092538,Normal,Moderate Activity,Maintenance,36,93,validation
+2211,48.0,2179,2,5.9,120,15.0,10.0,175.26,54.43104,17.72070588879678,Underweight,High Activity,Maintenance,8,20,validation
+2957,62.0,2363,2,5.2,115,0.0,0.0,157.48000000000002,52.16308,21.033542067084127,Normal,Low Activity,Maintenance,51,66,validation
+217,56.0,3854,2,5.6,120,10.0,4.0,167.64,54.43104,19.36829218011053,Normal,Moderate Activity,Maintenance,36,93,validation
+2636,45.0,6493,2,5.9,120,20.0,6.0,175.26,54.43104,17.72070588879678,Underweight,High Activity,Maintenance,8,20,validation
+1295,50.0,3474,2,5.6,235,40.0,1.0,167.64,106.59412,37.92957218604979,Obese,High Activity,Fat Loss,19,0,validation
+12835,30.0,1338,2,5.11,180,50.0,10.0,180.34,81.64656,25.10462628542793,Overweight,High Activity,Maintenance,16,39,validation
+5739,35.0,6628,2,5.7,155,5.0,7.0,170.18,70.30676,24.276163054442392,Normal,Moderate Activity,Maintenance,36,93,validation
+13005,54.0,3285,2,5.1,200,48.0,0.0,154.94,90.7184,37.7892505314707,Obese,High Activity,Fat Loss,19,0,validation
+2527,33.0,80,1,5.1,145,2.0,2.0,154.94,65.77083999999999,27.397206635316252,Overweight,Low Activity,Fat Loss,71,9,validation
+9123,18.0,5109,1,5.1,160,5.0,0.0,154.94,72.57472,30.23140042517656,Obese,Low Activity,Fat Loss,3,4,validation
+5743,18.0,4789,1,5.11,156,8.0,5.0,180.34,70.760352,21.757342780704207,Normal,Moderate Activity,Maintenance,36,93,validation
+4609,26.0,2501,1,5.6,130,10.0,1.0,167.64,58.96696,20.982316528453072,Normal,Moderate Activity,Muscle Gain,0,80,validation
+1494,61.0,5489,1,5.1,178,5.0,0.0,154.94,80.739376,33.63243297300892,Obese,Low Activity,Fat Loss,3,4,validation
+200,48.0,2068,1,5.9,250,20.0,30.0,175.26,113.398,36.91813726832663,Obese,High Activity,Fat Loss,19,0,validation
+435,49.0,2085,2,5.2,200,9.0,9.0,157.48000000000002,90.7184,36.58007316014631,Obese,Moderate Activity,Fat Loss,86,51,validation
+10740,42.0,1102,2,5.3,160,20.0,12.0,160.02,72.57472,28.342413953661367,Overweight,High Activity,Fat Loss,87,17,validation
+4750,62.0,2518,2,5.4,105,10.0,3.0,162.56,47.62716,18.02300919054963,Underweight,Moderate Activity,Maintenance,94,18,validation
+10311,20.0,7331,1,5.9,125,12.0,4.0,175.26,56.699,18.459068634163312,Underweight,Moderate Activity,Muscle Gain,61,2,validation
+10197,53.0,960,1,6.1,175,5.0,5.0,185.42,79.3786,23.08821093528845,Normal,Moderate Activity,Maintenance,36,93,validation
+5069,60.0,5311,1,5.1,240,2.0,0.0,154.94,108.86208,45.34710063776484,Obese,Low Activity,Fat Loss,3,4,validation
+11564,37.0,6933,2,5.6,150,7.0,1.0,167.64,68.0388,24.21036522513816,Normal,Low Activity,Maintenance,51,66,validation
+10335,57.0,6864,2,5.1,115,30.0,0.0,154.94,52.16308,21.72881905559565,Normal,Moderate Activity,Maintenance,36,93,validation
+8127,65.0,1829,1,5.6,142,14.0,1.0,167.64,64.410064,22.919145746464128,Normal,Moderate Activity,Maintenance,36,93,validation
+7616,53.0,5896,1,5.1,182,35.0,8.0,154.94,82.553744,34.388217983638334,Obese,High Activity,Fat Loss,19,0,validation
+4898,35.0,2530,2,5.6,164,30.0,4.0,167.64,74.389088,26.469999312817723,Overweight,High Activity,Maintenance,16,39,validation
+8755,19.0,5097,2,5.3,135,5.0,0.0,160.02,61.23492,23.91391177340178,Normal,Low Activity,Maintenance,51,66,validation
+13611,48.0,1413,1,6.2,210,14.0,2.0,187.96,95.25432,26.96210578688505,Overweight,Moderate Activity,Maintenance,2,37,validation
+2209,36.0,2178,2,5.1,170,10.0,0.0,154.94,77.11064,32.1208629517501,Obese,Low Activity,Fat Loss,3,4,validation
+10292,57.0,1052,1,5.9,170,10.0,0.0,175.26,77.11064,25.10433334246211,Overweight,Low Activity,Maintenance,17,22,validation
+6372,29.0,1773,1,5.11,200,20.0,10.0,180.34,90.7184,27.89402920603104,Overweight,High Activity,Fat Loss,87,17,validation
+12832,35.0,6225,1,5.1,195,3.0,0.0,154.94,88.45044,36.84451926818393,Obese,Low Activity,Fat Loss,3,4,validation
+2473,53.0,6486,2,5.5,125,5.0,1.0,165.1,56.699,20.800858169763675,Normal,Low Activity,Maintenance,51,66,validation
+6598,65.0,5811,2,5.5,138,64.0,4.0,165.1,62.595696,22.964147419419096,Normal,High Activity,Maintenance,50,11,validation
+11434,61.0,6923,2,5.3,128,24.0,0.0,160.02,58.059776,22.67393116292909,Normal,Moderate Activity,Maintenance,36,93,validation
+268,43.0,2072,1,5.6,150,12.0,0.0,167.64,68.0388,24.21036522513816,Normal,Moderate Activity,Maintenance,36,93,validation
+13638,25.0,7410,2,5.8,155,5.0,2.0,172.72,70.30676,23.567408293986134,Normal,Low Activity,Maintenance,51,66,validation
+2726,54.0,100,2,5.4,108,10.0,2.0,162.56,48.987936,18.53795231027962,Normal,Moderate Activity,Maintenance,36,93,validation
+367,41.0,3867,2,5.3,188,6.0,9.0,160.02,85.275296,33.3023363955521,Obese,Moderate Activity,Fat Loss,86,51,validation
+2720,42.0,3518,2,5.7,165,1.0,3.0,170.18,74.84268,25.842367122470936,Overweight,Low Activity,Maintenance,17,22,validation
+8413,19.0,4153,2,5.8,135,8.0,3.0,172.72,61.23492,20.5264523850847,Normal,Moderate Activity,Muscle Gain,0,80,validation
+1251,20.0,4217,1,5.1,130,10.0,0.0,154.94,58.96696,24.563012845455955,Normal,Low Activity,Maintenance,51,66,validation
+7494,60.0,6735,2,5.1,140,2.0,2.0,154.94,63.50288,26.45247537202949,Overweight,Low Activity,Maintenance,17,22,validation
+1622,43.0,1019,1,6.3,185,12.0,1.0,190.5,83.91452,23.123158424094623,Normal,Moderate Activity,Maintenance,36,93,validation
+3891,25.0,217,2,5.5,135,25.0,8.0,165.1,61.23492,22.46492682334477,Normal,High Activity,Maintenance,50,11,validation
+8663,46.0,5956,1,5.1,165,14.0,2.0,154.94,74.84268,31.17613168846333,Obese,Moderate Activity,Fat Loss,86,51,validation
+8863,43.0,2885,2,5.8,150,6.0,9.0,172.72,68.0388,22.80716931676077,Normal,Moderate Activity,Maintenance,36,93,validation
+11287,64.0,3145,2,5.2,125,27.0,7.0,157.48000000000002,56.699,22.86254572509144,Normal,High Activity,Maintenance,50,11,validation
+3240,31.0,146,2,5.5,150,7.0,3.0,165.1,68.0388,24.96102980371641,Normal,Moderate Activity,Maintenance,36,93,validation
+9714,48.0,6021,1,5.1,200,4.0,0.0,154.94,90.7184,37.7892505314707,Obese,Low Activity,Fat Loss,3,4,validation
+12946,19.0,7398,2,5.9,152,2.0,0.0,175.26,68.945984,22.446227459142587,Normal,Low Activity,Maintenance,51,66,validation
+186,18.0,4640,1,5.9,133,0.0,0.0,175.26,60.327736,19.640449026749767,Normal,Low Activity,Muscle Gain,0,98,validation
+9755,52.0,6022,1,6.1,210,50.0,0.0,185.42,95.25432,27.70585312234614,Overweight,High Activity,Fat Loss,87,17,validation
+867,51.0,2118,2,5.7,200,3.0,4.0,170.18,90.7184,31.32408136057083,Obese,Moderate Activity,Fat Loss,86,51,validation
+6548,40.0,2697,2,5.4,160,10.0,3.0,162.56,72.57472,27.463633052266104,Overweight,Moderate Activity,Fat Loss,54,56,validation
+9367,21.0,4187,2,5.1,140,8.0,3.0,154.94,63.50288,26.45247537202949,Overweight,Moderate Activity,Maintenance,2,37,validation
+294,50.0,3861,2,5.3,182,2.0,0.0,160.02,82.553744,32.2394958722898,Obese,Low Activity,Fat Loss,3,4,validation
+8368,50.0,1835,1,6.2,210,5.0,5.0,187.96,95.25432,26.96210578688505,Overweight,Moderate Activity,Maintenance,2,37,validation
+11548,19.0,7604,2,5.3,115,10.0,5.0,160.02,52.16308,20.371110029194107,Normal,Moderate Activity,Muscle Gain,0,80,validation
+10059,56.0,3708,2,5.8,120,40.0,0.0,172.72,54.43104,18.24573545340862,Underweight,High Activity,Maintenance,8,20,validation
+555,44.0,5423,1,5.9,160,10.0,4.0,175.26,72.57472,23.62760785172904,Normal,Moderate Activity,Maintenance,36,93,validation
+3514,46.0,169,1,5.1,185,20.0,5.0,154.94,83.91452,34.9550567416104,Obese,Moderate Activity,Fat Loss,86,51,validation
+9815,61.0,922,1,5.11,190,6.0,0.0,180.34,86.18248,26.49932774572948,Overweight,Low Activity,Maintenance,17,22,validation
+9540,47.0,6010,1,5.1,160,7.0,1.0,154.94,72.57472,30.23140042517656,Obese,Low Activity,Fat Loss,3,4,validation
+3238,45.0,145,2,5.5,275,10.0,0.0,165.1,124.7378,45.761887973480086,Obese,Low Activity,Fat Loss,3,4,validation
+2295,58.0,3504,1,6.2,200,10.0,3.0,187.96,90.7184,25.67819598750958,Overweight,Moderate Activity,Maintenance,2,37,validation
+4507,40.0,292,2,5.2,135,12.0,2.0,157.48000000000002,61.23492,24.69154938309876,Normal,Moderate Activity,Maintenance,36,93,validation
+11187,37.0,1141,2,5.4,250,5.0,0.0,162.56,113.398,42.91192664416579,Obese,Low Activity,Fat Loss,3,4,validation
+657,46.0,5431,2,5.5,145,0.0,0.0,165.1,65.77083999999999,24.128995476925866,Normal,Low Activity,Maintenance,51,66,validation
+1102,61.0,5463,1,6.4,215,40.0,0.0,193.04,97.52228,26.17033177279651,Overweight,High Activity,Maintenance,16,39,validation
+5914,29.0,3591,2,5.6,135,5.0,0.0,167.64,61.23492,21.789328702624346,Normal,Low Activity,Maintenance,51,66,validation
+8947,18.0,4175,1,6.4,152,35.0,16.0,193.04,68.945984,18.501815951000324,Normal,High Activity,Muscle Gain,16,78,validation
+1954,40.0,2,1,6.6,220,4.0,0.0,198.12,99.79024,25.423271096377825,Overweight,Low Activity,Maintenance,17,22,validation
+11163,41.0,2036,2,5.2,125,17.0,4.0,157.48000000000002,56.699,22.86254572509144,Normal,Moderate Activity,Maintenance,36,93,validation
+6095,31.0,1758,1,5.9,165,5.0,2.0,175.26,74.84268,24.365970597095576,Normal,Low Activity,Maintenance,51,66,validation
+9633,60.0,6016,1,5.6,200,26.0,0.0,167.64,90.7184,32.28048696685089,Obese,Moderate Activity,Fat Loss,86,51,validation
+5869,53.0,2622,2,5.2,155,4.0,0.0,157.48000000000002,70.30676,28.34955669911339,Overweight,Low Activity,Fat Loss,71,9,validation
+14525,60.0,1499,1,6.2,195,10.0,0.0,187.96,88.45044,25.03624108782184,Overweight,Low Activity,Maintenance,17,22,validation
+9644,53.0,909,2,5.8,230,2.0,0.0,172.72,104.32616,34.97099295236652,Obese,Low Activity,Fat Loss,3,4,validation
+1912,50.0,1606,1,6.2,250,6.0,1.0,187.96,113.398,32.09774498438697,Obese,Low Activity,Fat Loss,3,4,validation
+9477,39.0,899,2,5.7,120,12.0,2.0,170.18,54.43104,18.79444881634249,Normal,Moderate Activity,Maintenance,36,93,validation
+2425,61.0,1633,1,5.9,175,8.0,10.0,175.26,79.3786,25.84269608782864,Overweight,Moderate Activity,Maintenance,2,37,validation
+11588,49.0,1184,1,6.4,245,20.0,0.0,193.04,111.13004,29.82200597365184,Overweight,Moderate Activity,Fat Loss,54,56,validation
+13604,53.0,4363,2,5.2,139,20.0,8.0,157.48000000000002,63.049288,25.423150846301684,Overweight,High Activity,Maintenance,16,39,validation
+10964,32.0,2035,1,6.2,285,4.0,2.0,187.96,129.27372,36.59142928220115,Obese,Low Activity,Fat Loss,3,4,validation
+8191,52.0,748,2,5.1,230,3.0,0.0,154.94,104.32616,43.45763811119131,Obese,Low Activity,Fat Loss,3,4,validation
+3262,63.0,148,1,5.5,138,10.0,0.0,165.1,62.595696,22.964147419419096,Normal,Low Activity,Maintenance,51,66,validation
+1796,44.0,1601,1,6.1,225,20.0,0.0,185.42,102.0582,29.684842631085157,Overweight,Moderate Activity,Fat Loss,54,56,validation
+991,43.0,5459,1,5.8,163,3.0,2.0,172.72,73.935496,24.78379065754671,Normal,Low Activity,Maintenance,51,66,validation
+12825,45.0,3271,2,5.6,135,5.0,2.0,167.64,61.23492,21.789328702624346,Normal,Low Activity,Maintenance,51,66,validation
+8812,42.0,1852,2,5.6,140,3.0,1.0,167.64,63.50288,22.59634087679561,Normal,Low Activity,Maintenance,51,66,validation
+1190,58.0,6429,2,5.4,270,0.0,0.0,162.56,122.46984,46.34488077569905,Obese,Low Activity,Fat Loss,3,4,validation
+3345,55.0,156,1,5.7,200,3.0,0.0,170.18,90.7184,31.32408136057083,Obese,Low Activity,Fat Loss,3,4,validation
+9737,62.0,916,1,6.2,205,36.0,0.0,187.96,92.98636,26.32015088719732,Overweight,High Activity,Maintenance,16,39,validation
+1915,37.0,2147,2,5.7,170,5.0,2.0,170.18,77.11064,26.62546915648521,Overweight,Low Activity,Maintenance,17,22,validation
+2751,43.0,104,1,6.2,170,25.0,5.0,187.96,77.11064,21.82646658938314,Normal,High Activity,Maintenance,50,11,validation
+1102,54.0,6425,2,5.1,170,20.0,10.0,154.94,77.11064,32.1208629517501,Obese,High Activity,Fat Loss,19,0,validation
+9923,48.0,930,2,5.3,116,21.0,5.0,160.02,52.616672,20.548250116404493,Normal,High Activity,Maintenance,50,11,validation
+6825,53.0,1798,2,5.6,200,20.0,3.0,167.64,90.7184,32.28048696685089,Obese,Moderate Activity,Fat Loss,86,51,validation
+9615,62.0,2940,2,5.3,220,36.0,0.0,160.02,99.79024,38.97081918628438,Obese,High Activity,Fat Loss,19,0,validation
+9311,37.0,878,1,5.9,230,5.0,0.0,175.26,104.32616,33.9646862868605,Obese,Low Activity,Fat Loss,3,4,validation
+12935,65.0,6999,2,5.9,160,20.0,6.0,175.26,72.57472,23.62760785172904,Normal,High Activity,Maintenance,50,11,validation
+12629,60.0,3253,2,5.7,130,10.0,0.0,170.18,58.96696,20.36065288437104,Normal,Low Activity,Maintenance,51,66,validation
+13604,35.0,1412,1,5.6,200,40.0,2.0,167.64,90.7184,32.28048696685089,Obese,High Activity,Fat Loss,19,0,validation
+1956,61.0,1609,2,5.8,175,3.0,2.0,172.72,79.3786,26.60836420288757,Overweight,Low Activity,Maintenance,17,22,validation
+6539,59.0,6675,2,5.9,170,0.0,6.0,175.26,77.11064,25.10433334246211,Overweight,Moderate Activity,Maintenance,2,37,validation
+2916,41.0,6505,2,5.9,130,20.0,5.0,175.26,58.96696,19.19743137952985,Normal,Moderate Activity,Maintenance,36,93,validation
+11637,22.0,2331,2,5.2,100,2.0,4.0,157.48000000000002,45.3592,18.29003658007316,Underweight,Low Activity,Muscle Gain,58,23,validation
+12883,41.0,1301,2,5.1,112,7.0,2.0,154.94,50.802304,21.161980297623597,Normal,Moderate Activity,Maintenance,36,93,validation
+9095,50.0,863,1,5.9,140,3.0,0.0,175.26,63.50288,20.674156870262912,Normal,Low Activity,Maintenance,51,66,validation
+8495,37.0,1840,1,5.7,195,9.0,3.0,170.18,88.45044,30.54097932655656,Obese,Moderate Activity,Fat Loss,86,51,validation
+12341,53.0,6969,2,5.7,150,10.0,0.0,170.18,68.0388,23.49306102042812,Normal,Low Activity,Maintenance,51,66,validation
+5118,22.0,5012,2,5.6,130,3.0,3.0,167.64,58.96696,20.982316528453072,Normal,Low Activity,Muscle Gain,0,98,validation
+332,37.0,2080,1,6.2,250,0.0,50.0,187.96,113.398,32.09774498438697,Obese,High Activity,Fat Loss,19,0,validation
+11883,42.0,2037,2,5.4,191,15.0,1.0,162.56,86.636072,32.784711956142665,Obese,Moderate Activity,Fat Loss,86,51,validation
+6516,58.0,1779,2,5.6,180,14.0,1.0,167.64,81.64656,29.05243827016579,Overweight,Moderate Activity,Fat Loss,54,56,validation
+8463,59.0,778,2,5.6,180,8.0,0.0,167.64,81.64656,29.05243827016579,Overweight,Low Activity,Fat Loss,71,9,validation
+7212,25.0,7264,1,6.2,190,2.0,0.0,187.96,86.18248,24.394286188134096,Normal,Low Activity,Maintenance,51,66,validation
+8916,46.0,843,1,6.2,220,12.0,0.0,187.96,99.79024,28.246015586260533,Overweight,Moderate Activity,Fat Loss,54,56,validation
+2081,39.0,2200,2,5.7,140,5.0,2.0,170.18,63.50288,21.92685695239958,Normal,Low Activity,Maintenance,51,66,validation
+2198,58.0,5533,1,6.2,220,5.0,3.0,187.96,99.79024,28.246015586260533,Overweight,Moderate Activity,Fat Loss,54,56,validation
+1857,53.0,5294,2,5.6,195,14.0,0.0,167.64,88.45044,31.47347479267961,Obese,Moderate Activity,Fat Loss,86,51,validation
+1769,60.0,1600,2,5.7,160,15.0,0.0,170.18,72.57472,25.059265088456662,Overweight,Moderate Activity,Maintenance,2,37,validation
+11906,19.0,3191,2,5.3,120,3.0,0.0,160.02,54.43104,21.256810465246023,Normal,Low Activity,Maintenance,51,66,validation
+9644,21.0,4193,1,5.11,195,3.0,1.0,180.34,88.45044,27.196678475880255,Overweight,Low Activity,Fat Loss,71,9,validation
+7031,53.0,2750,2,5.5,215,8.0,5.0,165.1,97.52228,35.77747605199352,Obese,Moderate Activity,Fat Loss,86,51,validation
+14260,38.0,3378,2,5.9,125,0.0,0.0,175.26,56.699,18.459068634163312,Underweight,Low Activity,Maintenance,0,74,validation
+2802,34.0,2350,2,5.5,117,7.0,3.0,165.1,53.070264,19.4696032468988,Normal,Moderate Activity,Muscle Gain,0,80,validation
+5589,18.0,4052,2,5.3,125,20.0,0.0,160.02,56.699,22.142510901297943,Normal,Moderate Activity,Maintenance,36,93,validation
+273,49.0,2074,1,5.11,190,7.0,0.0,180.34,86.18248,26.49932774572948,Overweight,Low Activity,Maintenance,17,22,validation
+3735,50.0,196,1,5.1,210,12.0,2.0,154.94,95.25432,39.67871305804423,Obese,Moderate Activity,Fat Loss,86,51,validation
+13663,35.0,6282,2,5.3,130,3.0,2.0,160.02,58.96696,23.02821133734986,Normal,Low Activity,Maintenance,51,66,validation
+12162,54.0,1247,1,5.9,190,6.0,2.0,175.26,86.18248,28.057784323928235,Overweight,Low Activity,Fat Loss,71,9,validation
+5680,53.0,2596,2,5.7,170,8.0,3.0,170.18,77.11064,26.62546915648521,Overweight,Moderate Activity,Maintenance,2,37,validation
+943,58.0,5455,1,5.9,200,25.0,5.0,175.26,90.7184,29.534509814661305,Overweight,High Activity,Fat Loss,87,17,validation
+9893,50.0,1886,1,5.1,180,10.0,40.0,154.94,81.64656,34.01032547832363,Obese,High Activity,Fat Loss,19,0,validation
+1660,60.0,3034,2,5.7,160,25.0,5.0,170.18,72.57472,25.059265088456662,Overweight,High Activity,Maintenance,16,39,validation
+8085,51.0,734,1,5.1,209,20.0,3.0,154.94,94.800728,39.48976680538688,Obese,Moderate Activity,Fat Loss,86,51,validation
+12543,31.0,1295,1,5.1,160,2.0,0.0,154.94,72.57472,30.23140042517656,Obese,Low Activity,Fat Loss,3,4,validation
+14518,27.0,6326,2,5.5,135,12.0,5.0,165.1,61.23492,22.46492682334477,Normal,Moderate Activity,Maintenance,36,93,validation
+12776,27.0,3266,1,5.1,185,55.0,6.0,154.94,83.91452,34.9550567416104,Obese,High Activity,Fat Loss,19,0,validation
+13726,60.0,2045,2,5.2,200,7.0,0.0,157.48000000000002,90.7184,36.58007316014631,Obese,Low Activity,Fat Loss,3,4,validation
+39,48.0,1552,1,6.1,300,10.0,0.0,185.42,136.0776,39.57979017478021,Obese,Low Activity,Fat Loss,3,4,validation
+11223,33.0,3139,2,5.4,120,0.0,0.0,162.56,54.43104,20.597724789199575,Normal,Low Activity,Muscle Gain,0,98,validation
+8684,51.0,2863,2,5.2,135,10.0,6.0,157.48000000000002,61.23492,24.69154938309876,Normal,Moderate Activity,Maintenance,36,93,validation
+8144,20.0,742,2,5.3,120,4.0,6.0,160.02,54.43104,21.256810465246023,Normal,Moderate Activity,Maintenance,36,93,validation
+2882,56.0,2355,2,5.6,150,14.0,1.0,167.64,68.0388,24.21036522513816,Normal,Moderate Activity,Maintenance,36,93,validation
+1151,58.0,2996,2,5.1,180,4.0,0.0,154.94,81.64656,34.01032547832363,Obese,Low Activity,Fat Loss,3,4,validation
+6989,65.0,623,1,6.2,185,20.0,0.0,187.96,83.91452,23.75233128844636,Normal,Moderate Activity,Maintenance,36,93,validation
+1796,44.0,3484,2,5.7,140,20.0,0.0,170.18,63.50288,21.92685695239958,Normal,Moderate Activity,Maintenance,36,93,validation
+6858,64.0,6691,2,5.6,130,30.0,0.0,167.64,58.96696,20.982316528453072,Normal,Moderate Activity,Maintenance,36,93,validation
+3972,50.0,1690,1,5.7,184,10.0,0.0,170.18,83.460928,28.81815485172516,Overweight,Low Activity,Fat Loss,71,9,validation
+11273,42.0,3143,2,5.6,170,10.0,2.0,167.64,77.11064,27.43841392182325,Overweight,Moderate Activity,Fat Loss,54,56,validation
+9039,54.0,6805,2,5.3,145,6.0,0.0,160.02,65.77083999999999,25.68531264550561,Overweight,Low Activity,Maintenance,17,22,validation
+11678,26.0,6147,2,5.9,175,12.0,3.0,175.26,79.3786,25.84269608782864,Overweight,Moderate Activity,Maintenance,2,37,validation
+5502,37.0,6614,2,5.6,150,10.0,0.0,167.64,68.0388,24.21036522513816,Normal,Low Activity,Maintenance,51,66,validation
+11429,35.0,1170,1,6.1,170,10.0,5.0,185.42,77.11064,22.428547765708785,Normal,Moderate Activity,Maintenance,36,93,validation
+8685,55.0,3672,2,5.8,145,10.0,2.0,172.72,65.77083999999999,22.04693033953541,Normal,Moderate Activity,Maintenance,36,93,validation
+3083,32.0,2371,2,5.6,125,7.0,0.0,167.64,56.699,20.175304354281803,Normal,Low Activity,Muscle Gain,0,98,validation
+186,45.0,2067,1,5.8,170,0.0,0.0,172.72,77.11064,25.848125225662216,Overweight,Low Activity,Maintenance,17,22,validation
+3758,21.0,7197,1,5.1,170,8.0,10.0,154.94,77.11064,32.1208629517501,Obese,Moderate Activity,Fat Loss,86,51,validation
+2291,57.0,2186,2,5.8,168,3.0,0.0,172.72,76.203456,25.54402963477207,Overweight,Low Activity,Maintenance,17,22,validation
+12398,62.0,1269,1,5.1,174,0.0,0.0,154.94,78.925008,32.87664796237951,Obese,Low Activity,Fat Loss,3,4,validation
+6154,35.0,1762,1,5.1,175,10.0,2.0,154.94,79.3786,33.06559421503687,Obese,Moderate Activity,Fat Loss,86,51,validation
+5070,42.0,359,2,5.6,200,10.0,0.0,167.64,90.7184,32.28048696685089,Obese,Low Activity,Fat Loss,3,4,validation
+4542,45.0,2493,2,5.1,170,5.0,0.0,154.94,77.11064,32.1208629517501,Obese,Low Activity,Fat Loss,3,4,validation
+1654,52.0,1022,2,5.5,135,7.0,4.0,165.1,61.23492,22.46492682334477,Normal,Moderate Activity,Maintenance,36,93,validation
+2721,56.0,99,2,5.6,148,7.0,0.0,167.64,67.131616,23.887560355469653,Normal,Low Activity,Maintenance,51,66,validation
+1613,49.0,3028,2,5.2,160,17.0,0.0,157.48000000000002,72.57472,29.264058528117047,Overweight,Moderate Activity,Fat Loss,54,56,validation
+4172,63.0,6557,2,5.4,140,5.0,0.0,162.56,63.50288,24.030678920732843,Normal,Low Activity,Maintenance,51,66,validation
+6063,57.0,5771,1,6.4,220,2.0,0.0,193.04,99.79024,26.77894413960573,Overweight,Low Activity,Maintenance,17,22,validation
+4554,45.0,298,1,5.1,165,15.0,3.0,154.94,74.84268,31.17613168846333,Obese,Moderate Activity,Fat Loss,86,51,validation
+2067,49.0,6466,2,5.4,120,30.0,0.0,162.56,54.43104,20.597724789199575,Normal,Moderate Activity,Maintenance,36,93,validation
+6279,54.0,515,1,6.3,210,55.0,6.0,190.5,95.25432,26.24790956248579,Overweight,High Activity,Maintenance,16,39,validation
+12946,48.0,6234,2,5.2,180,8.0,2.0,157.48000000000002,81.64656,32.92206584413167,Obese,Moderate Activity,Fat Loss,86,51,validation
+6764,24.0,4105,1,5.9,210,10.0,0.0,175.26,95.25432,31.011235305394365,Obese,Low Activity,Fat Loss,3,4,validation
+5642,51.0,426,1,6.1,240,5.0,1.0,185.42,108.86208,31.66383213982416,Obese,Low Activity,Fat Loss,3,4,validation
+9322,53.0,1869,2,5.7,138,7.0,0.0,170.18,62.595696,21.61361613879387,Normal,Low Activity,Maintenance,51,66,validation
+6771,53.0,594,1,5.1,203,45.0,1.0,154.94,92.079176,38.35608928944277,Obese,High Activity,Fat Loss,19,0,validation
+12726,59.0,1320,1,5.11,170,40.0,10.0,180.34,77.11064,23.70992482512638,Normal,High Activity,Maintenance,50,11,validation
+5611,41.0,2589,2,5.7,200,10.0,6.0,170.18,90.7184,31.32408136057083,Obese,Moderate Activity,Fat Loss,86,51,validation
+7365,53.0,5877,1,5.11,217,3.0,0.0,180.34,98.429464,30.26502168854367,Obese,Low Activity,Fat Loss,3,4,validation
+5615,50.0,6622,2,5.7,136,6.0,3.0,170.18,61.688512,21.300375325188163,Normal,Moderate Activity,Maintenance,36,93,validation
+13913,42.0,1432,1,5.8,220,25.0,3.0,172.72,99.79024,33.4505149979158,Obese,High Activity,Fat Loss,19,0,validation
+311,56.0,5285, ,5.3,150,9.0,9.0,160.02,68.0388,26.571013081557528,Overweight,Moderate Activity,Maintenance,2,37,validation
+5123,55.0,3577,2,5.7,150,4.0,0.0,170.18,68.0388,23.49306102042812,Normal,Low Activity,Maintenance,51,66,validation
+3554,24.0,4978,2,5.6,150,10.0,4.0,167.64,68.0388,24.21036522513816,Normal,Moderate Activity,Maintenance,36,93,validation
+8235,65.0,2825,2,5.7,150,9.0,0.0,170.18,68.0388,23.49306102042812,Normal,Low Activity,Maintenance,51,66,validation
+10020,43.0,2968,2,5.6,145,4.0,0.0,167.64,65.77083999999999,23.40335305096689,Normal,Low Activity,Maintenance,51,66,validation
+14906,62.0,1542,1,5.9,160,20.0,5.0,175.26,72.57472,23.62760785172904,Normal,Moderate Activity,Maintenance,36,93,validation
+9388,65.0,1871,2,5.5,149,10.0,5.0,165.1,67.585208,24.794622938358295,Normal,Moderate Activity,Maintenance,36,93,validation
+539,50.0,6391,2,5.3,110,10.0,0.0,160.02,49.89512,19.48540959314219,Normal,Low Activity,Maintenance,51,66,validation
+5051,19.0,4490,1,5.9,130,5.0,2.0,175.26,58.96696,19.19743137952985,Normal,Low Activity,Muscle Gain,0,98,validation
+4011,50.0,233,2,5.4,145,2.0,1.0,162.56,65.77083999999999,24.888917453616155,Normal,Low Activity,Maintenance,51,66,validation
+3984,52.0,229,2,5.2,185,3.0,0.0,157.48000000000002,83.91452,33.836567673135335,Obese,Low Activity,Fat Loss,3,4,validation
+3628,55.0,1673,1,5.9,164,12.0,0.0,175.26,74.389088,24.21829804802227,Normal,Moderate Activity,Maintenance,36,93,validation
+6731,39.0,6687,1,5.1,190,7.0,2.0,154.94,86.18248,35.89978800489716,Obese,Moderate Activity,Fat Loss,86,51,validation
+5425,27.0,2574,2,5.9,165,6.0,0.0,175.26,74.84268,24.365970597095576,Normal,Low Activity,Maintenance,51,66,validation
+2170,54.0,2173,2,5.9,155,1.0,0.0,175.26,70.30676,22.88924510636251,Normal,Low Activity,Maintenance,51,66,validation
+14811,46.0,7090,2,5.9,145,6.0,3.0,175.26,65.77083999999999,21.41251961562944,Normal,Moderate Activity,Maintenance,36,93,validation
+10732,38.0,6887,2,5.6,150,2.0,1.0,167.64,68.0388,24.21036522513816,Normal,Low Activity,Maintenance,51,66,validation
+8893,20.0,2886,2,5.7,140,4.0,10.0,170.18,63.50288,21.92685695239958,Normal,Moderate Activity,Maintenance,36,93,validation
+10904,61.0,5349,1,5.6,155,5.0,3.0,167.64,70.30676,25.01737739930943,Overweight,Moderate Activity,Maintenance,2,37,validation
+8724,39.0,6786,2,5.1,170,7.0,0.0,154.94,77.11064,32.1208629517501,Obese,Low Activity,Fat Loss,3,4,validation
+6210,21.0,4505,1,5.11,165,2.0,0.0,180.34,74.84268,23.0125740949756,Normal,Low Activity,Maintenance,51,66,validation
+3859,19.0,7201,1,6.2,170,15.0,10.0,187.96,77.11064,21.82646658938314,Normal,High Activity,Maintenance,50,11,validation
+3638,44.0,181,2,5.4,170,4.0,0.0,162.56,77.11064,29.180110118032736,Overweight,Low Activity,Fat Loss,71,9,validation
+14564,49.0,5366,2,5.7,190,3.0,2.0,170.18,86.18248,29.75787729254229,Overweight,Low Activity,Fat Loss,71,9,validation
+11317,57.0,6117,1,5.1,260,6.0,0.0,154.94,117.93392,49.12602569091191,Obese,Low Activity,Fat Loss,3,4,validation
+7314,51.0,5873,1,5.8,270,4.0,2.0,172.72,122.46984,41.0529047701694,Obese,Low Activity,Fat Loss,3,4,validation
+12672,60.0,1920,1,5.1,155,15.0,5.0,154.94,70.30676,29.28666916188979,Overweight,Moderate Activity,Fat Loss,54,56,validation
+13943,32.0,3739,2,5.5,210,5.0,2.0,165.1,95.25432,34.945441725202976,Obese,Low Activity,Fat Loss,3,4,validation
+12423,56.0,5356,1,5.8,170,8.0,3.0,172.72,77.11064,25.848125225662216,Overweight,Moderate Activity,Maintenance,2,37,validation
+2669,54.0,92,2,5.2,115,4.0,0.0,157.48000000000002,52.16308,21.033542067084127,Normal,Low Activity,Maintenance,51,66,validation
+683,46.0,5434,1,6.1,260,40.0,10.0,185.42,117.93392,34.302484818142844,Obese,High Activity,Fat Loss,19,0,validation
+159,40.0,3851,2,5.3,140,4.0,0.0,160.02,63.50288,24.79961220945369,Normal,Low Activity,Maintenance,51,66,validation
+14266,46.0,3379,2,5.4,130,0.0,2.0,162.56,58.96696,22.31420185496621,Normal,Low Activity,Maintenance,51,66,validation
+2897,33.0,121,2,5.5,142,3.0,6.0,165.1,64.410064,23.62977488085154,Normal,Moderate Activity,Maintenance,36,93,validation
+359,52.0,3866,2,5.6,120,40.0,2.0,167.64,54.43104,19.36829218011053,Normal,High Activity,Maintenance,50,11,validation
+14765,39.0,3416,2,5.5,121,10.0,2.0,165.1,54.884632,20.135230708331235,Normal,Moderate Activity,Maintenance,36,93,validation
+5283,29.0,4491,2,5.5,125,0.0,0.0,165.1,56.699,20.800858169763675,Normal,Low Activity,Muscle Gain,0,98,validation
+12151,60.0,3211,2,5.8,200,28.0,7.0,172.72,90.7184,30.40955908901437,Obese,High Activity,Fat Loss,19,0,validation
+12703,44.0,1317,1,5.9,175,25.0,3.0,175.26,79.3786,25.84269608782864,Overweight,High Activity,Maintenance,16,39,validation
+8100,52.0,4147,2,5.6,130,6.0,0.0,167.64,58.96696,20.982316528453072,Normal,Low Activity,Maintenance,51,66,validation
+5103,62.0,6590,2,5.5,130,10.0,0.0,165.1,58.96696,21.632892496554224,Normal,Low Activity,Maintenance,51,66,validation
+5859,62.0,3589,2,5.6,140,2.0,5.0,167.64,63.50288,22.59634087679561,Normal,Moderate Activity,Maintenance,36,93,validation
+906,62.0,3897,2,5.4,140,10.0,1.0,162.56,63.50288,24.030678920732843,Normal,Moderate Activity,Maintenance,36,93,validation
+2189,48.0,5532,2,5.5,185,14.0,0.0,165.1,83.91452,30.78527009125024,Obese,Moderate Activity,Fat Loss,86,51,validation
+7289,27.0,7265,1,6.2,225,12.0,2.0,187.96,102.0582,28.887970485948276,Overweight,Moderate Activity,Fat Loss,54,56,validation
+2158,19.0,7471,2,5.6,120,35.0,15.0,167.64,54.43104,19.36829218011053,Normal,High Activity,Muscle Gain,16,78,validation
+12177,55.0,3214,2,5.11,265,1.0,2.0,180.34,120.20188,36.95958869799112,Obese,Low Activity,Fat Loss,3,4,validation
+8262,51.0,756,1,5.6,190,3.0,5.0,167.64,86.18248,30.666462618508337,Obese,Moderate Activity,Fat Loss,86,51,validation
+6216,55.0,504,1,5.1,165,2.0,4.0,154.94,74.84268,31.17613168846333,Obese,Low Activity,Fat Loss,3,4,validation
+6684,22.0,5055,2,5.5,110,0.0,6.0,165.1,49.89512,18.304755189392036,Underweight,Moderate Activity,Muscle Gain,61,2,validation
+10705,48.0,3096,2,5.7,175,2.0,0.0,170.18,79.3786,27.40857119049948,Overweight,Low Activity,Fat Loss,71,9,validation
+13500,33.0,4573,1,5.11,240,21.0,0.0,180.34,108.86208,33.47283504723724,Obese,Moderate Activity,Fat Loss,86,51,validation
+9300,60.0,3686,2,5.4,100,1.0,0.0,162.56,45.3592,17.164770657666317,Underweight,Low Activity,Maintenance,0,74,validation
+6737,57.0,3626,2,5.5,130,3.0,1.0,165.1,58.96696,21.632892496554224,Normal,Low Activity,Maintenance,51,66,validation
+5438,41.0,5727,1,5.11,155,10.0,4.0,180.34,70.30676,21.61787263467405,Normal,Moderate Activity,Maintenance,36,93,validation
+6348,33.0,524,2,5.8,175,18.0,0.0,172.72,79.3786,26.60836420288757,Overweight,Moderate Activity,Maintenance,2,37,validation
+10009,64.0,938,1,5.8,185,6.0,6.0,172.72,83.91452,28.12884215733829,Overweight,Moderate Activity,Fat Loss,54,56,validation
+14810,65.0,3422,2,5.6,150,6.0,3.0,167.64,68.0388,24.21036522513816,Normal,Moderate Activity,Maintenance,36,93,validation
+7279,44.0,1808,1,5.1,178,2.0,7.0,154.94,80.739376,33.63243297300892,Obese,Moderate Activity,Fat Loss,86,51,validation
+5236,63.0,2561,2,5.4,210,55.0,0.0,162.56,95.25432,36.04601838109926,Obese,High Activity,Fat Loss,19,0,validation
+6748,50.0,2715,2,5.2,125,30.0,1.0,157.48000000000002,56.699,22.86254572509144,Normal,High Activity,Maintenance,50,11,validation
+11389,50.0,1166,1,5.8,215,50.0,6.0,172.72,97.52228,32.69027602069045,Obese,High Activity,Fat Loss,19,0,validation
+4108,28.0,5649,2,6.3,193,2.0,3.0,190.5,87.543256,24.1230787883798,Normal,Low Activity,Maintenance,51,66,validation
+11897,30.0,6943,2,5.7,145,3.0,2.0,170.18,65.77083999999999,22.70995898641385,Normal,Low Activity,Maintenance,51,66,validation
+3185,39.0,1661,2,5.4,140,20.0,0.0,162.56,63.50288,24.030678920732843,Normal,Moderate Activity,Maintenance,36,93,validation
+988,53.0,5458,1,5.11,170,10.0,0.0,180.34,77.11064,23.70992482512638,Normal,Low Activity,Maintenance,51,66,validation
+3027,28.0,133,2,5.1,221,10.0,0.0,154.94,100.243832,41.75712183727512,Obese,Low Activity,Fat Loss,3,4,validation
+14926,58.0,5368,1,5.9,165,12.0,0.0,175.26,74.84268,24.365970597095576,Normal,Moderate Activity,Maintenance,36,93,validation
+5104,52.0,5698,1,6.2,250,6.0,2.0,187.96,113.398,32.09774498438697,Obese,Low Activity,Fat Loss,3,4,validation
+12654,37.0,6989,2,5.6,180,12.0,0.0,167.64,81.64656,29.05243827016579,Overweight,Moderate Activity,Fat Loss,54,56,validation
+10960,30.0,1123,1,5.1,190,20.0,10.0,154.94,86.18248,35.89978800489716,Obese,High Activity,Fat Loss,19,0,validation
+5300,45.0,6606,2,5.5,200,10.0,2.0,165.1,90.7184,33.281373071621886,Obese,Moderate Activity,Fat Loss,86,51,validation
+4694,54.0,2513,2,5.2,120,0.0,2.0,157.48000000000002,54.43104,21.948043896087785,Normal,Low Activity,Maintenance,51,66,validation
+9705,40.0,6020,1,5.9,175,7.0,7.0,175.26,79.3786,25.84269608782864,Overweight,Moderate Activity,Maintenance,2,37,validation
+4689,61.0,5668,1,5.7,185,4.0,3.0,170.18,83.91452,28.974775258528016,Overweight,Low Activity,Fat Loss,71,9,validation
+11736,41.0,1196,1,5.11,160,4.0,4.0,180.34,72.57472,22.315223364824828,Normal,Moderate Activity,Maintenance,36,93,validation
+5118,18.0,4036,2,5.7,130,3.0,2.0,170.18,58.96696,20.36065288437104,Normal,Low Activity,Muscle Gain,0,98,validation
+6619,62.0,575,1,5.9,200,15.0,1.0,175.26,90.7184,29.534509814661305,Overweight,Moderate Activity,Fat Loss,54,56,validation
+12154,55.0,3212,2,5.9,145,20.0,0.0,175.26,65.77083999999999,21.41251961562944,Normal,Moderate Activity,Maintenance,36,93,validation
+3835,39.0,5629,1,5.11,230,3.0,0.0,180.34,104.32616,32.07813358693569,Obese,Low Activity,Fat Loss,3,4,validation
+593,48.0,5425,2,5.8,125,20.0,5.0,172.72,56.699,19.00597443063398,Normal,Moderate Activity,Maintenance,36,93,validation
+14711,18.0,4580,2,5.8,155,0.0,3.0,172.72,70.30676,23.567408293986134,Normal,Low Activity,Maintenance,51,66,validation
+3729,47.0,1681,2,5.7,130,5.0,0.0,170.18,58.96696,20.36065288437104,Normal,Low Activity,Maintenance,51,66,validation
+2921,63.0,2359,1,6.2,190,25.0,20.0,187.96,86.18248,24.394286188134096,Normal,High Activity,Maintenance,50,11,validation
+14173,65.0,3370,2,5.8,165,15.0,0.0,172.72,74.84268,25.087886248436856,Overweight,Moderate Activity,Maintenance,2,37,validation
+11245,64.0,6108,1,5.1,180,50.0,6.0,154.94,81.64656,34.01032547832363,Obese,High Activity,Fat Loss,19,0,validation
+1182,20.0,7139,2,5.5,130,5.0,0.0,165.1,58.96696,21.632892496554224,Normal,Low Activity,Maintenance,51,66,validation
+303,21.0,5231,2,5.3,115,10.0,5.0,160.02,52.16308,20.371110029194107,Normal,Moderate Activity,Muscle Gain,0,80,validation
+11202,64.0,3136,2,5.3,118,2.0,0.0,160.02,53.523856,20.902530290825258,Normal,Low Activity,Maintenance,51,66,validation
+1801,32.0,5146,1,5.6,165,0.0,5.0,167.64,74.84268,26.631401747651974,Overweight,Low Activity,Maintenance,17,22,validation
+12559,50.0,6981,2,5.2,160,3.0,0.0,157.48000000000002,72.57472,29.264058528117047,Overweight,Low Activity,Fat Loss,71,9,validation
+10043,43.0,6036,1,5.7,195,2.0,1.0,170.18,88.45044,30.54097932655656,Obese,Low Activity,Fat Loss,3,4,validation
+14001,44.0,3350,2,5.1,260,6.0,0.0,154.94,117.93392,49.12602569091191,Obese,Low Activity,Fat Loss,3,4,validation
+1803,49.0,1036,2,5.9,150,2.0,5.0,175.26,68.0388,22.150882360995976,Normal,Moderate Activity,Maintenance,36,93,validation
+6108,63.0,2642,2,5.6,140,10.0,0.0,167.64,63.50288,22.59634087679561,Normal,Low Activity,Maintenance,51,66,validation
+12347,34.0,6970,2,5.5,145,3.0,5.0,165.1,65.77083999999999,24.128995476925866,Normal,Moderate Activity,Maintenance,36,93,validation
+8496,41.0,5944,1,6.3,198,7.0,0.0,190.5,89.811216,24.748029016058037,Normal,Low Activity,Maintenance,51,66,validation
+2468,44.0,5545,1,5.11,215,0.0,10.0,180.34,97.52228,29.98608139648336,Overweight,Moderate Activity,Fat Loss,54,56,validation
+9417,50.0,892,1,5.11,175,5.0,8.0,180.34,79.3786,24.40727555527716,Normal,Moderate Activity,Maintenance,36,93,validation
+5780,53.0,449,1,5.1,175,8.0,2.0,154.94,79.3786,33.06559421503687,Obese,Moderate Activity,Fat Loss,86,51,validation
+8057,18.0,5086,1,5.8,170,5.0,5.0,172.72,77.11064,25.848125225662216,Overweight,Moderate Activity,Maintenance,2,37,validation
+3786,63.0,5625,2,5.6,158,5.0,3.0,167.64,71.667536,25.501584703812195,Overweight,Moderate Activity,Maintenance,2,37,validation
+14525,56.0,3398,2,5.5,120,20.0,4.0,165.1,54.43104,19.968823842973126,Normal,Moderate Activity,Maintenance,36,93,validation
+10473,53.0,6872,1,5.1,180,30.0,4.0,154.94,81.64656,34.01032547832363,Obese,High Activity,Fat Loss,19,0,validation
+6764,57.0,2718,2,5.7,190,10.0,0.0,170.18,86.18248,29.75787729254229,Overweight,Low Activity,Fat Loss,71,9,validation
+137,57.0,2065,1,5.9,175,10.0,0.0,175.26,79.3786,25.84269608782864,Overweight,Low Activity,Maintenance,17,22,validation
+12604,62.0,3249,2,5.4,120,10.0,0.0,162.56,54.43104,20.597724789199575,Normal,Low Activity,Maintenance,51,66,validation
+9629,48.0,6015,1,5.1,180,20.0,0.0,154.94,81.64656,34.01032547832363,Obese,Moderate Activity,Fat Loss,86,51,validation
+12599,32.0,6212,1,5.1,170,15.0,11.0,154.94,77.11064,32.1208629517501,Obese,High Activity,Fat Loss,19,0,validation
+4223,56.0,2459,2,5.7,150,20.0,0.0,170.18,68.0388,23.49306102042812,Normal,Moderate Activity,Maintenance,36,93,validation
+6821,52.0,1797,1,5.1,200,25.0,0.0,154.94,90.7184,37.7892505314707,Obese,Moderate Activity,Fat Loss,86,51,validation
+4975,42.0,2539,2,5.6,120,5.0,1.0,167.64,54.43104,19.36829218011053,Normal,Low Activity,Maintenance,51,66,validation
+10120,44.0,6040,2,5.8,145,30.0,3.0,172.72,65.77083999999999,22.04693033953541,Normal,High Activity,Maintenance,50,11,validation
+11268,37.0,1149,2,5.6,215,5.0,0.0,167.64,97.52228,34.701523489364696,Obese,Low Activity,Fat Loss,3,4,validation
+8432,50.0,3662,2,5.5,220,4.0,0.0,165.1,99.79024,36.60951037878407,Obese,Low Activity,Fat Loss,3,4,validation
+2765,59.0,106,1,5.11,180,3.0,0.0,180.34,81.64656,25.10462628542793,Overweight,Low Activity,Maintenance,17,22,validation
+2980,63.0,132,1,5.11,197,15.0,3.0,180.34,89.357624,27.475618767940567,Overweight,Moderate Activity,Fat Loss,54,56,validation
+1882,40.0,1043,2,5.5,160,10.0,0.0,165.1,72.57472,26.625098457297504,Overweight,Low Activity,Maintenance,17,22,validation
+6684,47.0,2712,2,5.3,160,1.0,0.0,160.02,72.57472,28.342413953661367,Overweight,Low Activity,Fat Loss,71,9,validation
+7074,57.0,5857,1,5.8,150,10.0,10.0,172.72,68.0388,22.80716931676077,Normal,Moderate Activity,Maintenance,36,93,validation
+3633,32.0,2399,2,5.6,120,20.0,10.0,167.64,54.43104,19.36829218011053,Normal,High Activity,Muscle Gain,16,78,validation
+2505,41.0,5549,2,5.4,145,4.0,1.0,162.56,65.77083999999999,24.888917453616155,Normal,Low Activity,Maintenance,51,66,validation
+486,54.0,2091,1,5.7,176,8.0,0.0,170.18,79.83219199999999,27.565191597302327,Overweight,Low Activity,Fat Loss,71,9,validation
+1885,35.0,6455,1,5.1,190,18.0,4.0,154.94,86.18248,35.89978800489716,Obese,Moderate Activity,Fat Loss,86,51,validation
+7015,53.0,5851,2,5.2,145,14.0,7.0,157.48000000000002,65.77083999999999,26.52055304110607,Overweight,Moderate Activity,Maintenance,2,37,validation
+11937,46.0,3197,2,5.7,240,15.0,0.0,170.18,108.86208,37.58889763268499,Obese,Moderate Activity,Fat Loss,86,51,validation
+14701,21.0,4404,1,5.7,175,2.0,10.0,170.18,79.3786,27.40857119049948,Overweight,Moderate Activity,Fat Loss,54,56,validation
+359,55.0,2082,1,5.8,155,0.0,0.0,172.72,70.30676,23.567408293986134,Normal,Low Activity,Maintenance,51,66,validation
+9311,36.0,2916,2,5.8,180,5.0,0.0,172.72,81.64656,27.36860318011293,Overweight,Low Activity,Fat Loss,71,9,validation
+3210,49.0,5584,2,5.1,107,0.0,0.0,154.94,48.534344,20.217249034336824,Normal,Low Activity,Maintenance,51,66,validation
+11421,50.0,3160,2,5.4,150,30.0,4.0,162.56,68.0388,25.74715598649947,Overweight,High Activity,Maintenance,16,39,validation
+7024,56.0,5333,1,5.8,182,20.0,2.0,172.72,82.553744,27.672698771003077,Overweight,Moderate Activity,Fat Loss,54,56,validation
+60,31.0,2058,1,5.8,225,13.0,45.0,172.72,102.0582,34.21075397514117,Obese,High Activity,Fat Loss,19,0,validation
+10959,48.0,3118,2,5.9,160,10.0,10.0,175.26,72.57472,23.62760785172904,Normal,Moderate Activity,Maintenance,36,93,validation
+1256,51.0,5470,1,6.4,230,5.0,0.0,193.04,104.32616,27.99616887322417,Overweight,Low Activity,Fat Loss,71,9,validation
+4703,56.0,320,1,5.7,168,0.0,0.0,170.18,76.203456,26.312228342879497,Overweight,Low Activity,Maintenance,17,22,validation
+5187,64.0,2557,2,5.2,125,4.0,4.0,157.48000000000002,56.699,22.86254572509144,Normal,Moderate Activity,Maintenance,36,93,validation
+6397,64.0,533,2,5.4,158,12.0,0.0,162.56,71.667536,27.12033763911278,Overweight,Moderate Activity,Fat Loss,54,56,validation
+14018,63.0,1441,2,5.3,125,60.0,0.0,160.02,56.699,22.142510901297943,Normal,High Activity,Maintenance,50,11,validation
+14005,37.0,5363,1,5.11,240,10.0,0.0,180.34,108.86208,33.47283504723724,Obese,Low Activity,Fat Loss,3,4,validation
+12483,48.0,1286,1,5.9,172,5.0,2.0,175.26,78.017824,25.39967844060872,Overweight,Low Activity,Maintenance,17,22,validation
+13399,61.0,7026,2,5.5,140,8.0,0.0,165.1,63.50288,23.29696115013532,Normal,Low Activity,Maintenance,51,66,validation
+6812,64.0,2727,2,5.2,115,0.0,0.0,157.48000000000002,52.16308,21.033542067084127,Normal,Low Activity,Maintenance,51,66,validation
+10895,40.0,3111,2,5.8,155,3.0,0.0,172.72,70.30676,23.567408293986134,Normal,Low Activity,Maintenance,51,66,validation
+12471,64.0,1283,2,5.7,139,5.0,0.0,170.18,63.049288,21.770236545596724,Normal,Low Activity,Maintenance,51,66,validation
+13238,55.0,1381,1,5.7,200,3.0,1.0,170.18,90.7184,31.32408136057083,Obese,Low Activity,Fat Loss,3,4,validation
+7316,19.0,4127,2,5.11,160,2.0,0.0,180.34,72.57472,22.315223364824828,Normal,Low Activity,Maintenance,51,66,validation
+3729,48.0,3545,1,5.1,155,17.0,3.0,154.94,70.30676,29.28666916188979,Overweight,Moderate Activity,Fat Loss,54,56,validation
+9950,63.0,3706,2,5.4,145,15.0,0.0,162.56,65.77083999999999,24.888917453616155,Normal,Moderate Activity,Maintenance,36,93,validation
+3881,46.0,5633,1,5.11,180,5.0,0.0,180.34,81.64656,25.10462628542793,Overweight,Low Activity,Maintenance,17,22,validation
+2158,51.0,5531,1,5.1,180,40.0,10.0,154.94,81.64656,34.01032547832363,Obese,High Activity,Fat Loss,19,0,validation
+10380,62.0,1062,1,5.9,190,5.0,0.0,175.26,86.18248,28.057784323928235,Overweight,Low Activity,Fat Loss,71,9,validation
+7734,29.0,6748,1,5.7,130,7.0,2.0,170.18,58.96696,20.36065288437104,Normal,Moderate Activity,Muscle Gain,0,80,validation
+1492,49.0,1003,2,5.9,280,12.0,1.0,175.26,127.00576,41.34831374052583,Obese,Moderate Activity,Fat Loss,86,51,validation
+2195,40.0,47,2,5.5,170,5.0,2.0,165.1,77.11064,28.2891671108786,Overweight,Low Activity,Fat Loss,71,9,validation
+5995,62.0,3597,2,5.6,180,15.0,0.0,167.64,81.64656,29.05243827016579,Overweight,Moderate Activity,Fat Loss,54,56,validation
+4484,20.0,4010,1,6.2,160,15.0,3.0,187.96,72.57472,20.542556790007666,Normal,Moderate Activity,Muscle Gain,0,80,validation
+14031,48.0,3354,2,5.4,120,20.0,0.0,162.56,54.43104,20.597724789199575,Normal,Moderate Activity,Maintenance,36,93,validation
+14023,34.0,4379,1,6.1,187,0.0,0.0,185.42,84.821704,24.67140254227966,Normal,Low Activity,Maintenance,51,66,validation
+7734,28.0,5905,2,5.11,205,12.0,2.0,180.34,92.98636,28.59137993618181,Overweight,Moderate Activity,Fat Loss,54,56,validation
+11508,38.0,6131,1,6.1,180,0.0,0.0,185.42,81.64656,23.74787410486812,Normal,Low Activity,Maintenance,51,66,validation
+7771,50.0,699,2,5.6,170,12.0,0.0,167.64,77.11064,27.43841392182325,Overweight,Moderate Activity,Fat Loss,54,56,validation
+9245,21.0,2913,1,5.9,185,1.0,0.0,175.26,83.91452,27.319421578561705,Overweight,Low Activity,Fat Loss,71,9,validation
+1613,54.0,1016,2,5.1,146,17.0,0.0,154.94,66.224432,27.586152887973608,Overweight,Moderate Activity,Fat Loss,54,56,validation
+14210,51.0,6312,1,5.1,195,5.0,60.0,154.94,88.45044,36.84451926818393,Obese,High Activity,Fat Loss,19,0,validation
+5813,59.0,454,2,5.2,135,4.0,8.0,157.48000000000002,61.23492,24.69154938309876,Normal,Moderate Activity,Maintenance,36,93,validation
+7032,44.0,630,1,5.9,190,4.0,1.0,175.26,86.18248,28.057784323928235,Overweight,Low Activity,Fat Loss,71,9,validation
+2356,42.0,65,1,6.1,195,4.0,1.0,185.42,88.45044,25.726863613607133,Overweight,Low Activity,Maintenance,17,22,validation
+10723,32.0,6885,2,5.3,114,0.0,3.0,160.02,51.709488,20.193969941983724,Normal,Low Activity,Muscle Gain,0,98,validation
+11107,31.0,6906,1,5.9,150,50.0,30.0,175.26,68.0388,22.150882360995976,Normal,High Activity,Maintenance,50,11,validation
+11312,56.0,1157,1,5.1,220,3.0,2.0,154.94,99.79024,41.56817558461777,Obese,Low Activity,Fat Loss,3,4,validation
+10198,19.0,4211,2,5.3,135,75.0,0.0,160.02,61.23492,23.91391177340178,Normal,High Activity,Maintenance,50,11,validation
+5515,64.0,5735,1,5.1,185,10.0,1.0,154.94,83.91452,34.9550567416104,Obese,Moderate Activity,Fat Loss,86,51,validation

@@ -18,7 +18,6 @@ from sklearn.metrics import (accuracy_score, f1_score, precision_score, recall_s
                            mean_absolute_error, r2_score, roc_curve, auc)
 from itertools import cycle
 import logging
-from .fitness_data_augmenter import FitnessDataAugmenter
 warnings.filterwarnings('ignore')
 
 # Helper functions
