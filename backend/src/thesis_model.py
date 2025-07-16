@@ -81,8 +81,9 @@ class XGFitnessAIModel:
         
         self.scaler = StandardScaler()
         self.rf_scaler = StandardScaler()
-        self.workout_encoder = LabelEncoder()
-        self.nutrition_encoder = LabelEncoder()
+        # Remove unused encoders
+        # self.workout_encoder = LabelEncoder()
+        # self.nutrition_encoder = LabelEncoder()
         self.workout_label_encoder = LabelEncoder()
         self.nutrition_label_encoder = LabelEncoder()
         self.workout_rf_label_encoder = LabelEncoder()
@@ -436,8 +437,8 @@ class XGFitnessAIModel:
             'workout_model': self.workout_model,
             'nutrition_model': self.nutrition_model,
             'scaler': self.scaler,
-            'workout_encoder': self.workout_encoder,
-            'nutrition_encoder': self.nutrition_encoder,
+            # Removed: 'workout_encoder': self.workout_encoder,
+            # Removed: 'nutrition_encoder': self.nutrition_encoder,
             'workout_label_encoder': self.workout_label_encoder,
             'nutrition_label_encoder': self.nutrition_label_encoder,
             'template_manager': self.template_manager,
@@ -455,3 +456,8 @@ class XGFitnessAIModel:
         with open(file_path, 'wb') as f:
             pickle.dump(model_data, f)
         print(f"✅ Model saved to {file_path} (include_research_models={include_research_models})")
+
+if __name__ == "__main__":
+    model = XGFitnessAIModel()
+    # Call methods you want to test, e.g.:
+    model.save_model("test_model.pkl")

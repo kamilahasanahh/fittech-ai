@@ -385,15 +385,6 @@ def main():
     print(f"   🔄 Reproducible results with random_state=42")
     print()
     
-    # Generate comprehensive visualizations
-    print("🎨 Generating comprehensive visualizations...")
-    print("⚠️ Visualization generation skipped during training")
-    print("   Run visualizations separately: python run_visualizations.py")
-    print("   (This ensures training data is available for visualizations)")
-    print()
-    
-    print()
-    
     print("\n" + "=" * 80)
     print("🎉 COMPREHENSIVE TRAINING COMPLETE!")
     print("=" * 80)

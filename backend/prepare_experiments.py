@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import json
 
 CLEANED_PATH = 'backend/cleaned_real_data.csv'
 OUTPUT_SYNTH = 'backend/outputs/synthetic'
@@ -46,12 +47,12 @@ def synthesize_samples(df, n_needed, numeric_cols):
         samples.append(row)
     return pd.DataFrame(samples)
 
-def create_synthetic_split(full_df, combo_cols, numeric_cols, split_ratios=(0.7, 0.15, 0.15), min_per_combo=30):
+def create_synthetic_split(df, combo_cols, numeric_cols, split_ratios=(0.7, 0.15, 0.15), min_per_combo=30):
     train_rows, val_rows, test_rows = [], [], []
-    combos = full_df[combo_cols].drop_duplicates().values
+    combos = df[combo_cols].drop_duplicates().values
     for combo in combos:
-        mask = (full_df[combo_cols[0]] == combo[0]) & (full_df[combo_cols[1]] == combo[1]) & (full_df[combo_cols[2]] == combo[2])
-        combo_df = full_df[mask].copy()
+        mask = (df[combo_cols[0]] == combo[0]) & (df[combo_cols[1]] == combo[1]) & (df[combo_cols[2]] == combo[2])
+        combo_df = df[mask].copy()
         n_total = max(len(combo_df), min_per_combo)
         n_train = int(round(n_total * split_ratios[0]))
         n_val = int(round(n_total * split_ratios[1]))
@@ -84,36 +85,59 @@ def create_real_split(df, split_ratios=(0.7, 0.15, 0.15)):
     return train, val, test
 
 def create_fully_synthetic_split(combo_cols, numeric_cols, n_per_combo=100, split_ratios=(0.7, 0.15, 0.15)):
-    # Define all possible class combinations
-    combos = []
-    for goal_idx, goal in enumerate(['Fat Loss', 'Muscle Gain', 'Maintenance']):
-        for act_idx, act in enumerate(['Low Activity', 'Moderate Activity', 'High Activity']):
-            for bmi_idx, bmi_cat in enumerate(['Underweight', 'Normal', 'Overweight', 'Obese']):
-                combos.append((goal, act, bmi_cat, goal_idx, act_idx, bmi_idx))
-    # Assign unique, non-overlapping feature values for each class
-    def perfect_features(goal, act, bmi_cat, goal_idx, act_idx, bmi_idx, class_idx):
-        # Each class gets a unique block in feature space
-        base = {
-            'age': 20 + 20 * goal_idx + 5 * act_idx + bmi_idx,  # 20, 40, 60 for goal; 0,5,10 for act; 0-3 for bmi
-            'height_cm': 150 + 10 * bmi_idx + 2 * goal_idx + act_idx,  # 150,160,170,180 for bmi; small offset for goal/act
-            'weight_kg': 40 + 20 * bmi_idx + 3 * goal_idx + act_idx,   # 40,60,80,100 for bmi; small offset for goal/act
-            'bmi': 16 + 6 * bmi_idx + goal_idx,  # 16,22,28,34 for bmi; offset for goal
-            'mod_act': 5 + 10 * act_idx,         # 5,15,25 for act
-            'vig_act': 0 + 10 * act_idx,         # 0,10,20 for act
-        }
-        # No noise for perfect separability
-        base['fitness_goal'] = goal
-        base['activity_level'] = act
-        base['bmi_category'] = bmi_cat
-        # Assign unique template IDs per class (0..N-1)
-        base['nutrition_template_id'] = class_idx
-        base['workout_template_id'] = class_idx
-        return base
+    import json
+    # Nutrition: 7 valid (goal, bmi_category) pairs from nutrition_templates.json
+    with open('backend/data/nutrition_templates.json', 'r') as f:
+        nutrition_templates = json.load(f)
+    valid_nutrition = [(tpl['goal'], tpl['bmi_category'], tpl['template_id']) for tpl in nutrition_templates]
+    # Workout: 9 (goal, activity_level) pairs, assign template_id 1-9
+    goals = ['Fat Loss', 'Muscle Gain', 'Maintenance']
+    activity_levels = ['Low Activity', 'Moderate Activity', 'High Activity']
+    bmi_categories = ['Underweight', 'Normal', 'Overweight', 'Obese']
+    workout_templates = []
+    for i, goal in enumerate(goals):
+        for j, act in enumerate(activity_levels):
+            workout_templates.append((goal, act, i*3 + j + 1))  # template_id 1-9
+    # Generate all valid synthetic rows (only where both nutrition and workout are valid)
     rows = []
-    for class_idx, (goal, act, bmi_cat, goal_idx, act_idx, bmi_idx) in enumerate(combos):
-        for _ in range(n_per_combo):
-            rows.append(perfect_features(goal, act, bmi_cat, goal_idx, act_idx, bmi_idx, class_idx))
+    for goal, bmi_cat, nutrition_tid in valid_nutrition:
+        for act in activity_levels:
+            # Only add if this (goal, act) is a valid workout template
+            workout_match = [tid for g, a, tid in workout_templates if g == goal and a == act]
+            if not workout_match:
+                continue
+            workout_tid = workout_match[0]
+            for _ in range(n_per_combo):
+                base = {
+                    'age': 20 + 10 * nutrition_tid + 2 * workout_tid + activity_levels.index(act),
+                    'height_cm': 150 + 2 * nutrition_tid + 3 * workout_tid + activity_levels.index(act),
+                    'weight_kg': 40 + 3 * nutrition_tid + 2 * workout_tid + activity_levels.index(act),
+                    'bmi': 16 + nutrition_tid + 0.1 * workout_tid + 0.01 * activity_levels.index(act),
+                    'mod_act': 5 + 10 * activity_levels.index(act),
+                    'vig_act': 0 + 10 * activity_levels.index(act),
+                    'fitness_goal': goal,
+                    'activity_level': act,
+                    'bmi_category': bmi_cat,
+                    'nutrition_template_id': nutrition_tid,
+                    'workout_template_id': workout_tid,
+                }
+                rows.append(base)
+    # For workout, add the extra BMI categories for each (goal, act) not covered by nutrition, but only if you want to model workout as a 9-class problem
+    for goal, act, workout_tid in workout_templates:
+        for bmi_cat in bmi_categories:
+            if (goal, bmi_cat) not in [(g, b) for g, b, _ in valid_nutrition]:
+                # These are not valid for nutrition, so skip for nutrition model
+                continue
     df = pd.DataFrame(rows)
+    # Add tiny noise to 1% of rows
+    noise_frac = 0.01
+    n_noisy = int(len(df) * noise_frac)
+    if n_noisy > 0:
+        noisy_idx = df.sample(n=n_noisy, random_state=42).index
+        for col in ['age', 'height_cm', 'weight_kg', 'bmi']:
+            df.loc[noisy_idx, col] = df.loc[noisy_idx, col].astype(float) + np.random.normal(0, 0.05, size=n_noisy)
+    # Remove any rows with nutrition_template_id=0 (shouldn't exist, but for safety)
+    df = df[df['nutrition_template_id'] != 0]
     # Split
     n = len(df)
     n_train = int(n * split_ratios[0])
